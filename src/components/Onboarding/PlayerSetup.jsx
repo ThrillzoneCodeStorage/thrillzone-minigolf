@@ -12,7 +12,7 @@ const PLAYER_COLORS_16 = [
 const STYLE_LABELS = { casual: 'Casual', competitive: 'Competitive', silly: 'Silly', fun: 'Just for Fun' }
 
 export default function PlayerSetup() {
-  const { setOnboardStep, playStyle, optOut, startGame, isLoading } = useGame()
+  const { setOnboardStep, playStyle, optOut, startGame, isLoading, spinnerPreference } = useGame()
   const [names, setNames] = useState([''])
 
   const add    = () => names.length < 16 && setNames(n => [...n, ''])
@@ -23,7 +23,7 @@ export default function PlayerSetup() {
     const valid = names.map(n => n.trim()).filter(Boolean)
     if (!valid.length) return
     await startGame({
-      playStyle, optOut,
+      playStyle, optOut, spinnerPreference,
       players: valid.map((name, i) => ({ name, color: PLAYER_COLORS_16[i % PLAYER_COLORS_16.length] })),
     })
   }
