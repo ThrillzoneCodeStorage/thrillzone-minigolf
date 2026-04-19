@@ -1,21 +1,112 @@
-import { useState } from 'react'
-import { Trophy, Mail, RotateCcw, AlertTriangle, CheckCircle, SkipForward } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Trophy, Mail, RotateCcw, AlertTriangle, CheckCircle, SkipForward, Camera, Star } from 'lucide-react'
 import { useGame } from '../../context/GameContext'
-import { updateSession, upsertScore } from '../../lib/supabase'
+import { updateSession, upsertScore, uploadLeaderboardPhoto } from '../../lib/supabase'
 import { EndConfetti } from '../HoleScreen/Celebrations'
+import { composePolaroid } from '../PhotoSystem/PhotoSystem'
+
+// ── Leaderboard selfie button ─────────────────────────────────
+function LbSelfieButton({ sessionId, player, onDone }) {
+  const videoRef = useRef(null)
+  const streamRef = useRef(null)
+  const [open, setOpen] = useState(false)
+  const [blob, setBlob] = useState(null)
+  const [previewUrl, setPreviewUrl] = useState(null)
+  const [uploading, setUploading] = useState(false)
+
+  async function openCam() {
+    setOpen(true)
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user' }, audio:false })
+      streamRef.current = stream
+      if (videoRef.current) { videoRef.current.srcObject = stream; await videoRef.current.play() }
+    } catch { setOpen(false) }
+  }
+
+  function stopStream() { streamRef.current?.getTracks().forEach(t=>t.stop()); streamRef.current=null }
+
+  function capture() {
+    const v = videoRef.current; if (!v) return
+    const c = document.createElement('canvas'); c.width=v.videoWidth; c.height=v.videoHeight
+    const ctx=c.getContext('2d'); ctx.translate(c.width,0); ctx.scale(-1,1); ctx.drawImage(v,0,0)
+    stopStream()
+    c.toBlob(b => { setBlob(b); setPreviewUrl(URL.createObjectURL(b)) }, 'image/jpeg', 0.92)
+  }
+
+  async function confirm() {
+    setUploading(true)
+    try {
+      const polaroid = await composePolaroid(blob)
+      await uploadLeaderboardPhoto(sessionId, player.name, polaroid||blob)
+      onDone()
+    } finally { setUploading(false) }
+  }
+
+  if (!open) return (
+    <button className="btn btn-primary btn-full btn-lg" onClick={openCam} style={{ gap:8 }}>
+      <Camera size={20}/> Take my leaderboard selfie!
+    </button>
+  )
+
+  if (blob && previewUrl) return (
+    <div>
+      <div style={{ background:'#fff', padding:'8px 8px 28px', borderRadius:6, marginBottom:12, boxShadow:'0 4px 20px rgba(0,0,0,0.5)' }}>
+        <img src={previewUrl} alt="Preview" style={{ width:'100%', aspectRatio:'1', objectFit:'cover', display:'block', borderRadius:2 }}/>
+        <div style={{ textAlign:'center', marginTop:8 }}><img src="/logo.png" alt="" style={{ height:24, objectFit:'contain' }}/></div>
+      </div>
+      <div style={{ display:'flex', gap:9 }}>
+        <button className="btn btn-ghost" style={{ flex:1 }} onClick={() => { setBlob(null); setPreviewUrl(null); openCam() }}>Retake</button>
+        <button className="btn btn-primary" style={{ flex:2 }} onClick={confirm} disabled={uploading}>
+          {uploading?'Uploading…':'Save to leaderboard'}
+        </button>
+      </div>
+    </div>
+  )
+
+  return (
+    <div>
+      <div style={{ position:'relative', borderRadius:12, overflow:'hidden', aspectRatio:'1', background:'#000', marginBottom:12 }}>
+        <video ref={videoRef} playsInline muted style={{ width:'100%', height:'100%', objectFit:'cover', display:'block', transform:'scaleX(-1)' }}/>
+      </div>
+      <div style={{ display:'flex', justifyContent:'center' }}>
+        <button onClick={capture}
+          style={{ width:68, height:68, borderRadius:'50%', background:'#fff', border:'5px solid rgba(255,255,255,0.35)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
+          <Camera size={28} color="#000"/>
+        </button>
+      </div>
+    </div>
+  )
+}
 
 export default function EndScreen() {
-  const { players, holes, scores, skippedHoles, photos, sessionId, playAgain, leaderboard, saveScore } = useGame()
+  const { players, holes, scores, skippedHoles, photos, sessionId, playAgain, leaderboard, saveScore, optOut } = useGame()
   const [email, setEmail]         = useState('')
   const [sending, setSending]     = useState(false)
   const [sent, setSent]           = useState(false)
   const [error, setError]         = useState('')
   const [showFinishWarn, setShowFinishWarn] = useState(false)
+  const [showLbSelfie, setShowLbSelfie]     = useState(false)
+  const [lbSelfiePlayer, setLbSelfiePlayer] = useState(null)
+  const [lbSelfieQueue, setLbSelfieQueue]   = useState([])
+  const [takingLbPhoto, setTakingLbPhoto]   = useState(false)
+  const [lbPhotoDone, setLbPhotoDone]       = useState(false)
   const [confirmed, setConfirmed] = useState(false)
   // For filling in skipped holes at end
   const [skipScores, setSkipScores] = useState({}) // { holeId: { playerName: value } }
 
   const winner = leaderboard[0]
+
+  // Detect qualifying players for leaderboard selfie
+  useEffect(() => {
+    if (!sessionId || optOut) return
+    const totalHoles = holes.length
+    const qualifiers = leaderboard.filter(p => p.holesPlayed >= totalHoles)
+    if (qualifiers.length > 0) {
+      setLbSelfieQueue(qualifiers)
+      setLbSelfiePlayer(qualifiers[0])
+      setTimeout(() => setShowLbSelfie(true), 1200)
+    }
+  }, [])
   const skippedList = holes.filter(h => skippedHoles.has(h.id))
   const hasSkipped = skippedList.length > 0
 

@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { Trophy, Sun, Calendar, TrendingDown, TrendingUp, Minus, BarChart3, Target } from 'lucide-react'
-import { supabase, getLeaderboard, getHoleAverages, getAllPhotos } from '../lib/supabase'
- 
+import { supabase, getLeaderboard, getHoleAverages, getAllPhotos, getLeaderboardPlayerPhotos } from '../lib/supabase'
+
 // ── Rank badge ─────────────────────────────────────────────────
 function RankBadge({ rank }) {
   if (rank === 1) return (
@@ -20,7 +20,7 @@ function RankBadge({ rank }) {
     </div>
   )
 }
- 
+
 // ── Diff icon for hole overview ────────────────────────────────
 function Diff({ avg, par }) {
   if (!avg) return <Minus size={16} color="#252525"/>
@@ -29,13 +29,13 @@ function Diff({ avg, par }) {
   if (d >  0.25) return <TrendingUp   size={16} color="#ef4444"/>
   return <Target size={16} color="#FFD600"/>
 }
- 
+
 // ── Timer progress bar ─────────────────────────────────────────
 function TimerBar({ duration, tabKey, onComplete }) {
   const [pct, setPct] = useState(0)
   const startRef = useRef(null)
   const rafRef   = useRef(null)
- 
+
   useEffect(() => {
     setPct(0)
     startRef.current = performance.now()
@@ -48,25 +48,25 @@ function TimerBar({ duration, tabKey, onComplete }) {
     rafRef.current = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(rafRef.current)
   }, [tabKey])
- 
+
   return (
     <div style={{ position:'absolute', top:0, left:0, right:0, height:5, background:'rgba(255,255,255,0.04)', zIndex:20 }}>
       <div style={{ height:'100%', width:`${pct*100}%`, background:'linear-gradient(90deg,#FFD600 0%,rgba(255,255,255,0.8) 100%)', borderRadius:'0 3px 3px 0', boxShadow:'0 0 12px rgba(255,214,0,0.6)', transition:'width 0.08s linear' }}/>
     </div>
   )
 }
- 
+
 // ── Hole-in-one full screen takeover ──────────────────────────
 function HoleInOneTV({ playerName, playerColor, holeName, onDismiss }) {
   const [visible, setVisible] = useState(true)
-  const [countdown, setCountdown] = useState(8)
- 
+  const [countdown, setCountdown] = useState(5)
+
   useEffect(() => {
     const interval = setInterval(() => setCountdown(c => c - 1), 1000)
-    const timeout  = setTimeout(() => { setVisible(false); setTimeout(onDismiss, 600) }, 8000)
+    const timeout  = setTimeout(() => { setVisible(false); setTimeout(onDismiss, 500) }, 5000)
     return () => { clearInterval(interval); clearTimeout(timeout) }
   }, [])
- 
+
   // Confetti canvas
   const canvasRef = useRef(null)
   const rafRef    = useRef(null)
@@ -107,7 +107,7 @@ function HoleInOneTV({ playerName, playerColor, holeName, onDismiss }) {
     rafRef.current = requestAnimationFrame(draw)
     return () => cancelAnimationFrame(rafRef.current)
   }, [])
- 
+
   return (
     <div style={{
       position:'fixed', inset:0, zIndex:1000,
@@ -118,7 +118,7 @@ function HoleInOneTV({ playerName, playerColor, holeName, onDismiss }) {
       transition:'opacity 0.6s ease',
     }}>
       <canvas ref={canvasRef} style={{ position:'absolute', inset:0, pointerEvents:'none' }}/>
- 
+
       {/* Countdown ring */}
       <div style={{ position:'absolute', top:48, right:60 }}>
         <svg width="72" height="72" viewBox="0 0 72 72">
@@ -132,7 +132,7 @@ function HoleInOneTV({ playerName, playerColor, holeName, onDismiss }) {
           </text>
         </svg>
       </div>
- 
+
       <div style={{ position:'relative', zIndex:1, textAlign:'center', padding:'0 80px' }}>
         {/* Trophy icon */}
         <div style={{ marginBottom:32, animation:'bounceIn 0.7s cubic-bezier(0.34,1.56,0.64,1)' }}>
@@ -146,7 +146,7 @@ function HoleInOneTV({ playerName, playerColor, holeName, onDismiss }) {
             <rect x="40" y="92" width="40" height="6" rx="3" fill="#FFD600" opacity="0.5"/>
           </svg>
         </div>
- 
+
         {/* HOLE IN ONE */}
         <div style={{
           fontSize:96, fontWeight:900, letterSpacing:'-0.04em', lineHeight:1,
@@ -157,7 +157,7 @@ function HoleInOneTV({ playerName, playerColor, holeName, onDismiss }) {
         }}>
           HOLE IN ONE!
         </div>
- 
+
         {/* Player name */}
         <div style={{
           fontSize:64, fontWeight:900, letterSpacing:'-0.03em', color:playerColor,
@@ -166,7 +166,7 @@ function HoleInOneTV({ playerName, playerColor, holeName, onDismiss }) {
         }}>
           {playerName}
         </div>
- 
+
         {/* Hole name */}
         {holeName && (
           <div style={{
@@ -177,7 +177,7 @@ function HoleInOneTV({ playerName, playerColor, holeName, onDismiss }) {
             {holeName}
           </div>
         )}
- 
+
         {/* Stars */}
         <div style={{ display:'flex', gap:20, justifyContent:'center', marginTop:36, animation:'fadeUp 0.5s 0.5s both' }}>
           {[0,1,2].map(i => (
@@ -188,7 +188,7 @@ function HoleInOneTV({ playerName, playerColor, holeName, onDismiss }) {
           ))}
         </div>
       </div>
- 
+
       <style>{`
         @keyframes bounceIn{0%{opacity:0;transform:scale(0.3)}60%{transform:scale(1.08)}80%{transform:scale(0.96)}100%{opacity:1;transform:scale(1)}}
         @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
@@ -196,10 +196,10 @@ function HoleInOneTV({ playerName, playerColor, holeName, onDismiss }) {
     </div>
   )
 }
- 
+
 // ── Main TV Leaderboard ────────────────────────────────────────
 const TAB_DURATION = 14000
- 
+
 export default function TVLeaderboard() {
   const [bestDay,   setBestDay]   = useState([])
   const [bestWeek,  setBestWeek]  = useState([])
@@ -211,20 +211,21 @@ export default function TVLeaderboard() {
   const [tabKey,    setTabKey]    = useState(0)
   const [time,      setTime]      = useState(new Date())
   const [holeInOne, setHoleInOne] = useState(null) // { playerName, playerColor, holeName }
- 
+  const [playerPhotos, setPlayerPhotos] = useState({}) // { 'sessionId-name': url }
+
   // Clock
   useEffect(() => {
     const t = setInterval(() => setTime(new Date()), 1000)
     return () => clearInterval(t)
   }, [])
- 
+
   // Photo rotation
   useEffect(() => {
     if (photos.length < 2) return
     const t = setInterval(() => setPhotoIdx(i => (i + 1) % photos.length), 8000)
     return () => clearInterval(t)
   }, [photos.length])
- 
+
   const load = useCallback(async () => {
     const [d, w, a, h, p] = await Promise.all([
       getLeaderboard('day'), getLeaderboard('week'),
@@ -232,57 +233,48 @@ export default function TVLeaderboard() {
     ])
     setBestDay(d); setBestWeek(w); setBestAll(a); setHoleAvgs(h)
     setPhotos(p.map(x => x.storage_path).filter(Boolean))
+    const lbPhotos = await getLeaderboardPlayerPhotos()
+    const photoMap = {}
+    lbPhotos.forEach(lp => { photoMap[`${lp.session_id}-${lp.player_name}`] = lp.photo_url })
+    setPlayerPhotos(photoMap)
   }, [])
- 
+
   useEffect(() => {
     load()
     const t = setInterval(load, 30000)
- 
-    const ch = supabase.channel('tv-main')
-      .on('postgres_changes', { event:'*', schema:'public', table:'sessions' }, load)
-      .on('postgres_changes', { event:'INSERT', schema:'public', table:'scores' }, async payload => {
-        // Check for hole in one from opted-in session
-        if (payload.new.strokes !== 1) return
+
+    async function checkForHoleInOne(payload) {
+      const newScore = payload.new
+      if (!newScore || newScore.strokes !== 1) return
+      // Skip if it was already a hole-in-one (UPDATE where old was also 1)
+      if (payload.old && payload.old.strokes === 1) return
+      try {
         const { data: session } = await supabase
-          .from('sessions')
-          .select('players, opt_out_leaderboard')
-          .eq('id', payload.new.session_id)
-          .single()
+          .from('sessions').select('players, opt_out_leaderboard')
+          .eq('id', newScore.session_id).single()
         if (!session || session.opt_out_leaderboard) return
-        const player = (session.players || []).find(p => p.name === payload.new.player_name)
+        const player = (session.players || []).find(p => p.name === newScore.player_name)
         const { data: hole } = await supabase
-          .from('holes').select('title').eq('id', payload.new.hole_id).single()
+          .from('holes').select('title').eq('id', newScore.hole_id).single()
         setHoleInOne({
-          playerName:  payload.new.player_name,
+          playerName:  newScore.player_name,
           playerColor: player?.color || '#FFD600',
           holeName:    hole?.title || '',
         })
-        // Also refresh leaderboard after celebration
-        setTimeout(load, 9000)
-      })
-      .on('postgres_changes', { event:'UPDATE', schema:'public', table:'scores' }, async payload => {
-        if (payload.new.strokes !== 1 || payload.old?.strokes === 1) { load(); return }
-        const { data: session } = await supabase
-          .from('sessions')
-          .select('players, opt_out_leaderboard')
-          .eq('id', payload.new.session_id)
-          .single()
-        if (!session || session.opt_out_leaderboard) { load(); return }
-        const player = (session.players || []).find(p => p.name === payload.new.player_name)
-        const { data: hole } = await supabase
-          .from('holes').select('title').eq('id', payload.new.hole_id).single()
-        setHoleInOne({
-          playerName:  payload.new.player_name,
-          playerColor: player?.color || '#FFD600',
-          holeName:    hole?.title || '',
-        })
-        setTimeout(load, 9000)
-      })
+        setTimeout(load, 6000)
+      } catch(e) { console.error('HIO detection error:', e) }
+    }
+
+    const ch = supabase.channel('tv-main-v2')
+      .on('postgres_changes', { event:'*', schema:'public', table:'sessions' }, load)
+      .on('postgres_changes', { event:'INSERT', schema:'public', table:'scores' }, payload => { load(); checkForHoleInOne(payload) })
+      .on('postgres_changes', { event:'UPDATE', schema:'public', table:'scores' }, payload => { load(); checkForHoleInOne(payload) })
+      .on('postgres_changes', { event:'INSERT', schema:'public', table:'leaderboard_player_photos' }, load)
       .subscribe()
- 
+
     return () => { clearInterval(t); supabase.removeChannel(ch) }
   }, [load])
- 
+
   // Build visible tabs — only show if they have data
   const allTabs = [
     { id:'day',   label:'Best Today',    Icon:Sun,       data:bestDay,  desc:'Lowest strokes today — full course' },
@@ -293,12 +285,12 @@ export default function TVLeaderboard() {
   const availableTabs = allTabs.filter(t =>
     t.id === 'holes' ? holeAvgs.length > 0 : t.data.length > 0
   )
- 
+
   // Set initial tab
   useEffect(() => {
     if (availableTabs.length > 0 && tab === null) setTab(availableTabs[0].id)
   }, [availableTabs.length])
- 
+
   function advanceTab() {
     if (availableTabs.length < 2) return
     setTab(prev => {
@@ -308,14 +300,14 @@ export default function TVLeaderboard() {
     })
     setTabKey(k => k + 1)
   }
- 
+
   const current = allTabs.find(t => t.id === tab)
   const hasPhotos = photos.length > 0
   const MAX = 5
- 
+
   return (
     <div style={{ width:'100vw', height:'100vh', background:'#060606', color:'#fff', fontFamily:'Inter,sans-serif', overflow:'hidden', position:'relative', display:'flex', flexDirection:'column' }}>
- 
+
       {/* Hole-in-one takeover */}
       {holeInOne && (
         <HoleInOneTV
@@ -323,19 +315,19 @@ export default function TVLeaderboard() {
           onDismiss={() => setHoleInOne(null)}
         />
       )}
- 
+
       {/* Background photo — very dim */}
       {hasPhotos && (
         <div style={{ position:'absolute', inset:0, zIndex:0 }}>
           <img key={photoIdx} src={photos[photoIdx]} alt="" style={{ width:'100%', height:'100%', objectFit:'cover', filter:'brightness(0.05) blur(6px)' }}/>
         </div>
       )}
- 
+
       {/* Timer bar */}
       {tab && availableTabs.length > 1 && (
         <TimerBar duration={TAB_DURATION} tabKey={`${tab}-${tabKey}`} onComplete={advanceTab}/>
       )}
- 
+
       {/* ── HEADER ─────────────────────────────────── */}
       <div style={{
         position:'relative', zIndex:1, flexShrink:0,
@@ -362,7 +354,7 @@ export default function TVLeaderboard() {
             </div>
           </div>
         </div>
- 
+
         {/* Centre: tab pills */}
         <div style={{ display:'flex', alignItems:'center', gap:10 }}>
           {availableTabs.map(v => {
@@ -390,7 +382,7 @@ export default function TVLeaderboard() {
             </div>
           )}
         </div>
- 
+
         {/* Right: clock */}
         <div style={{ textAlign:'right' }}>
           <p style={{ fontSize:52, fontWeight:900, color:'#FFD600', margin:0, letterSpacing:'-0.04em', lineHeight:1 }}>
@@ -407,10 +399,10 @@ export default function TVLeaderboard() {
           </div>
         </div>
       </div>
- 
+
       {/* ── MAIN CONTENT ───────────────────────────── */}
       <div style={{ position:'relative', zIndex:1, flex:1, display:'flex', overflow:'hidden' }}>
- 
+
         {/* No data state */}
         {availableTabs.length === 0 && (
           <div style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', gap:16 }}>
@@ -421,11 +413,11 @@ export default function TVLeaderboard() {
             <p style={{ fontSize:16, color:'#181818', margin:0 }}>Complete a full round to appear on the board</p>
           </div>
         )}
- 
+
         {/* ── LEADERBOARD TAB ────────────────────── */}
         {current && tab !== 'holes' && availableTabs.length > 0 && (
           <div style={{ flex:1, display:'flex', gap:0, overflow:'hidden' }}>
- 
+
             {/* Left — rankings */}
             <div style={{ flex:1, padding:'24px 48px 28px 56px', display:'flex', flexDirection:'column', gap:13, overflow:'hidden' }}>
               {/* Subtitle */}
@@ -435,14 +427,14 @@ export default function TVLeaderboard() {
                   {current.desc}
                 </span>
               </div>
- 
+
               {/* Column labels */}
               <div style={{ display:'flex', alignItems:'center', gap:24, padding:'0 28px 0 76px' }}>
                 <span style={{ flex:1, fontSize:12, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'#222' }}>Player</span>
                 <span style={{ width:180, textAlign:'right', fontSize:12, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'rgba(255,214,0,0.35)' }}>Strokes</span>
                 <span style={{ width:130, textAlign:'right', fontSize:12, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'#222' }}>Avg / hole</span>
               </div>
- 
+
               {/* Entries */}
               {current.data.slice(0, MAX).map((e, i) => {
                 const isFirst = i === 0
@@ -459,15 +451,15 @@ export default function TVLeaderboard() {
                     flexShrink:0,
                   }}>
                     <RankBadge rank={i+1}/>
- 
+
                     {e.color && (
                       <div style={{ width:14, height:14, borderRadius:'50%', background:e.color, flexShrink:0, boxShadow:`0 0 12px ${e.color}70` }}/>
                     )}
- 
+
                     <span style={{ flex:1, fontSize:38, fontWeight:900, letterSpacing:'-0.03em', color:isFirst?'#FFD600':'#ccc', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
                       {e.name}
                     </span>
- 
+
                     {/* Total */}
                     <div style={{ width:180, display:'flex', alignItems:'baseline', gap:8, justifyContent:'flex-end' }}>
                       <span style={{ fontSize:60, fontWeight:900, letterSpacing:'-0.05em', lineHeight:1, color:isFirst?'#FFD600':'#fff' }}>
@@ -477,7 +469,7 @@ export default function TVLeaderboard() {
                         strokes
                       </span>
                     </div>
- 
+
                     {/* Avg */}
                     <div style={{ width:130, textAlign:'right', borderLeft:'1px solid rgba(255,255,255,0.05)', paddingLeft:22 }}>
                       <p style={{ fontSize:30, fontWeight:800, color:'#323232', margin:0, letterSpacing:'-0.02em', lineHeight:1 }}>{e.avg}</p>
@@ -487,7 +479,7 @@ export default function TVLeaderboard() {
                 )
               })}
             </div>
- 
+
             {/* Right — Polaroid photos panel */}
             {hasPhotos && (
               <div style={{
@@ -521,7 +513,7 @@ export default function TVLeaderboard() {
             )}
           </div>
         )}
- 
+
         {/* ── HOLE STATS TAB ─────────────────────── */}
         {tab === 'holes' && holeAvgs.length > 0 && (
           <div style={{ flex:1, padding:'20px 56px 28px', overflow:'hidden', display:'flex', flexDirection:'column' }}>
@@ -531,7 +523,7 @@ export default function TVLeaderboard() {
                 All-time average strokes per hole
               </span>
             </div>
- 
+
             <div style={{ flex:1, display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, overflow:'hidden', alignContent:'start' }}>
               {holeAvgs.map((hole, i) => {
                 const par  = hole.par || 3
@@ -564,7 +556,7 @@ export default function TVLeaderboard() {
                 )
               })}
             </div>
- 
+
             {/* Legend */}
             <div style={{ display:'flex', gap:28, justifyContent:'center', paddingTop:14 }}>
               {[['#22C55E','Under par'],['#FFD600','On par'],['#ef4444','Over par']].map(([c,l])=>(
@@ -577,7 +569,7 @@ export default function TVLeaderboard() {
           </div>
         )}
       </div>
- 
+
       <style>{`
         @keyframes slideIn { from{opacity:0;transform:translateX(-16px)} to{opacity:1;transform:none} }
         * { box-sizing:border-box; }
@@ -585,4 +577,3 @@ export default function TVLeaderboard() {
     </div>
   )
 }
- 
