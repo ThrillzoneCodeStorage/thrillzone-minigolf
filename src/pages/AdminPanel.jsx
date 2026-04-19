@@ -7,7 +7,7 @@ import {
 import {
   checkAdminPassword, getHoles, upsertHole, deleteHole, reorderHoles,
   getAllSpinnerEffects, upsertSpinnerEffect, deleteSpinnerEffect,
-  getAllSessions, setAdminSetting,
+  getAllSessions, setAdminSetting, deleteSession, deletePlayerScores,
   getAllGameModeRules, upsertGameModeRule, deleteGameModeRule, reorderGameModeRules,
 } from '../lib/supabase'
 
@@ -352,6 +352,7 @@ function SpinnerTab() {
 function DataTab() {
   const [sessions, setSessions] = useState([])
   const [expanded, setExpanded] = useState(null)
+  const [deleting, setDeleting] = useState(null)
 
   async function load() { getAllSessions(60).then(setSessions) }
   useEffect(() => { load(); const t=setInterval(load,20000); return()=>clearInterval(t) }, [])
@@ -363,6 +364,18 @@ function DataTab() {
   function duration(start,end) {
     const m=Math.floor((new Date(end||Date.now())-new Date(start))/60000)
     return m<60?`${m}m`:`${Math.floor(m/60)}h ${m%60}m`
+  }
+
+  async function handleDeleteSession(id) {
+    if (!confirm('Delete this entire session and all its scores? This cannot be undone.')) return
+    setDeleting(id)
+    try { await deleteSession(id); load() } finally { setDeleting(null) }
+  }
+
+  async function handleDeletePlayer(sessionId, playerName) {
+    if (!confirm(`Remove all scores for ${playerName} from this session?`)) return
+    setDeleting(`${sessionId}-${playerName}`)
+    try { await deletePlayerScores(sessionId, playerName); load() } finally { setDeleting(null) }
   }
 
   const active = sessions.filter(s=>!s.completed_at)
@@ -397,7 +410,10 @@ function DataTab() {
                     <span style={{ fontSize:11, color:A.text3 }}>{duration(s.started_at)} played</span>
                     {s.opt_out_leaderboard && <span style={{ fontSize:11, color:A.text3 }}>Private</span>}
                   </div>
-                  <span style={{ fontSize:10, color:A.text3 }}>{elapsed(s.started_at)}</span>
+                  <button onClick={()=>handleDeleteSession(s.id)} disabled={deleting===s.id}
+                    style={{ ...iconBtn, color:A.red, fontSize:12, opacity:deleting===s.id?0.5:1 }}>
+                    <Trash2 size={13}/>{deleting===s.id?'Deleting…':'Delete session'}
+                  </button>
                 </div>
                 <div style={{ display:'flex', gap:7, flexWrap:'wrap' }}>
                   {totals.map(p=>(
@@ -405,6 +421,9 @@ function DataTab() {
                       <div style={{ width:7, height:7, borderRadius:'50%', background:p.color||A.yellow }}/>
                       <span style={{ color:A.text, fontSize:12, fontWeight:600 }}>{p.name}</span>
                       <span style={{ color:A.text2, fontSize:12 }}>{p.total} ({p.holes}h)</span>
+                      <button onClick={()=>handleDeletePlayer(s.id,p.name)} style={{ background:'none', border:'none', color:A.red, cursor:'pointer', padding:'0 2px', lineHeight:1, opacity:0.6 }}>
+                        <X size={11}/>
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -438,15 +457,26 @@ function DataTab() {
                 {players.map(p=>{
                   const total=scoresArr.filter(sc=>sc.player_name===p.name).reduce((a,sc)=>a+sc.strokes,0)
                   const holes=scoresArr.filter(sc=>sc.player_name===p.name).length
+                  const key=`${s.id}-${p.name}`
                   return (
-                    <div key={p.name} style={{ display:'flex', gap:8, marginBottom:5, alignItems:'center' }}>
+                    <div key={p.name} style={{ display:'flex', gap:8, marginBottom:8, alignItems:'center' }}>
                       <div style={{ width:7, height:7, borderRadius:'50%', background:p.color||A.yellow, flexShrink:0 }}/>
                       <span style={{ color:A.text, fontSize:13, fontWeight:600, flex:1 }}>{p.name}</span>
                       <span style={{ color:A.text2, fontSize:13 }}>{total} strokes</span>
                       <span style={{ color:A.text3, fontSize:12 }}>{holes} holes</span>
+                      <button onClick={()=>handleDeletePlayer(s.id,p.name)} disabled={deleting===key}
+                        style={{ ...iconBtn, color:A.red, fontSize:12, opacity:deleting===key?0.5:1 }}>
+                        <Trash2 size={12}/>{deleting===key?'…':'Remove scores'}
+                      </button>
                     </div>
                   )
                 })}
+                <div style={{ marginTop:10, paddingTop:10, borderTop:`1px solid ${A.border}`, display:'flex', justifyContent:'flex-end' }}>
+                  <button onClick={()=>handleDeleteSession(s.id)} disabled={deleting===s.id}
+                    style={{ ...iconBtn, color:A.red, opacity:deleting===s.id?0.5:1 }}>
+                    <Trash2 size={13}/>{deleting===s.id?'Deleting…':'Delete entire session'}
+                  </button>
+                </div>
                 {s.email && <p style={{ fontSize:12, color:A.green, marginTop:8 }}>Scorecard sent to {s.email}</p>}
               </div>
             )}

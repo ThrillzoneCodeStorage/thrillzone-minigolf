@@ -132,6 +132,10 @@ export async function getAllPhotos(limit = 50) {
 
 // ── Leaderboard ────────────────────────────────────────────────
 export async function getLeaderboard(period = 'all') {
+  // Get total hole count so we can require full course completion
+  const { data: allHoles } = await supabase.from('holes').select('id')
+  const totalHoles = allHoles?.length || 17
+
   let query = supabase
     .from('sessions')
     .select(`id, players, play_style, started_at, scores(hole_id, player_name, strokes)`)
@@ -149,25 +153,30 @@ export async function getLeaderboard(period = 'all') {
   const { data, error } = await query
   if (error) return []
 
-  // Flatten: for each session, get each player's avg strokes/hole
   const entries = []
   for (const session of (data || [])) {
-    const playerNames = (session.players || []).map(p => p.name)
-    for (const name of playerNames) {
-      const playerScores = (session.scores || []).filter(s => s.player_name === name)
-      if (playerScores.length === 0) continue
-      const avg = playerScores.reduce((a, s) => a + s.strokes, 0) / playerScores.length
+    for (const player of (session.players || [])) {
+      // Only valid scores (strokes > 0, not skipped)
+      const playerScores = (session.scores || []).filter(
+        s => s.player_name === player.name && s.strokes > 0
+      )
+      // Must have completed every single hole with a real score
+      if (playerScores.length < totalHoles) continue
+      const total = playerScores.reduce((a, s) => a + s.strokes, 0)
+      const avg   = Math.round((total / playerScores.length) * 10) / 10
       entries.push({
-        name,
-        avg: Math.round(avg * 10) / 10,
-        holes: playerScores.length,
+        name:       player.name,
+        color:      player.color,
+        total,
+        avg,
+        holes:      playerScores.length,
         session_id: session.id,
         started_at: session.started_at,
       })
     }
   }
 
-  return entries.sort((a, b) => a.avg - b.avg).slice(0, 10)
+  return entries.sort((a, b) => a.total - b.total).slice(0, 10)
 }
 
 export async function getLiveLeaderboard() {
@@ -278,4 +287,35 @@ export async function reorderGameModeRules(mode, orderedIds) {
     supabase.from('game_mode_rules').update({ order_index: i }).eq('id', id)
   )
   await Promise.all(updates)
+}
+
+// ── Hole averages (all-time) ───────────────────────────────────
+export async function getHoleAverages() {
+  const [{ data: holes }, { data: scores }] = await Promise.all([
+    supabase.from('holes').select('*').order('order_index'),
+    supabase.from('scores').select('hole_id, strokes').gt('strokes', 0),
+  ])
+  if (!holes) return []
+  return holes.map(hole => {
+    const hs = (scores || []).filter(s => s.hole_id === hole.id)
+    const avg = hs.length > 0
+      ? Math.round((hs.reduce((a, s) => a + s.strokes, 0) / hs.length) * 10) / 10
+      : null
+    return { ...hole, avg, count: hs.length }
+  })
+}
+
+// ── Delete session ─────────────────────────────────────────────
+export async function deleteSession(id) {
+  const { error } = await supabase.from('sessions').delete().eq('id', id)
+  if (error) throw error
+}
+
+// ── Delete one player's scores from a session ──────────────────
+export async function deletePlayerScores(sessionId, playerName) {
+  const { error } = await supabase.from('scores')
+    .delete()
+    .eq('session_id', sessionId)
+    .eq('player_name', playerName)
+  if (error) throw error
 }
