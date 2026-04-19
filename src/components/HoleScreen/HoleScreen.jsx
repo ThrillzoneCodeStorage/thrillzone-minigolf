@@ -47,18 +47,39 @@ function PhysicalSpinnerPrompt({ onDone }) {
 }
 
 // Mode change modal
-function ModeChangeModal({ current, onSelect, onClose }) {
+function ModeChangeModal({ current, onSelect, onClose, onRestart }) {
   const styles = ['casual','competitive','silly','fun']
+  const [confirmRestart, setConfirmRestart] = useState(false)
+
+  if (confirmRestart) return (
+    <div className="modal-center">
+      <div className="modal-box" style={{ textAlign:'center' }}>
+        <div style={{ width:52, height:52, borderRadius:14, background:'rgba(255,59,59,0.10)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 14px' }}>
+          <AlertTriangle size={26} color="var(--red)"/>
+        </div>
+        <h3 style={{ fontSize:18, fontWeight:900, marginBottom:8, letterSpacing:'-0.02em' }}>Restart the game?</h3>
+        <p style={{ fontSize:14, color:'var(--text-2)', lineHeight:1.6, marginBottom:20 }}>
+          All scores and photos from this round will be lost. This cannot be undone.
+        </p>
+        <div style={{ display:'flex', gap:9 }}>
+          <button className="btn btn-ghost" style={{ flex:1 }} onClick={() => setConfirmRestart(false)}>Cancel</button>
+          <button className="btn btn-danger" style={{ flex:1 }} onClick={onRestart}>Restart</button>
+        </div>
+      </div>
+    </div>
+  )
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-sheet" onClick={e => e.stopPropagation()}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
-          <h3 style={{ fontSize:19, fontWeight:900, letterSpacing:'-0.02em' }}>Change Play Style</h3>
+          <h3 style={{ fontSize:19, fontWeight:900, letterSpacing:'-0.02em' }}>Game Options</h3>
           <button onClick={onClose} style={{ background:'none', border:'none', color:'var(--text-2)', cursor:'pointer', padding:4, display:'flex' }}>
             <X size={20}/>
           </button>
         </div>
-        <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+        <p style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'var(--text-3)', marginBottom:12 }}>Change Play Style</p>
+        <div style={{ display:'flex', flexDirection:'column', gap:10, marginBottom:20 }}>
           {styles.map(s => {
             const cfg = STYLE_CONFIG[s]
             const isCurrent = s === current
@@ -78,6 +99,14 @@ function ModeChangeModal({ current, onSelect, onClose }) {
             )
           })}
         </div>
+        <div className="divider"/>
+        <button
+          onClick={() => setConfirmRestart(true)}
+          className="btn btn-ghost btn-full"
+          style={{ color:'var(--red)', borderColor:'rgba(255,59,59,0.2)', gap:8, marginTop:8 }}
+        >
+          <RefreshCw size={15}/> Restart Game
+        </button>
       </div>
     </div>
   )
@@ -86,7 +115,7 @@ function ModeChangeModal({ current, onSelect, onClose }) {
 export default function HoleScreen() {
   const {
     currentHole, currentHoleIndex, holes, players, scores, saveScore,
-    playStyle, changePlayStyle, nextHole, goToHole, skipHole,
+    playStyle, changePlayStyle, nextHole, goToHole, skipHole, playAgain,
     showPhotoGallery, setShowPhotoGallery,
     showSpinner, dismissSpinner, setShowSpinner, setSpinnerEffect,
     currentTurnIndex, setCurrentTurnIndex,
@@ -436,6 +465,7 @@ export default function HoleScreen() {
           current={playStyle}
           onSelect={changePlayStyle}
           onClose={() => setShowModeChange(false)}
+          onRestart={() => { setShowModeChange(false); playAgain() }}
         />
       )}
 

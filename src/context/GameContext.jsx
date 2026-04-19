@@ -55,7 +55,7 @@ export function GameProvider({ children }) {
           setSessionId(existing.id); setDeviceCode(savedCode)
           setPlayStyle(existing.play_style); setOptOut(existing.opt_out_leaderboard)
           setPlayers(existing.players || []); setCurrentHoleIndex(existing.current_hole_index || 0)
-          setSpinnerPreference(existing.spinner_preference || 'digital')
+          setSpinnerPreference('digital')
           const existingScores = await getScoresForSession(existing.id)
           const scoreMap = {}
           for (const s of existingScores) {
@@ -80,7 +80,7 @@ export function GameProvider({ children }) {
       const session = await createSession({
         device_code: code, play_style: ps,
         opt_out_leaderboard: oo, players: pl,
-        current_hole_index: 0, spinner_preference: sp,
+        current_hole_index: 0,
       })
       setSessionId(session.id); setDeviceCode(code)
       setPlayStyle(ps); setOptOut(oo); setPlayers(pl)
