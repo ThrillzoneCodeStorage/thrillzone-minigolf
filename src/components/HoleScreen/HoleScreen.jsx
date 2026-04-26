@@ -160,6 +160,16 @@ export default function HoleScreen() {
     </div>
   )
 
+  // Adaptive card sizing based on player count
+  const pCount = players.length
+  const cardPad     = pCount <= 2 ? '14px 14px' : pCount <= 4 ? '10px 12px' : pCount <= 6 ? '8px 11px' : '6px 10px'
+  const nameSize    = pCount <= 2 ? 15 : pCount <= 4 ? 14 : pCount <= 6 ? 13 : 12
+  const btnSize     = pCount <= 2 ? 48 : pCount <= 4 ? 42 : pCount <= 6 ? 38 : 34
+  const btnFont     = pCount <= 2 ? 22 : pCount <= 4 ? 20 : pCount <= 6 ? 18 : 16
+  const scoreFont   = pCount <= 2 ? 28 : pCount <= 4 ? 24 : pCount <= 6 ? 20 : 18
+  const cardGap     = pCount <= 4 ? 8 : pCount <= 6 ? 6 : 4
+  const headerMb    = pCount <= 4 ? 6 : 4
+
   const holeNum    = currentHoleIndex + 1
   const totalHoles = holes.length
   const isLast     = currentHoleIndex === totalHoles - 1
@@ -167,7 +177,13 @@ export default function HoleScreen() {
   const allUnset   = players.every(p => localScores[p.name] === null || localScores[p.name] === undefined)
 
   function increment(playerName) {
-    setLocalScores(prev => ({ ...prev, [playerName]: (prev[playerName] ?? 0) + 1 }))
+    const par = currentHole?.par || 3
+    setLocalScores(prev => {
+      const cur = prev[playerName]
+      // First press: default to par, then increment from there
+      const next = (cur === null || cur === undefined) ? par : cur + 1
+      return { ...prev, [playerName]: next }
+    })
     const el = document.getElementById(`score-plus-${playerName}`)
     if (el) addFloater(1, el)
   }
@@ -272,19 +288,7 @@ export default function HoleScreen() {
           <p style={{ fontSize:14, color:'var(--text-2)', lineHeight:1.58, marginBottom:9 }}>{currentHole.description}</p>
         )}
 
-        {/* Competitive turn */}
-        {playStyle==='competitive' && currentPlayer && (
-          <div style={{ background:`${currentPlayer.color}12`, border:`1.5px solid ${currentPlayer.color}35`, borderRadius:11, padding:'9px 13px', marginBottom:9, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-            <div style={{ display:'flex', alignItems:'center', gap:9 }}>
-              <div style={{ width:9, height:9, borderRadius:'50%', background:currentPlayer.color, animation:'glowRing 1.5s infinite' }}/>
-              <span style={{ fontSize:14, fontWeight:700 }}>{currentPlayer.name}'s turn</span>
-            </div>
-            <button onClick={() => setCurrentTurnIndex(i => i+1)}
-              style={{ background:currentPlayer.color, color:'#000', border:'none', borderRadius:8, padding:'6px 13px', fontWeight:800, fontSize:13, cursor:'pointer', fontFamily:'inherit', display:'flex', alignItems:'center', gap:5 }}>
-              Next <ChevronRight size={14}/>
-            </button>
-          </div>
-        )}
+
 
         {/* Winner indicator */}
         {previousHoleWinner && playStyle!=='competitive' && playStyle!=='fun' && (
@@ -304,7 +308,7 @@ export default function HoleScreen() {
         {isHole8 && <Hole8Timer/>}
 
         {playStyle!=='fun' ? (
-          <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:12 }}>
+          <div style={{ display:'flex', flexDirection:'column', gap:cardGap, marginBottom:10 }}>
             {/* Render in leaderboard order when scored, otherwise original player order */}
             {(leaderboard.length > 0 ? leaderboard : players.map(p => ({ ...p, holesPlayed: 0 }))).map((lbPlayer, rank) => {
               const player = players.find(p => p.name === lbPlayer.name)
@@ -321,25 +325,31 @@ export default function HoleScreen() {
                 <div key={player.name} style={{
                   background: isFirst ? 'rgba(255,214,0,0.05)' : 'var(--bg-card)',
                   border:`1.5px solid ${isSet?player.color+'28':isWinner?'var(--border-y)':isFirst?'rgba(255,214,0,0.2)':'var(--border)'}`,
-                  borderRadius:'var(--radius)', padding:'9px 11px', transition:'border-color 0.2s'
+                  borderRadius:'var(--radius)', padding:cardPad, transition:'border-color 0.2s'
                 }}>
-                  <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:6 }}>
-                    {/* Position number */}
-                    <span style={{ fontSize:12, fontWeight:900, color:isFirst?'var(--yellow)':'var(--text-3)', width:18, textAlign:'center', flexShrink:0 }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:7, marginBottom:headerMb }}>
+                    <span style={{ fontSize:11, fontWeight:900, color:isFirst?'var(--yellow)':'var(--text-3)', width:16, textAlign:'center', flexShrink:0 }}>
                       {lbPlayer.holesPlayed > 0 ? rank+1 : '—'}
                     </span>
-                    <div style={{ width:8, height:8, borderRadius:'50%', background:player.color, flexShrink:0 }}/>
-                    <span style={{ fontWeight:800, fontSize:14, flex:1, letterSpacing:'-0.01em', color:isFirst?'var(--yellow)':'var(--text)' }}>{player.name}</span>
-                    {isWinner && <Crown size={12} color="var(--yellow)"/>}
-                    <span style={{ fontSize:12, fontWeight:800, color:isFirst?'var(--yellow)':'var(--text-2)' }}>{runningTotal}</span>
-                    <span style={{ fontSize:10, color:'var(--text-3)', fontWeight:600 }}>total</span>
+                    <div style={{ width:7, height:7, borderRadius:'50%', background:player.color, flexShrink:0 }}/>
+                    <span style={{ fontWeight:800, fontSize:nameSize, flex:1, letterSpacing:'-0.01em', color:isFirst?'var(--yellow)':'var(--text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{player.name}</span>
+                    {isWinner && <Crown size={11} color="var(--yellow)"/>}
+                    <span style={{ fontSize:nameSize-1, fontWeight:800, color:isFirst?'var(--yellow)':'var(--text-2)' }}>{runningTotal}</span>
+                    <span style={{ fontSize:9, color:'var(--text-3)', fontWeight:600 }}>total</span>
                   </div>
                   <div className="score-input-wrap">
-                    <button id={`score-minus-${player.name}`} className="score-btn score-btn-minus" onClick={() => decrement(player.name)}>−</button>
-                    <div className={`score-display${isSet?' active':''}`} key={`${player.name}-${val}`} style={{ animation:'countUp 0.18s cubic-bezier(0.34,1.56,0.64,1)' }}>
+                    <button id={`score-minus-${player.name}`}
+                      className="score-btn score-btn-minus"
+                      onClick={() => decrement(player.name)}
+                      style={{ width:btnSize, height:btnSize, fontSize:btnFont }}>−</button>
+                    <div className={`score-display${isSet?' active':''}`} key={`${player.name}-${val}`}
+                      style={{ animation:'countUp 0.18s cubic-bezier(0.34,1.56,0.64,1)', fontSize:scoreFont, padding:'6px 4px' }}>
                       {isSet ? val : '—'}
                     </div>
-                    <button id={`score-plus-${player.name}`} className="score-btn score-btn-plus" onClick={() => increment(player.name)}>+</button>
+                    <button id={`score-plus-${player.name}`}
+                      className="score-btn score-btn-plus"
+                      onClick={() => increment(player.name)}
+                      style={{ width:btnSize, height:btnSize, fontSize:btnFont }}>+</button>
                   </div>
                 </div>
               )

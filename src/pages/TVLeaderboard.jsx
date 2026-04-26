@@ -176,6 +176,7 @@ export default function TVLeaderboard() {
   const [bestDay,      setBestDay]      = useState([])
   const [bestWeek,     setBestWeek]     = useState([])
   const [bestMonth,    setBestMonth]    = useState([])
+  const [bestYear,     setBestYear]     = useState([])
   const [bestAll,      setBestAll]      = useState([])
   const [holeAvgs,     setHoleAvgs]     = useState([])
   const [photos,       setPhotos]       = useState([])
@@ -199,11 +200,11 @@ export default function TVLeaderboard() {
   }, [photos.length])
 
   const load = useCallback(async () => {
-    const [d, w, mo, a, h, p, lbp] = await Promise.all([
-      getLeaderboard('day'), getLeaderboard('week'), getLeaderboard('month'), getLeaderboard('all'),
+    const [d, w, mo, yr, a, h, p, lbp] = await Promise.all([
+      getLeaderboard('day'), getLeaderboard('week'), getLeaderboard('month'), getLeaderboard('year'), getLeaderboard('all'),
       getHoleAverages(), getAllPhotos(30), getLeaderboardPlayerPhotos(),
     ])
-    setBestDay(d); setBestWeek(w); setBestMonth(mo); setBestAll(a); setHoleAvgs(h)
+    setBestDay(d); setBestWeek(w); setBestMonth(mo); setBestYear(yr); setBestAll(a); setHoleAvgs(h)
     setPhotos(p.map(x => x.storage_path).filter(Boolean))
     const pm = {}
     lbp.forEach(lp => { pm[`${lp.session_id}-${lp.player_name}`] = lp.photo_url })
@@ -265,11 +266,12 @@ export default function TVLeaderboard() {
 
   // Tabs — only show if they have data
   const allTabs = [
-    { id:'day',   label:'Best Today',    Icon:Sun,      data:bestDay,   desc:'Lowest strokes today — full course only' },
-    { id:'week',  label:'Best Week',     Icon:Calendar, data:bestWeek,  desc:'Lowest strokes this week — full course only' },
-    { id:'month', label:'This Month',    Icon:CalendarDays, data:bestMonth, desc:'Lowest strokes this month — full course only' },
-    { id:'all',   label:'All Time',      Icon:Trophy,   data:bestAll,   desc:'Lowest strokes ever — full course only' },
-    { id:'holes', label:'Hole Stats',    Icon:BarChart3, data:[],       desc:'All-time average strokes per hole' },
+    { id:'day',   label:'Today',         Icon:Sun,          data:bestDay,   desc:'Lowest strokes today' },
+    { id:'week',  label:'This Week',     Icon:Calendar,     data:bestWeek,  desc:'Lowest strokes this week' },
+    { id:'month', label:'This Month',    Icon:CalendarDays, data:bestMonth, desc:'Lowest strokes this month' },
+    { id:'year',  label:'This Year',     Icon:Trophy,       data:bestYear,  desc:'Lowest strokes this year' },
+    { id:'all',   label:'All Time',      Icon:Trophy,       data:bestAll,   desc:'Lowest strokes ever' },
+    { id:'holes', label:'Hole Stats',    Icon:BarChart3,    data:[],        desc:'All-time average per hole' },
   ]
   const availableTabs = allTabs.filter(t => t.id === 'holes' ? holeAvgs.length > 0 : t.data.length > 0)
 
@@ -288,7 +290,7 @@ export default function TVLeaderboard() {
 
   const current  = allTabs.find(t => t.id === tab)
   const hasPhotos = photos.length > 0
-  const MAX = 5
+  const MAX = 10
 
   return (
     <div style={{ width:'100vw', height:'100vh', background:'#060606', color:'#fff', fontFamily:'Inter,sans-serif', overflow:'hidden', position:'relative', display:'flex', flexDirection:'column' }}>
@@ -403,55 +405,76 @@ export default function TVLeaderboard() {
                 <span style={{ width:130, textAlign:'right', fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', color:'#202020' }}>Avg / hole</span>
               </div>
 
-              {current.data.slice(0, MAX).map((e, i) => {
-                const isFirst = i === 0
-                const avatar  = playerPhotos[`${e.session_id}-${e.name}`]
-                return (
-                  <div key={`${e.name}-${i}`} style={{
-                    display:'flex', alignItems:'center', gap:20,
-                    background: isFirst ? 'linear-gradient(135deg,rgba(255,214,0,0.09),rgba(255,214,0,0.03))' : 'rgba(255,255,255,0.025)',
-                    border:`1px solid ${isFirst?'rgba(255,214,0,0.20)':'rgba(255,255,255,0.04)'}`,
-                    borderRadius:18, padding:'18px 28px',
-                    animation:`slideIn 0.45s ${i*0.08}s both`,
-                    boxShadow: isFirst ? '0 8px 48px rgba(255,214,0,0.06)' : 'none',
-                  }}>
-                    <RankBadge rank={i+1}/>
+              {(() => {
+                const entries = current.data.slice(0, MAX)
+                const n = entries.length
+                // Adaptive sizing: fewer entries = bigger text, more = compact
+                const rowPad   = n <= 3 ? '18px 28px' : n <= 5 ? '13px 24px' : n <= 7 ? '9px 20px' : '7px 16px'
+                const nameSize = n <= 3 ? 36 : n <= 5 ? 28 : n <= 7 ? 22 : 18
+                const numSize  = n <= 3 ? 60 : n <= 5 ? 46 : n <= 7 ? 36 : 28
+                const avgSize  = n <= 3 ? 30 : n <= 5 ? 24 : n <= 7 ? 20 : 16
+                const dotSize  = n <= 3 ? 13 : n <= 5 ? 11 : 9
+                const avatarSz = n <= 5 ? 52 : n <= 7 ? 40 : 32
+                const badgeSz  = n <= 3 ? 64 : n <= 5 ? 52 : n <= 7 ? 42 : 34
+                const dateSize = n <= 5 ? 12 : 10
+                const rowGap   = n <= 3 ? 20 : n <= 5 ? 16 : n <= 7 ? 12 : 10
+                const rowRad   = n <= 5 ? 18 : 12
+                const totWidth = n <= 3 ? 180 : n <= 5 ? 150 : 120
+                const avgWidth = n <= 3 ? 130 : n <= 5 ? 110 : 90
 
-                    {e.color && <div style={{ width:13, height:13, borderRadius:'50%', background:e.color, flexShrink:0, boxShadow:`0 0 10px ${e.color}60` }}/>}
+                return entries.map((e, i) => {
+                  const isFirst = i === 0
+                  const avatar  = playerPhotos[`${e.session_id}-${e.name}`]
+                  return (
+                    <div key={`${e.name}-${i}`} style={{
+                      display:'flex', alignItems:'center', gap:rowGap,
+                      background: isFirst ? 'linear-gradient(135deg,rgba(255,214,0,0.09),rgba(255,214,0,0.03))' : 'rgba(255,255,255,0.025)',
+                      border:`1px solid ${isFirst?'rgba(255,214,0,0.20)':'rgba(255,255,255,0.04)'}`,
+                      borderRadius:rowRad, padding:rowPad,
+                      animation:`slideIn 0.45s ${i*0.06}s both`,
+                      boxShadow: isFirst ? '0 4px 32px rgba(255,214,0,0.06)' : 'none',
+                    }}>
+                      {/* Rank badge — scaled */}
+                      <div style={{ width:badgeSz, height:badgeSz, borderRadius:'50%', background:isFirst?'rgba(255,214,0,0.12)':i===1?'rgba(192,192,192,0.07)':i===2?'rgba(160,100,40,0.07)':'rgba(255,255,255,0.03)', border:`1.5px solid ${isFirst?'rgba(255,214,0,0.25)':i===1?'rgba(192,192,192,0.15)':i===2?'rgba(160,100,40,0.15)':'rgba(255,255,255,0.06)'}`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                        {isFirst ? <Trophy size={Math.round(badgeSz*0.42)} color="#FFD600" strokeWidth={1.5}/> : <span style={{ fontSize:Math.round(badgeSz*0.38), fontWeight:900, color:i===1?'#999':i===2?'#a07040':'#2e2e2e' }}>{i+1}</span>}
+                      </div>
 
-                    {/* Name + optional avatar + date */}
-                    <div style={{ flex:1, display:'flex', alignItems:'center', gap:14, minWidth:0 }}>
-                      {avatar && (
-                        <div style={{ width:52, height:52, borderRadius:'50%', overflow:'hidden', flexShrink:0, border:`2px solid ${isFirst?'rgba(255,214,0,0.4)':'rgba(255,255,255,0.08)'}`, boxShadow:'0 4px 16px rgba(0,0,0,0.6)' }}>
-                          <img src={avatar} alt={e.name} style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }}/>
-                        </div>
-                      )}
-                      <div style={{ minWidth:0 }}>
-                        <span style={{ display:'block', fontSize:34, fontWeight:900, letterSpacing:'-0.03em', color:isFirst?'#FFD600':'#ccc', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-                          {e.name}
-                        </span>
-                        {e.started_at && (
-                          <span style={{ fontSize:12, color:'#2a2a2a', fontWeight:600, letterSpacing:'0.02em' }}>
-                            {new Date(e.started_at).toLocaleDateString('en-NZ', { day:'numeric', month:'short', year:'numeric' })}
-                          </span>
+                      {e.color && <div style={{ width:dotSize, height:dotSize, borderRadius:'50%', background:e.color, flexShrink:0, boxShadow:`0 0 8px ${e.color}55` }}/>}
+
+                      {/* Name + avatar + date */}
+                      <div style={{ flex:1, display:'flex', alignItems:'center', gap:Math.round(rowGap*0.7), minWidth:0 }}>
+                        {avatar && (
+                          <div style={{ width:avatarSz, height:avatarSz, borderRadius:'50%', overflow:'hidden', flexShrink:0, border:`2px solid ${isFirst?'rgba(255,214,0,0.4)':'rgba(255,255,255,0.08)'}`, boxShadow:'0 4px 12px rgba(0,0,0,0.6)' }}>
+                            <img src={avatar} alt={e.name} style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }}/>
+                          </div>
                         )}
+                        <div style={{ minWidth:0 }}>
+                          <span style={{ display:'block', fontSize:nameSize, fontWeight:900, letterSpacing:'-0.03em', color:isFirst?'#FFD600':'#ccc', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                            {e.name}
+                          </span>
+                          {e.started_at && (
+                            <span style={{ fontSize:dateSize, color:'#2a2a2a', fontWeight:600 }}>
+                              {new Date(e.started_at).toLocaleDateString('en-NZ', { day:'numeric', month:'short', year:'numeric' })}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Total */}
+                      <div style={{ width:totWidth, display:'flex', alignItems:'baseline', gap:6, justifyContent:'flex-end' }}>
+                        <span style={{ fontSize:numSize, fontWeight:900, letterSpacing:'-0.05em', lineHeight:1, color:isFirst?'#FFD600':'#fff' }}>{e.total}</span>
+                        <span style={{ fontSize:Math.max(10,numSize*0.22), color:isFirst?'rgba(255,214,0,0.38)':'#242424', fontWeight:600, paddingBottom:4 }}>strokes</span>
+                      </div>
+
+                      {/* Avg */}
+                      <div style={{ width:avgWidth, textAlign:'right', borderLeft:'1px solid rgba(255,255,255,0.05)', paddingLeft:Math.round(rowGap*0.8) }}>
+                        <p style={{ fontSize:avgSize, fontWeight:800, color:'#313131', margin:0, letterSpacing:'-0.02em', lineHeight:1 }}>{e.avg}</p>
+                        <p style={{ fontSize:Math.max(9,avgSize*0.37), color:'#1e1e1e', margin:'2px 0 0', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.04em' }}>avg/hole</p>
                       </div>
                     </div>
-
-                    {/* Total */}
-                    <div style={{ width:180, display:'flex', alignItems:'baseline', gap:8, justifyContent:'flex-end' }}>
-                      <span style={{ fontSize:58, fontWeight:900, letterSpacing:'-0.05em', lineHeight:1, color:isFirst?'#FFD600':'#fff' }}>{e.total}</span>
-                      <span style={{ fontSize:13, color:isFirst?'rgba(255,214,0,0.38)':'#242424', fontWeight:600, paddingBottom:6 }}>strokes</span>
-                    </div>
-
-                    {/* Avg */}
-                    <div style={{ width:130, textAlign:'right', borderLeft:'1px solid rgba(255,255,255,0.05)', paddingLeft:22 }}>
-                      <p style={{ fontSize:30, fontWeight:800, color:'#313131', margin:0, letterSpacing:'-0.02em', lineHeight:1 }}>{e.avg}</p>
-                      <p style={{ fontSize:11, color:'#1e1e1e', margin:'3px 0 0', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.05em' }}>avg/hole</p>
-                    </div>
-                  </div>
-                )
-              })}
+                  )
+                })
+              })()}
             </div>
 
             {/* Polaroid panel */}
