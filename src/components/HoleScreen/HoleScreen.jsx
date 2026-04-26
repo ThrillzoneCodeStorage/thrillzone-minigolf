@@ -115,7 +115,7 @@ function ModeChangeModal({ current, onSelect, onClose, onRestart }) {
 export default function HoleScreen() {
   const {
     currentHole, currentHoleIndex, holes, players, scores, saveScore,
-    playStyle, changePlayStyle, nextHole, goToHole, skipHole, playAgain,
+    playStyle, changePlayStyle, nextHole, goToHole, skipHole, skippedHoles, playAgain,
     showPhotoGallery, setShowPhotoGallery,
     showSpinner, dismissSpinner, setShowSpinner, setSpinnerEffect,
     currentTurnIndex, setCurrentTurnIndex,
@@ -132,6 +132,7 @@ export default function HoleScreen() {
   const [pickedEffect, setPickedEffect]         = useState(null)
   const [showZeroWarn, setShowZeroWarn]         = useState(false)
   const [showSkipConfirm, setShowSkipConfirm]   = useState(false)
+  const [showHoleList, setShowHoleList]         = useState(false)
   const [showPhysicalSpin, setShowPhysicalSpin] = useState(false)
   const [holeInOnePlayers, setHoleInOnePlayers] = useState([])
   const [floaters, setFloaters]                 = useState([])
@@ -217,7 +218,8 @@ export default function HoleScreen() {
         saved[player.name] = strokes
       }
     }
-    const hio = players.filter(p => saved[p.name] === 1)
+    // No hole-in-one popup on the challenge timer hole (hole 8 = index 7)
+    const hio = isHole8 ? [] : players.filter(p => saved[p.name] === 1)
     if (hio.length > 0) {
       setHoleInOnePlayers(hio)
       setPendingNav(() => doNavigate)
@@ -312,12 +314,12 @@ export default function HoleScreen() {
                 .reduce((a,[,h]) => a + (h[player.name]||0), 0) + (isSet ? val : 0)
               const isWinner = previousHoleWinner?.name === player.name
               return (
-                <div key={player.name} style={{ background:'var(--bg-card)', border:`1.5px solid ${isSet?player.color+'28':isWinner?'var(--border-y)':'var(--border)'}`, borderRadius:'var(--radius)', padding:'12px 14px', transition:'border-color 0.2s' }}>
-                  <div style={{ display:'flex', alignItems:'center', gap:9, marginBottom:9 }}>
-                    <div style={{ width:9, height:9, borderRadius:'50%', background:player.color, flexShrink:0 }}/>
+                <div key={player.name} style={{ background:'var(--bg-card)', border:`1.5px solid ${isSet?player.color+'28':isWinner?'var(--border-y)':'var(--border)'}`, borderRadius:'var(--radius)', padding:'10px 12px', transition:'border-color 0.2s' }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:7 }}>
+                    <div style={{ width:8, height:8, borderRadius:'50%', background:player.color, flexShrink:0 }}/>
                     <span style={{ fontWeight:800, fontSize:14, flex:1, letterSpacing:'-0.01em' }}>{player.name}</span>
-                    {isWinner && <Crown size={13} color="var(--yellow)"/>}
-                    <span style={{ fontSize:12, color:'var(--text-3)' }}>Total <strong style={{ color:'var(--text-2)', fontWeight:800 }}>{runningTotal}</strong></span>
+                    {isWinner && <Crown size={12} color="var(--yellow)"/>}
+                    <span style={{ fontSize:11, color:'var(--text-3)', fontWeight:700 }}><strong style={{ color:'var(--text-2)' }}>{runningTotal}</strong> total</span>
                   </div>
                   <div className="score-input-wrap">
                     <button id={`score-minus-${player.name}`} className="score-btn score-btn-minus" onClick={() => decrement(player.name)}>−</button>
@@ -347,8 +349,8 @@ export default function HoleScreen() {
           </button>
         </div>
 
-        <button className="btn btn-ghost btn-full btn-sm" onClick={() => setShowSkipConfirm(true)} style={{ gap:6, color:'var(--text-3)' }}>
-          <SkipForward size={14}/> Skip this hole
+        <button className="btn btn-ghost btn-full btn-sm" onClick={() => setShowHoleList(true)} style={{ gap:6, color:'var(--text-3)' }}>
+          <SkipForward size={14}/> Skip or jump to another hole
         </button>
       </div>
 
@@ -394,6 +396,55 @@ export default function HoleScreen() {
                 Maybe later
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Hole list / skip picker */}
+      {showHoleList && (
+        <div className="modal-overlay" onClick={() => setShowHoleList(false)}>
+          <div className="modal-sheet" style={{ maxHeight:'80dvh' }} onClick={e => e.stopPropagation()}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
+              <div>
+                <h3 style={{ fontSize:18, fontWeight:900, letterSpacing:'-0.02em', margin:0 }}>Jump to a hole</h3>
+                <p style={{ fontSize:13, color:'var(--text-2)', margin:0 }}>Tap any hole to go there, or skip the current one</p>
+              </div>
+              <button onClick={() => setShowHoleList(false)} style={{ background:'none', border:'none', color:'var(--text-2)', cursor:'pointer', display:'flex' }}><X size={20}/></button>
+            </div>
+            <div style={{ overflowY:'auto', maxHeight:'55dvh', display:'flex', flexDirection:'column', gap:7 }}>
+              {holes.map((h, i) => {
+                const isCurrent = i === currentHoleIndex
+                const isSkipped = skippedHoles?.has(h.id)
+                const holeScores = scores[h.id]
+                const hasScores  = holeScores && players.some(p => holeScores[p.name])
+                return (
+                  <button key={h.id}
+                    onClick={() => { setShowHoleList(false); goToHole(i) }}
+                    style={{
+                      display:'flex', alignItems:'center', gap:12,
+                      background:isCurrent?'var(--yellow-dim)':'var(--bg-card-2)',
+                      border:`1.5px solid ${isCurrent?'var(--border-y)':'var(--border)'}`,
+                      borderRadius:12, padding:'11px 14px',
+                      cursor:'pointer', textAlign:'left', fontFamily:'inherit', width:'100%',
+                    }}>
+                    <span style={{ width:26, fontSize:12, fontWeight:800, color:isCurrent?'var(--yellow)':'var(--text-3)', flexShrink:0, textAlign:'center' }}>
+                      {String(i+1).padStart(2,'0')}
+                    </span>
+                    <span style={{ flex:1, fontSize:14, fontWeight:isCurrent?800:600, color:isCurrent?'var(--yellow)':'var(--text)', letterSpacing:'-0.01em', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                      {h.title}
+                    </span>
+                    {isCurrent && <span style={{ fontSize:11, color:'var(--yellow)', fontWeight:700, flexShrink:0 }}>Current</span>}
+                    {isSkipped && <span style={{ fontSize:11, color:'var(--text-3)', fontWeight:600, flexShrink:0 }}>Skipped</span>}
+                    {!isCurrent && !isSkipped && hasScores && <span style={{ fontSize:11, color:'var(--text-3)', fontWeight:600, flexShrink:0 }}>Scored</span>}
+                  </button>
+                )
+              })}
+            </div>
+            <div className="divider"/>
+            <button className="btn btn-ghost btn-full" style={{ gap:6, color:'var(--text-3)' }}
+              onClick={() => { setShowHoleList(false); skipHole() }}>
+              <SkipForward size={14}/> Skip this hole and come back later
+            </button>
           </div>
         </div>
       )}

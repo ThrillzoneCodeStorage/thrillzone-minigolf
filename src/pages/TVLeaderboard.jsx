@@ -417,16 +417,23 @@ export default function TVLeaderboard() {
 
                     {e.color && <div style={{ width:13, height:13, borderRadius:'50%', background:e.color, flexShrink:0, boxShadow:`0 0 10px ${e.color}60` }}/>}
 
-                    {/* Name + optional avatar */}
+                    {/* Name + optional avatar + date */}
                     <div style={{ flex:1, display:'flex', alignItems:'center', gap:14, minWidth:0 }}>
                       {avatar && (
                         <div style={{ width:52, height:52, borderRadius:'50%', overflow:'hidden', flexShrink:0, border:`2px solid ${isFirst?'rgba(255,214,0,0.4)':'rgba(255,255,255,0.08)'}`, boxShadow:'0 4px 16px rgba(0,0,0,0.6)' }}>
                           <img src={avatar} alt={e.name} style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }}/>
                         </div>
                       )}
-                      <span style={{ fontSize:34, fontWeight:900, letterSpacing:'-0.03em', color:isFirst?'#FFD600':'#ccc', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-                        {e.name}
-                      </span>
+                      <div style={{ minWidth:0 }}>
+                        <span style={{ display:'block', fontSize:34, fontWeight:900, letterSpacing:'-0.03em', color:isFirst?'#FFD600':'#ccc', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                          {e.name}
+                        </span>
+                        {e.started_at && (
+                          <span style={{ fontSize:12, color:'#2a2a2a', fontWeight:600, letterSpacing:'0.02em' }}>
+                            {new Date(e.started_at).toLocaleDateString('en-NZ', { day:'numeric', month:'short', year:'numeric' })}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
                     {/* Total */}

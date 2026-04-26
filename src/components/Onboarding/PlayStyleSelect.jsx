@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChevronRight, Check, Zap, Trophy, Shuffle, Smile, Smartphone, Disc } from 'lucide-react'
+import { ChevronRight, Check, Zap, Trophy, Shuffle, Smile, Smartphone, Disc, X } from 'lucide-react'
 import PlayingCardsRules from '../Rules/PlayingCardsRules'
 import { useGame } from '../../context/GameContext'
 
@@ -7,20 +7,22 @@ const STYLES = [
   { id:'casual',      Icon:Zap,     name:'Casual',        tag:'Classic',        desc:'Normal scoring. Relaxed, no pressure.', color:'#FFD600', bg:'rgba(255,214,0,0.07)',   border:'rgba(255,214,0,0.25)', rules:['Count every stroke honestly.','Your ball must stop before your next shot.','Ball out of bounds = +1 penalty stroke.','Lowest total strokes at the end wins!'] },
   { id:'competitive', Icon:Trophy,  name:'Competitive',   tag:'One at a time',  desc:'Take turns. You can nudge other balls.', color:'#60a5fa', bg:'rgba(96,165,250,0.07)', border:'rgba(96,165,250,0.25)', rules:['One player takes their full turn before the next.','You may nudge other players\' balls out of your path.','Ball must stop before the next player goes.','Winner of each hole goes first on the next.'] },
   { id:'silly',       Icon:Shuffle, name:'Silly',         tag:'Spin the wheel', desc:'Normal scoring + a spin wheel after every hole.', color:'#a78bfa', bg:'rgba(167,139,250,0.07)', border:'rgba(167,139,250,0.25)', rules:['Normal scoring applies — every stroke counts.','After each hole, someone spins the wheel.','Whatever the wheel lands on must be carried out!','Lowest total strokes still wins — even with chaos.'] },
-  { id:'fun',         Icon:Smile,   name:'Just for Fun',  tag:'No scores',      desc:'Skip scoring. Just enjoy the course.', color:'#fb923c', bg:'rgba(251,146,60,0.07)',  border:'rgba(251,146,60,0.25)', rules:['No scores are tracked — no winner or loser.','Read each hole\'s description as you go.','Take as many shots as you like.','The only goal is to have a great time!'] },
+  { id:'fun',         Icon:Smile,   name:'Just for Fun',  tag:'No scores',      desc:'No scores, no leaderboard. Just enjoy the course.', color:'#fb923c', bg:'rgba(251,146,60,0.07)',  border:'rgba(251,146,60,0.25)', rules:['No scores are tracked — no winner or loser.','Read each hole\'s description as you go.','Take as many shots as you like.','The only goal is to have a great time!'] },
 ]
 
 export default function PlayStyleSelect() {
-  const { setPlayStyle, setOnboardStep, setSpinnerPreference } = useGame()
-  const [preview, setPreview]         = useState(null)
+  const { setPlayStyle, setOnboardStep, setSpinnerPreference, setOptOut } = useGame()
+  const [preview, setPreview]               = useState(null)
   const [showSpinChoice, setShowSpinChoice] = useState(false)
 
   function handleRulesDone() {
     if (preview?.id === 'silly') {
       setShowSpinChoice(true)
     } else {
+      // Fun mode: auto opt-out, skip leaderboard screen
+      if (preview?.id === 'fun') setOptOut(true)
       setPlayStyle(preview.id)
-      setOnboardStep('optOut')
+      setOnboardStep(preview.id === 'fun' ? 'players' : 'optOut')
       setPreview(null)
     }
   }
@@ -72,7 +74,7 @@ export default function PlayStyleSelect() {
         </div>
       </div>
 
-      {/* Rules sheet */}
+      {/* Rules sheet — shown AFTER style selected */}
       {preview && !showSpinChoice && (
         <div className="modal-overlay" onClick={() => setPreview(null)}>
           <div className="modal-sheet" onClick={e => e.stopPropagation()}>
@@ -82,10 +84,10 @@ export default function PlayStyleSelect() {
                   <preview.Icon size={20} color={preview.color}/>
                   <h3 style={{ fontSize:20, fontWeight:900, letterSpacing:'-0.02em' }}>{preview.name}</h3>
                 </div>
-                <p style={{ fontSize:13, color:'var(--text-2)' }}>Read the rules, then start</p>
+                <p style={{ fontSize:13, color:'var(--text-2)' }}>Quick rules, then add your players</p>
               </div>
-              <button onClick={() => setPreview(null)} style={{ background:'none', border:'none', color:'var(--text-3)', cursor:'pointer', padding:4, display:'flex' }}>
-                <ChevronRight size={22} style={{ transform:'rotate(180deg)' }}/>
+              <button onClick={() => setPreview(null)} style={{ background:'none', border:'none', color:'var(--text-3)', cursor:'pointer', padding:4 }}>
+                <X size={20}/>
               </button>
             </div>
             <PlayingCardsRules title={preview.name} rules={preview.rules} accent={preview.color} onDone={handleRulesDone}/>
@@ -102,7 +104,7 @@ export default function PlayStyleSelect() {
             </div>
             <h3 style={{ fontSize:20, fontWeight:900, letterSpacing:'-0.02em', marginBottom:8 }}>How do you want to spin?</h3>
             <p style={{ fontSize:14, color:'var(--text-2)', lineHeight:1.65, marginBottom:24 }}>
-              After each hole someone spins to get a challenge. Use the digital wheel on your phone, or the physical wheel in the corner!
+              After each hole someone spins to get a challenge — use the digital wheel on your phone, or the physical wheel in the corner!
             </p>
             <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
               <button className="btn btn-full" onClick={() => handleSpinChoice('digital')}

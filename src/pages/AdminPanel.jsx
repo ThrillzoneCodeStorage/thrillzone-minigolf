@@ -3,17 +3,17 @@ function ReportsTab() {
   const [stats,  setStats]  = useState(null)
   const [period, setPeriod] = useState('today')
   const [loading,setLoading]= useState(true)
- 
+
   async function load() {
     setLoading(true)
     try { setStats(await getReportingStats()) } finally { setLoading(false) }
   }
   useEffect(() => { load() }, [])
- 
+
   const STYLE_COLORS = { casual:'#FFD600', competitive:'#60a5fa', silly:'#a78bfa', fun:'#fb923c' }
   const p = stats ? (period==='today' ? stats.today : period==='week' ? stats.week : stats.all) : null
   const ph= stats ? (period==='today' ? stats.photos.today : period==='week' ? stats.photos.week : stats.photos.all) : null
- 
+
   function StatCard({ icon: Icon, label, value, sub, color='#FFD600' }) {
     return (
       <div style={{ background:'#161616', border:`1px solid ${A.border}`, borderRadius:14, padding:'20px 22px' }}>
@@ -28,7 +28,7 @@ function ReportsTab() {
       </div>
     )
   }
- 
+
   return (
     <div>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
@@ -42,7 +42,7 @@ function ReportsTab() {
           <button onClick={load} style={{ ...iconBtn, marginLeft:4 }}><RefreshCw size={13}/></button>
         </div>
       </div>
- 
+
       {loading || !p ? (
         <p style={{ color:A.text3, fontSize:14 }}>Loading…</p>
       ) : (
@@ -54,13 +54,13 @@ function ReportsTab() {
             <StatCard icon={Camera} label="Photos" value={ph} sub="Polaroids taken" color='#a78bfa'/>
             <StatCard icon={Zap} label="Hole in ones" value={p.holeInOnes} sub="across all sessions" color='#22C55E'/>
           </div>
- 
+
           <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, marginBottom:20 }}>
             <StatCard icon={CheckCircle} label="Completed" value={`${p.sessions>0?Math.round((p.completed/p.sessions)*100):0}%`} sub={`${p.completed} of ${p.sessions} finished`} color='#22C55E'/>
             <StatCard icon={Clock} label="Avg duration" value={p.avgDur ? `${p.avgDur}m` : '—'} sub="per completed round" color='#fb923c'/>
             <StatCard icon={XCircle} label="Abandoned" value={p.sessions - p.completed} sub="sessions not finished" color={A.red}/>
           </div>
- 
+
           {/* Play style breakdown */}
           {Object.keys(p.styleBreak).length > 0 && (
             <div style={{ background:'#161616', border:`1px solid ${A.border}`, borderRadius:14, padding:20 }}>
@@ -89,7 +89,7 @@ function ReportsTab() {
     </div>
   )
 }
- 
+
 // ── Leaderboard Tab ────────────────────────────────────────────
 function LeaderboardTab() {
   const [entries,  setEntries]  = useState([])
@@ -98,13 +98,13 @@ function LeaderboardTab() {
   const [holeScores, setHoleScores] = useState({})
   const [loading,  setLoading]  = useState(false)
   const [acting,   setActing]   = useState(null)
- 
+
   async function load() {
     setLoading(true)
     try { setEntries(await getAdminLeaderboard(period)) } finally { setLoading(false) }
   }
   useEffect(() => { load() }, [period])
- 
+
   async function toggleExpand(sessionId, playerName) {
     const key = `${sessionId}-${playerName}`
     if (expanded === key) { setExpanded(null); return }
@@ -114,7 +114,7 @@ function LeaderboardTab() {
       setHoleScores(prev => ({ ...prev, [key]: scores }))
     }
   }
- 
+
   async function toggleOptOut(sessionId, currentOptOut) {
     setActing(sessionId)
     try {
@@ -122,22 +122,22 @@ function LeaderboardTab() {
       load()
     } finally { setActing(null) }
   }
- 
+
   async function handleDeleteScores(sessionId, playerName) {
     if (!confirm(`Delete all scores for ${playerName}? This cannot be undone.`)) return
     setActing(`${sessionId}-${playerName}`)
     try { await deletePlayerScores(sessionId, playerName); load() } finally { setActing(null) }
   }
- 
+
   const qualified   = entries.filter(e => e.qualified && !e.opt_out)
   const hidden      = entries.filter(e => e.opt_out)
   const unqualified = entries.filter(e => !e.qualified && !e.opt_out)
- 
+
   function PlayerRow({ e, rank }) {
     const key = `${e.session_id}-${e.name}`
     const isOpen = expanded === key
     const scores = holeScores[key] || []
- 
+
     return (
       <div style={{ background:'#161616', border:`1px solid ${A.border}`, borderRadius:12, marginBottom:8, overflow:'hidden', opacity:e.opt_out?0.55:1 }}>
         <div style={{ display:'flex', alignItems:'center', gap:12, padding:'13px 16px' }}>
@@ -145,16 +145,16 @@ function LeaderboardTab() {
           <div style={{ width:32, height:32, borderRadius:'50%', background:rank===1?'rgba(255,214,0,0.12)':rank===2?'rgba(180,180,180,0.07)':'rgba(255,255,255,0.04)', border:`1px solid ${rank===1?'rgba(255,214,0,0.25)':'rgba(255,255,255,0.07)'}`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
             {rank===1 ? <Trophy size={14} color='#FFD600' strokeWidth={1.5}/> : <span style={{ fontSize:14, fontWeight:800, color:rank===2?'#888':'#2e2e2e' }}>{rank}</span>}
           </div>
- 
+
           {/* Colour dot */}
           {e.color && <div style={{ width:9, height:9, borderRadius:'50%', background:e.color, flexShrink:0 }}/>}
- 
+
           {/* Name */}
           <div style={{ flex:1, minWidth:0 }}>
             <p style={{ color:A.text, fontSize:14, fontWeight:700, margin:0 }}>{e.name}</p>
             <p style={{ color:A.text3, fontSize:11, margin:0 }}>{e.holes} holes · started {new Date(e.started_at).toLocaleDateString('en-NZ')}</p>
           </div>
- 
+
           {/* Scores */}
           <div style={{ textAlign:'right', marginRight:8 }}>
             <span style={{ fontSize:22, fontWeight:900, color:rank===1?A.yellow:A.text, letterSpacing:'-0.02em' }}>{e.total}</span>
@@ -164,13 +164,13 @@ function LeaderboardTab() {
             <p style={{ fontSize:16, fontWeight:700, color:A.text3, margin:0 }}>{e.avg}</p>
             <p style={{ fontSize:10, color:A.text3, margin:0 }}>avg/hole</p>
           </div>
- 
+
           {/* Qualified badge */}
           <div style={{ ...iconBtn, color:e.qualified?'#22C55E':A.text3, fontSize:11, cursor:'default' }}>
             {e.qualified ? <CheckCircle size={13}/> : <XCircle size={13}/>}
             {e.qualified ? 'Full course' : `${e.holes} holes`}
           </div>
- 
+
           {/* Actions */}
           <button
             onClick={() => toggleOptOut(e.session_id, e.opt_out)}
@@ -181,7 +181,7 @@ function LeaderboardTab() {
             {e.opt_out ? <Eye size={13}/> : <EyeOff size={13}/>}
             {e.opt_out ? 'Show' : 'Hide'}
           </button>
- 
+
           <button
             onClick={() => handleDeleteScores(e.session_id, e.name)}
             disabled={!!acting}
@@ -189,14 +189,14 @@ function LeaderboardTab() {
           >
             <Trash2 size={13}/>
           </button>
- 
+
           {/* Expand toggle */}
           <button onClick={() => toggleExpand(e.session_id, e.name)}
             style={{ ...iconBtn }}>
             {isOpen ? <ChevronUp size={13}/> : <ChevronDown size={13}/>}
           </button>
         </div>
- 
+
         {/* Hole-by-hole scores */}
         {isOpen && (
           <div style={{ borderTop:`1px solid ${A.border}`, padding:'14px 16px' }}>
@@ -221,7 +221,7 @@ function LeaderboardTab() {
       </div>
     )
   }
- 
+
   return (
     <div>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
@@ -235,7 +235,7 @@ function LeaderboardTab() {
           <button onClick={load} style={{ ...iconBtn, marginLeft:4 }}><RefreshCw size={13}/></button>
         </div>
       </div>
- 
+
       {loading ? (
         <p style={{ color:A.text3, fontSize:14 }}>Loading…</p>
       ) : entries.length === 0 ? (
@@ -254,7 +254,7 @@ function LeaderboardTab() {
               {qualified.map((e, i) => <PlayerRow key={`${e.session_id}-${e.name}`} e={e} rank={i+1}/>)}
             </div>
           )}
- 
+
           {/* Unqualified — partial rounds */}
           {unqualified.length > 0 && (
             <div style={{ marginBottom:24 }}>
@@ -267,7 +267,7 @@ function LeaderboardTab() {
               {unqualified.map((e, i) => <PlayerRow key={`${e.session_id}-${e.name}`} e={e} rank={i+1}/>)}
             </div>
           )}
- 
+
           {/* Hidden */}
           {hidden.length > 0 && (
             <div>
@@ -285,14 +285,14 @@ function LeaderboardTab() {
     </div>
   )
 }
- 
+
 import { useState, useEffect } from 'react'
 import {
   Settings, LayoutDashboard, BookOpen, BarChart2,
   Plus, Trash2, Edit2, Save, X, Eye, EyeOff,
   GripVertical, Monitor, ChevronDown, ChevronUp, Clock,
-  Users, Camera, Zap, TrendingDown, Medal, EyeOff as Hide,
-  BarChart3, Trophy, CheckCircle, XCircle, RefreshCw
+  Users, Camera, Zap, TrendingDown,
+  BarChart3, Trophy, CheckCircle, XCircle, RefreshCw, Image
 } from 'lucide-react'
 import {
   checkAdminPassword, getHoles, upsertHole, deleteHole, reorderHoles,
@@ -300,8 +300,9 @@ import {
   getAllSessions, setAdminSetting, deleteSession, deletePlayerScores,
   getAllGameModeRules, upsertGameModeRule, deleteGameModeRule, reorderGameModeRules,
   getReportingStats, getAdminLeaderboard, getPlayerScoresBySession, setSessionOptOut,
+  getLeaderboardPlayerPhotos,
 } from '../lib/supabase'
- 
+
 // ── Style constants ────────────────────────────────────────────
 const A = {
   bg: '#0a0a0a', card: '#141414', card2: '#1c1c1c',
@@ -317,7 +318,7 @@ const cancelBtn = { background:'#1c1c1c', color:A.text2, border:`1px solid ${A.b
 const iconBtn   = { background:'#242424', border:`1px solid ${A.border}`, borderRadius:7, padding:'6px 9px', cursor:'pointer', color:A.text2, fontFamily:'inherit', display:'flex', alignItems:'center', gap:4, fontSize:13 }
 const overlay   = { position:'fixed', inset:0, background:'rgba(0,0,0,0.88)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:400, padding:16, backdropFilter:'blur(6px)' }
 const mbox      = { background:A.card, border:`1px solid ${A.borderY}`, borderRadius:18, width:'100%', maxWidth:460, padding:24, maxHeight:'90vh', overflowY:'auto' }
- 
+
 function Field({ label, value, onChange, type='text', rows, children }) {
   return (
     <div style={{ marginBottom:2 }}>
@@ -329,13 +330,13 @@ function Field({ label, value, onChange, type='text', rows, children }) {
     </div>
   )
 }
- 
+
 // ── Login ──────────────────────────────────────────────────────
 function AdminLogin({ onLogin }) {
   const [pw, setPw] = useState('')
   const [err, setErr] = useState('')
   const [loading, setLoading] = useState(false)
- 
+
   async function handleLogin() {
     setLoading(true); setErr('')
     const ok = await checkAdminPassword(pw)
@@ -343,7 +344,7 @@ function AdminLogin({ onLogin }) {
     else setErr('Incorrect password')
     setLoading(false)
   }
- 
+
   return (
     <div style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', background:A.bg, fontFamily:'Inter,sans-serif', padding:20 }}>
       <div style={{ background:A.card, border:`1px solid ${A.border}`, borderRadius:20, padding:36, width:'100%', maxWidth:380, textAlign:'center' }}>
@@ -362,7 +363,7 @@ function AdminLogin({ onLogin }) {
     </div>
   )
 }
- 
+
 // ── Holes Tab ──────────────────────────────────────────────────
 function HolesTab({ holes, onRefresh }) {
   const [editing, setEditing] = useState(null)
@@ -370,10 +371,10 @@ function HolesTab({ holes, onRefresh }) {
   const [saving, setSaving] = useState(false)
   const [dragging, setDragging] = useState(null)
   const [dragOver, setDragOver] = useState(null)
- 
+
   function openNew()   { setForm({ title:'', description:'', type:'hole', par:3 }); setEditing('new') }
   function openEdit(h) { setForm({ title:h.title, description:h.description||'', type:h.type||'hole', par:h.par||3 }); setEditing(h) }
- 
+
   async function save() {
     if (!form.title.trim()) return
     setSaving(true)
@@ -384,12 +385,12 @@ function HolesTab({ holes, onRefresh }) {
       setEditing(null); onRefresh()
     } finally { setSaving(false) }
   }
- 
+
   async function remove(h) {
     if (!confirm(`Delete "${h.title}"?`)) return
     await deleteHole(h.id); onRefresh()
   }
- 
+
   function onDragStart(e,i) { setDragging(i); e.dataTransfer.effectAllowed='move' }
   function onDragOver(e,i)  { e.preventDefault(); setDragOver(i) }
   async function onDrop(e,i) {
@@ -399,7 +400,7 @@ function HolesTab({ holes, onRefresh }) {
     await reorderHoles(r.map(h=>h.id))
     setDragging(null); setDragOver(null); onRefresh()
   }
- 
+
   return (
     <div>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
@@ -460,7 +461,7 @@ function HolesTab({ holes, onRefresh }) {
     </div>
   )
 }
- 
+
 // ── Rules Tab ──────────────────────────────────────────────────
 const MODES = [
   { id:'casual',      label:'Casual',       color:A.yellow  },
@@ -468,7 +469,7 @@ const MODES = [
   { id:'silly',       label:'Silly',        color:'#a78bfa' },
   { id:'fun',         label:'Just for Fun', color:'#fb923c' },
 ]
- 
+
 function RulesTab() {
   const [allRules, setAllRules]     = useState([])
   const [activeMode, setActiveMode] = useState('casual')
@@ -477,16 +478,16 @@ function RulesTab() {
   const [saving, setSaving]         = useState(false)
   const [dragging, setDragging]     = useState(null)
   const [dragOver, setDragOver]     = useState(null)
- 
+
   async function load() { getAllGameModeRules().then(setAllRules) }
   useEffect(() => { load() }, [])
- 
+
   const modeRules = allRules.filter(r => r.mode === activeMode)
   const mode      = MODES.find(m => m.id === activeMode)
- 
+
   function openNew()   { setForm({ rule_text:'', active:true }); setEditing('new') }
   function openEdit(r) { setForm({ rule_text:r.rule_text, active:r.active }); setEditing(r) }
- 
+
   async function save() {
     setSaving(true)
     try {
@@ -496,14 +497,14 @@ function RulesTab() {
       setEditing(null); load()
     } finally { setSaving(false) }
   }
- 
+
   async function remove(id) {
     if (!confirm('Delete this rule?')) return
     await deleteGameModeRule(id); load()
   }
- 
+
   async function toggle(r) { await upsertGameModeRule({ ...r, active:!r.active }); load() }
- 
+
   function onDragStart(e,i) { setDragging(i); e.dataTransfer.effectAllowed='move' }
   function onDragOver(e,i)  { e.preventDefault(); setDragOver(i) }
   async function onDrop(e,i) {
@@ -513,7 +514,7 @@ function RulesTab() {
     await reorderGameModeRules(activeMode, reordered.map(r=>r.id))
     setDragging(null); setDragOver(null); load()
   }
- 
+
   return (
     <div>
       <h3 style={{ color:A.text, fontSize:15, fontWeight:800, marginBottom:6 }}>Rules per Game Mode</h3>
@@ -566,19 +567,19 @@ function RulesTab() {
     </div>
   )
 }
- 
+
 // ── Spinner Tab ────────────────────────────────────────────────
 function SpinnerTab() {
   const [effects, setEffects] = useState([])
   const [editing, setEditing] = useState(null)
   const [form, setForm]       = useState({ name:'', description:'', active:true })
   const [saving, setSaving]   = useState(false)
- 
+
   useEffect(() => { getAllSpinnerEffects().then(setEffects) }, [])
- 
+
   function openNew()   { setForm({ name:'', description:'', active:true }); setEditing('new') }
   function openEdit(e) { setForm({ name:e.name, description:e.description||'', active:e.active }); setEditing(e) }
- 
+
   async function save() {
     setSaving(true)
     try {
@@ -588,14 +589,14 @@ function SpinnerTab() {
       setEditing(null); getAllSpinnerEffects().then(setEffects)
     } finally { setSaving(false) }
   }
- 
+
   async function remove(id) {
     if (!confirm('Delete this effect?')) return
     await deleteSpinnerEffect(id); getAllSpinnerEffects().then(setEffects)
   }
- 
+
   async function toggle(e) { await upsertSpinnerEffect({ ...e, active:!e.active }); getAllSpinnerEffects().then(setEffects) }
- 
+
   return (
     <div>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
@@ -638,16 +639,78 @@ function SpinnerTab() {
     </div>
   )
 }
- 
+
+// ── LB Photos Tab ─────────────────────────────────────────────
+function LBPhotosTab() {
+  const [photos, setPhotos] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [deleting, setDeleting] = useState(null)
+
+  async function load() {
+    setLoading(true)
+    try { setPhotos(await getLeaderboardPlayerPhotos()) } finally { setLoading(false) }
+  }
+  useEffect(() => { load() }, [])
+
+  async function deletePhoto(sessionId, playerName) {
+    if (!confirm(`Remove leaderboard photo for ${playerName}?`)) return
+    setDeleting(`${sessionId}-${playerName}`)
+    try {
+      await supabase.from('leaderboard_player_photos')
+        .delete().eq('session_id', sessionId).eq('player_name', playerName)
+      load()
+    } finally { setDeleting(null) }
+  }
+
+  return (
+    <div>
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
+        <div>
+          <h3 style={{ color:A.text, fontSize:15, fontWeight:800, margin:0 }}>Leaderboard Photos</h3>
+          <p style={{ color:A.text3, fontSize:12, margin:'3px 0 0' }}>Player selfies shown next to their name on the TV board. Auto-deleted after 10 days.</p>
+        </div>
+        <button onClick={load} style={iconBtn}><RefreshCw size={13}/></button>
+      </div>
+
+      {loading && <p style={{ color:A.text3, fontSize:14 }}>Loading…</p>}
+      {!loading && photos.length === 0 && (
+        <p style={{ color:A.text3, fontSize:14 }}>No leaderboard photos yet. Players take these at the end of a qualifying round.</p>
+      )}
+
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(180px,1fr))', gap:12, marginTop:12 }}>
+        {photos.map(p => (
+          <div key={`${p.session_id}-${p.player_name}`} style={{ background:'#161616', border:`1px solid ${A.border}`, borderRadius:12, overflow:'hidden' }}>
+            <div style={{ background:'#fff', padding:'6px 6px 18px' }}>
+              <img src={p.photo_url} alt={p.player_name} style={{ width:'100%', aspectRatio:'1', objectFit:'cover', display:'block', borderRadius:2 }}/>
+              <div style={{ textAlign:'center', marginTop:6 }}>
+                <img src="/logo.png" alt="" style={{ maxWidth:'80%', maxHeight:22, objectFit:'contain', display:'block', margin:'0 auto' }}/>
+              </div>
+            </div>
+            <div style={{ padding:'10px 12px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+              <span style={{ color:A.text, fontSize:13, fontWeight:700 }}>{p.player_name}</span>
+              <button
+                onClick={() => deletePhoto(p.session_id, p.player_name)}
+                disabled={deleting===`${p.session_id}-${p.player_name}`}
+                style={{ ...iconBtn, color:A.red }}>
+                <Trash2 size={13}/>
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // ── Data Tab ───────────────────────────────────────────────────
 function DataTab() {
   const [sessions, setSessions] = useState([])
   const [expanded, setExpanded] = useState(null)
   const [deleting, setDeleting] = useState(null)
- 
+
   async function load() { getAllSessions(60).then(setSessions) }
   useEffect(() => { load(); const t=setInterval(load,20000); return()=>clearInterval(t) }, [])
- 
+
   function elapsed(start) {
     const m=Math.floor((Date.now()-new Date(start))/60000)
     return m<60?`${m}m ago`:`${Math.floor(m/60)}h ${m%60}m ago`
@@ -656,22 +719,31 @@ function DataTab() {
     const m=Math.floor((new Date(end||Date.now())-new Date(start))/60000)
     return m<60?`${m}m`:`${Math.floor(m/60)}h ${m%60}m`
   }
- 
+
   async function handleDeleteSession(id) {
     if (!confirm('Delete this entire session and all its scores? This cannot be undone.')) return
     setDeleting(id)
     try { await deleteSession(id); load() } finally { setDeleting(null) }
   }
- 
+
   async function handleDeletePlayer(sessionId, playerName) {
     if (!confirm(`Remove all scores for ${playerName} from this session?`)) return
     setDeleting(`${sessionId}-${playerName}`)
     try { await deletePlayerScores(sessionId, playerName); load() } finally { setDeleting(null) }
   }
- 
-  const active = sessions.filter(s=>!s.completed_at)
+
+  const INACTIVE_MS = 45 * 60 * 1000
+  const active = sessions.filter(s => {
+    if (s.completed_at) return false
+    // Check last score time vs session start
+    const sessionScores = s.scores || []
+    const lastActivity = sessionScores.length > 0
+      ? Math.max(...sessionScores.map(sc => new Date(sc.created_at || s.started_at).getTime()))
+      : new Date(s.started_at).getTime()
+    return Date.now() - lastActivity < INACTIVE_MS
+  })
   const recent = sessions.filter(s=>s.completed_at)
- 
+
   return (
     <div>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
@@ -681,7 +753,7 @@ function DataTab() {
         </h3>
         <button onClick={load} style={iconBtn}><Clock size={14}/> Refresh</button>
       </div>
- 
+
       {active.length===0
         ? <p style={{ color:A.text3, fontSize:13, marginBottom:24 }}>No active games right now.</p>
         : active.map(s => {
@@ -722,7 +794,7 @@ function DataTab() {
             )
           })
       }
- 
+
       <h3 style={{ color:A.text, fontSize:15, fontWeight:800, margin:'24px 0 10px' }}>Completed Games</h3>
       {recent.slice(0,30).map(s => {
         const players=s.players||[]
@@ -777,20 +849,20 @@ function DataTab() {
     </div>
   )
 }
- 
+
 // ── Settings Tab ───────────────────────────────────────────────
 function SettingsTab({ onLogout }) {
   const [newPw, setNewPw]     = useState('')
   const [confirm, setConfirm] = useState('')
   const [msg, setMsg]         = useState('')
- 
+
   async function changePw() {
     if (newPw.length<4) { setMsg('Password must be at least 4 characters'); return }
     if (newPw!==confirm) { setMsg('Passwords do not match'); return }
     await setAdminSetting('admin_password', newPw)
     setMsg('Password updated!'); setNewPw(''); setConfirm('')
   }
- 
+
   return (
     <div>
       <h3 style={{ color:A.text, fontSize:15, fontWeight:800, marginBottom:16 }}>Settings</h3>
@@ -809,28 +881,29 @@ function SettingsTab({ onLogout }) {
     </div>
   )
 }
- 
+
 // ── Main ───────────────────────────────────────────────────────
 export default function AdminPanel() {
   const [authed, setAuthed] = useState(sessionStorage.getItem('tz_admin')==='1')
   const [tab, setTab]       = useState('holes')
   const [holes, setHoles]   = useState([])
- 
+
   async function loadHoles() { getHoles().then(setHoles) }
   useEffect(() => { if (authed) loadHoles() }, [authed])
- 
+
   if (!authed) return <AdminLogin onLogin={()=>setAuthed(true)} />
- 
+
   const TABS = [
     { id:'reports',    Icon:BarChart3,       label:'Reports'    },
     { id:'leaderboard',Icon:Trophy,          label:'Leaderboard'},
+    { id:'photos',     Icon:Image,           label:'LB Photos'  },
     { id:'holes',      Icon:LayoutDashboard, label:'Holes'      },
     { id:'rules',      Icon:BookOpen,        label:'Rules'      },
     { id:'spinner',    Icon:Settings,        label:'Spinner'    },
     { id:'data',       Icon:BarChart2,       label:'Data'       },
     { id:'settings',   Icon:Settings,        label:'Settings'   },
   ]
- 
+
   return (
     <div style={{ minHeight:'100vh', background:A.bg, fontFamily:'Inter,sans-serif', color:A.text }}>
       {/* Top bar */}
@@ -846,7 +919,7 @@ export default function AdminPanel() {
           <Monitor size={13}/> TV Board
         </a>
       </div>
- 
+
       {/* Tabs */}
       <div style={{ background:'#0d0d0d', borderBottom:`1px solid ${A.border}`, padding:'0 14px', display:'flex', gap:2, overflowX:'auto' }}>
         {TABS.map(t => (
@@ -862,10 +935,11 @@ export default function AdminPanel() {
           </button>
         ))}
       </div>
- 
+
       {/* Content */}
       <div style={{ maxWidth:860, margin:'0 auto', padding:'20px 16px 48px' }}>
         {tab==='reports'     && <ReportsTab/>}
+        {tab==='photos'      && <LBPhotosTab/>}
         {tab==='leaderboard' && <LeaderboardTab/>}
         {tab==='holes'       && <HolesTab holes={holes} onRefresh={loadHoles}/>}
         {tab==='rules'       && <RulesTab/>}
@@ -876,4 +950,3 @@ export default function AdminPanel() {
     </div>
   )
 }
- 
