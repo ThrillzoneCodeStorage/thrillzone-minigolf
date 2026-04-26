@@ -323,33 +323,50 @@ export default function HoleScreen() {
               const isFirst  = rank === 0 && lbPlayer.holesPlayed > 0
               return (
                 <div key={player.name} style={{
-                  background: isFirst ? 'rgba(255,214,0,0.05)' : 'var(--bg-card)',
-                  border:`1.5px solid ${isSet?player.color+'28':isWinner?'var(--border-y)':isFirst?'rgba(255,214,0,0.2)':'var(--border)'}`,
-                  borderRadius:'var(--radius)', padding:cardPad, transition:'border-color 0.2s'
+                  background: isFirst ? `${player.color}0a` : 'var(--bg-card)',
+                  border:`1.5px solid ${isFirst ? player.color+'35' : isSet ? player.color+'20' : 'var(--border)'}`,
+                  borderRadius:14, overflow:'hidden', transition:'border-color 0.2s'
                 }}>
-                  <div style={{ display:'flex', alignItems:'center', gap:7, marginBottom:headerMb }}>
-                    <span style={{ fontSize:11, fontWeight:900, color:isFirst?'var(--yellow)':'var(--text-3)', width:16, textAlign:'center', flexShrink:0 }}>
-                      {lbPlayer.holesPlayed > 0 ? rank+1 : '—'}
-                    </span>
-                    <div style={{ width:7, height:7, borderRadius:'50%', background:player.color, flexShrink:0 }}/>
-                    <span style={{ fontWeight:800, fontSize:nameSize, flex:1, letterSpacing:'-0.01em', color:isFirst?'var(--yellow)':'var(--text)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{player.name}</span>
-                    {isWinner && <Crown size={11} color="var(--yellow)"/>}
-                    <span style={{ fontSize:nameSize-1, fontWeight:800, color:isFirst?'var(--yellow)':'var(--text-2)' }}>{runningTotal}</span>
-                    <span style={{ fontSize:9, color:'var(--text-3)', fontWeight:600 }}>total</span>
-                  </div>
-                  <div className="score-input-wrap">
-                    <button id={`score-minus-${player.name}`}
-                      className="score-btn score-btn-minus"
-                      onClick={() => decrement(player.name)}
-                      style={{ width:btnSize, height:btnSize, fontSize:btnFont }}>−</button>
-                    <div className={`score-display${isSet?' active':''}`} key={`${player.name}-${val}`}
-                      style={{ animation:'countUp 0.18s cubic-bezier(0.34,1.56,0.64,1)', fontSize:scoreFont, padding:'6px 4px' }}>
-                      {isSet ? val : '—'}
+                  {/* Header row — avatar, name, position, total */}
+                  <div style={{ display:'flex', alignItems:'center', gap:10, padding:`${pCount <= 4 ? 11 : pCount <= 6 ? 9 : 7}px 13px`, background: isFirst ? `${player.color}10` : 'transparent', borderBottom:`1px solid ${isFirst ? player.color+'18' : 'rgba(255,255,255,0.04)'}` }}>
+                    {/* Initial avatar */}
+                    <div style={{ width:pCount<=4?30:26, height:pCount<=4?30:26, borderRadius:'50%', background:player.color, display:'flex', alignItems:'center', justifyContent:'center', fontWeight:900, fontSize:pCount<=4?13:11, color:'#000', flexShrink:0, letterSpacing:'-0.02em' }}>
+                      {player.name.trim()[0].toUpperCase()}
                     </div>
-                    <button id={`score-plus-${player.name}`}
-                      className="score-btn score-btn-plus"
-                      onClick={() => increment(player.name)}
-                      style={{ width:btnSize, height:btnSize, fontSize:btnFont }}>+</button>
+                    {/* Name + position badge */}
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                        <span style={{ fontWeight:800, fontSize:nameSize, color:isFirst?player.color:'var(--text)', letterSpacing:'-0.01em', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{player.name}</span>
+                        {isWinner && <Crown size={11} color="var(--yellow)"/>}
+                        {lbPlayer.holesPlayed > 0 && (
+                          <span style={{ fontSize:10, fontWeight:800, padding:'1px 7px', borderRadius:10, textTransform:'uppercase', letterSpacing:'0.05em', background:isFirst?`${player.color}20`:'rgba(255,255,255,0.06)', color:isFirst?player.color:'var(--text-3)', flexShrink:0 }}>
+                            {rank===0?'1st':rank===1?'2nd':rank===2?'3rd':`${rank+1}th`}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {/* Total */}
+                    <div style={{ textAlign:'right', flexShrink:0 }}>
+                      <div style={{ fontSize:9, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color:isFirst?`${player.color}70`:'var(--text-3)', lineHeight:1, marginBottom:2 }}>Total</div>
+                      <div style={{ fontSize:pCount<=4?22:18, fontWeight:900, color:isFirst?player.color:'var(--text-2)', letterSpacing:'-0.03em', lineHeight:1 }}>{runningTotal}</div>
+                    </div>
+                  </div>
+                  {/* Score input row */}
+                  <div style={{ padding:`${pCount<=4?8:6}px 13px` }}>
+                    <div className="score-input-wrap">
+                      <button id={`score-minus-${player.name}`}
+                        className="score-btn score-btn-minus"
+                        onClick={() => decrement(player.name)}
+                        style={{ width:btnSize, height:btnSize, fontSize:btnFont }}>−</button>
+                      <div className={`score-display${isSet?' active':''}`} key={`${player.name}-${val}`}
+                        style={{ animation:'countUp 0.18s cubic-bezier(0.34,1.56,0.64,1)', fontSize:scoreFont, padding:'6px 4px', borderColor: isSet ? player.color+'40' : undefined, color: isSet ? player.color : undefined }}>
+                        {isSet ? val : '—'}
+                      </div>
+                      <button id={`score-plus-${player.name}`}
+                        className="score-btn score-btn-plus"
+                        onClick={() => increment(player.name)}
+                        style={{ width:btnSize, height:btnSize, fontSize:btnFont }}>+</button>
+                    </div>
                   </div>
                 </div>
               )
