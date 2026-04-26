@@ -732,7 +732,7 @@ function DataTab() {
     try { await deletePlayerScores(sessionId, playerName); load() } finally { setDeleting(null) }
   }
 
-  const INACTIVE_MS = 45 * 60 * 1000
+  const INACTIVE_MS = 30 * 60 * 1000
   const active = sessions.filter(s => {
     if (s.completed_at) return false
     // Check last score time vs session start
@@ -748,7 +748,7 @@ function DataTab() {
     <div>
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
         <h3 style={{ color:A.text, fontSize:15, fontWeight:800, margin:0 }}>
-          Active Games
+          Current Live Games
           {active.length>0 && <span style={{ marginLeft:8, background:A.yellow, color:'#000', fontSize:11, fontWeight:800, padding:'2px 8px', borderRadius:10 }}>{active.length}</span>}
         </h3>
         <button onClick={load} style={iconBtn}><Clock size={14}/> Refresh</button>
@@ -885,7 +885,7 @@ function SettingsTab({ onLogout }) {
 // ── Main ───────────────────────────────────────────────────────
 export default function AdminPanel() {
   const [authed, setAuthed] = useState(sessionStorage.getItem('tz_admin')==='1')
-  const [tab, setTab]       = useState('holes')
+  const [tab, setTab]       = useState('data')
   const [holes, setHoles]   = useState([])
 
   async function loadHoles() { getHoles().then(setHoles) }
@@ -894,13 +894,13 @@ export default function AdminPanel() {
   if (!authed) return <AdminLogin onLogin={()=>setAuthed(true)} />
 
   const TABS = [
-    { id:'reports',    Icon:BarChart3,       label:'Reports'    },
+    { id:'data',       Icon:BarChart2,       label:'Live Games' },
     { id:'leaderboard',Icon:Trophy,          label:'Leaderboard'},
     { id:'photos',     Icon:Image,           label:'LB Photos'  },
     { id:'holes',      Icon:LayoutDashboard, label:'Holes'      },
     { id:'rules',      Icon:BookOpen,        label:'Rules'      },
     { id:'spinner',    Icon:Settings,        label:'Spinner'    },
-    { id:'data',       Icon:BarChart2,       label:'Data'       },
+    { id:'reports',    Icon:BarChart3,       label:'Reports'    },
     { id:'settings',   Icon:Settings,        label:'Settings'   },
   ]
 

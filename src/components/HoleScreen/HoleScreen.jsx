@@ -6,7 +6,6 @@ import {
 } from 'lucide-react'
 import { useGame } from '../../context/GameContext'
 import { getSpinnerEffects, getGameModeRules } from '../../lib/supabase'
-import LeaderboardStrip from '../Leaderboard/LeaderboardStrip'
 import SpinnerWheel from '../SpinnerWheel/SpinnerWheel'
 import { CameraNavButton, PhotoGallery } from '../PhotoSystem/PhotoSystem'
 import { HoleInOnePopup, FloatNumber, HoleTransition } from './Celebrations'
@@ -305,21 +304,35 @@ export default function HoleScreen() {
         {isHole8 && <Hole8Timer/>}
 
         {playStyle!=='fun' ? (
-          <div style={{ display:'flex', flexDirection:'column', gap:9, marginBottom:12 }}>
-            {players.map(player => {
+          <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:12 }}>
+            {/* Render in leaderboard order (lowest total first) so position is always visible */}
+            {leaderboard.map((lbPlayer, rank) => {
+              const player = players.find(p => p.name === lbPlayer.name)
+              if (!player) return null
               const val = localScores[player.name]
               const isSet = val !== null && val !== undefined
-              const runningTotal = Object.entries(scores)
+              const prevTotal = Object.entries(scores)
                 .filter(([hid]) => hid !== currentHole.id)
-                .reduce((a,[,h]) => a + (h[player.name]||0), 0) + (isSet ? val : 0)
+                .reduce((a,[,h]) => a + (h[player.name]||0), 0)
+              const runningTotal = prevTotal + (isSet ? val : 0)
               const isWinner = previousHoleWinner?.name === player.name
+              const isFirst  = rank === 0 && lbPlayer.holesPlayed > 0
               return (
-                <div key={player.name} style={{ background:'var(--bg-card)', border:`1.5px solid ${isSet?player.color+'28':isWinner?'var(--border-y)':'var(--border)'}`, borderRadius:'var(--radius)', padding:'10px 12px', transition:'border-color 0.2s' }}>
-                  <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:7 }}>
+                <div key={player.name} style={{
+                  background: isFirst ? 'rgba(255,214,0,0.05)' : 'var(--bg-card)',
+                  border:`1.5px solid ${isSet?player.color+'28':isWinner?'var(--border-y)':isFirst?'rgba(255,214,0,0.2)':'var(--border)'}`,
+                  borderRadius:'var(--radius)', padding:'9px 11px', transition:'border-color 0.2s'
+                }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:6 }}>
+                    {/* Position number */}
+                    <span style={{ fontSize:12, fontWeight:900, color:isFirst?'var(--yellow)':'var(--text-3)', width:18, textAlign:'center', flexShrink:0 }}>
+                      {lbPlayer.holesPlayed > 0 ? rank+1 : '—'}
+                    </span>
                     <div style={{ width:8, height:8, borderRadius:'50%', background:player.color, flexShrink:0 }}/>
-                    <span style={{ fontWeight:800, fontSize:14, flex:1, letterSpacing:'-0.01em' }}>{player.name}</span>
+                    <span style={{ fontWeight:800, fontSize:14, flex:1, letterSpacing:'-0.01em', color:isFirst?'var(--yellow)':'var(--text)' }}>{player.name}</span>
                     {isWinner && <Crown size={12} color="var(--yellow)"/>}
-                    <span style={{ fontSize:11, color:'var(--text-3)', fontWeight:700 }}><strong style={{ color:'var(--text-2)' }}>{runningTotal}</strong> total</span>
+                    <span style={{ fontSize:12, fontWeight:800, color:isFirst?'var(--yellow)':'var(--text-2)' }}>{runningTotal}</span>
+                    <span style={{ fontSize:10, color:'var(--text-3)', fontWeight:600 }}>total</span>
                   </div>
                   <div className="score-input-wrap">
                     <button id={`score-minus-${player.name}`} className="score-btn score-btn-minus" onClick={() => decrement(player.name)}>−</button>
@@ -354,7 +367,6 @@ export default function HoleScreen() {
         </button>
       </div>
 
-      <LeaderboardStrip/>
       {showPhotoGallery && <PhotoGallery onClose={() => setShowPhotoGallery(false)}/>}
       {showSpinner && spinnerPreference==='digital' && <SpinnerWheel effects={spinnerEffects} forcedEffect={pickedEffect} onDismiss={dismissSpinner}/>}
       {showPhysicalSpin && (

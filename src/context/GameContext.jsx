@@ -22,10 +22,11 @@ function generateDeviceCode() {
 
 export function GameProvider({ children }) {
   const [phase, setPhase]                     = useState('loading')
-  const [onboardStep, setOnboardStep]         = useState('playStyle')
+  const [onboardStep, setOnboardStep]         = useState('playStyle')  // playStyle | players | rules | optOut
   const [playStyle, setPlayStyle]             = useState(null)
   const [optOut, setOptOut]                   = useState(false)
   const [players, setPlayers]                 = useState([])
+  const [pendingPlayers, setPendingPlayers]     = useState([])
   const [holes, setHoles]                     = useState([])
   const [currentHoleIndex, setCurrentHoleIndex] = useState(0)
   const [scores, setScores]                   = useState({})
@@ -74,16 +75,17 @@ export function GameProvider({ children }) {
   }, [])
 
   const startGame = useCallback(async ({ playStyle: ps, optOut: oo, players: pl, spinnerPreference: sp = 'digital' }) => {
+    const finalPlayers = pl || pendingPlayers
     setIsLoading(true)
     try {
       const code = generateDeviceCode()
       const session = await createSession({
         device_code: code, play_style: ps,
-        opt_out_leaderboard: oo, players: pl,
+        opt_out_leaderboard: oo, players: finalPlayers,
         current_hole_index: 0,
       })
       setSessionId(session.id); setDeviceCode(code)
-      setPlayStyle(ps); setOptOut(oo); setPlayers(pl)
+      setPlayStyle(ps); setOptOut(oo); setPlayers(finalPlayers)
       setSpinnerPreference(sp)
       setCurrentHoleIndex(0); setScores({}); setSkippedHoles(new Set()); setPhotos([])
       localStorage.setItem(DEVICE_CODE_KEY, code)
@@ -181,20 +183,36 @@ export function GameProvider({ children }) {
     setSpinnerPreference('digital')
   }, [])
 
-  const leaderboard = players.map(player => {
-    const playerScores = Object.entries(scores)
-      .filter(([holeId]) => !skippedHoles.has(holeId))
-      .map(([, holeScores]) => holeScores[player.name])
-      .filter(s => s !== undefined && s !== null)
-    const total = playerScores.reduce((a, b) => a + b, 0)
-    const avg   = playerScores.length > 0 ? Math.round((total / playerScores.length) * 10) / 10 : null
-    return { ...player, total, avg, holesPlayed: playerScores.length }
-  }).sort((a, b) => {
-    if (a.holesPlayed === 0 && b.holesPlayed === 0) return 0
-    if (a.holesPlayed === 0) return 1
-    if (b.holesPlayed === 0) return -1
-    return a.total - b.total
-  })
+  const leaderboard = (() => {
+    const entries = players.map(player => {
+      const playerScores = Object.entries(scores)
+        .filter(([holeId]) => !skippedHoles.has(holeId))
+        .map(([, holeScores]) => holeScores[player.name])
+        .filter(s => s !== undefined && s !== null)
+      const total = playerScores.reduce((a, b) => a + b, 0)
+      const avg   = playerScores.length > 0 ? Math.round((total / playerScores.length) * 10) / 10 : null
+      return { ...player, total, avg, holesPlayed: playerScores.length }
+    })
+
+    // Sort: lowest total first, tiebreak by most recent holes (earlier holes = lower index)
+    return entries.sort((a, b) => {
+      if (a.holesPlayed === 0 && b.holesPlayed === 0) return 0
+      if (a.holesPlayed === 0) return 1
+      if (b.holesPlayed === 0) return -1
+      if (a.total !== b.total) return a.total - b.total
+      // Tiebreaker: compare hole scores from most recent completed hole backwards
+      for (let i = holes.length - 1; i >= 0; i--) {
+        const hole = holes[i]
+        if (!hole) continue
+        const aScore = scores[hole.id]?.[a.name]
+        const bScore = scores[hole.id]?.[b.name]
+        if (aScore !== undefined && bScore !== undefined && aScore !== bScore) {
+          return aScore - bScore
+        }
+      }
+      return 0
+    })
+  })()
 
   const previousHoleWinner = (() => {
     if (currentHoleIndex === 0) return null
@@ -202,12 +220,31 @@ export function GameProvider({ children }) {
     if (!prevHole) return null
     const holeScores = scores[prevHole.id]
     if (!holeScores) return null
-    let min = Infinity, winner = null
+    let min = Infinity, winners = []
     players.forEach(p => {
       const s = holeScores[p.name]
-      if (s !== undefined && s !== null && s < min) { min = s; winner = p }
+      if (s === undefined || s === null) return
+      if (s < min) { min = s; winners = [p] }
+      else if (s === min) { winners.push(p) }
     })
-    return winner
+    if (winners.length === 1) return winners[0]
+    // Tiebreak winners using scores from earlier holes
+    for (let i = currentHoleIndex - 2; i >= 0; i--) {
+      const tieHole = holes[i]
+      if (!tieHole) continue
+      const tieScores = scores[tieHole.id]
+      if (!tieScores) continue
+      let tieMin = Infinity, tieWinners = []
+      winners.forEach(p => {
+        const s = tieScores[p.name]
+        if (s === undefined || s === null) return
+        if (s < tieMin) { tieMin = s; tieWinners = [p] }
+        else if (s === tieMin) { tieWinners.push(p) }
+      })
+      if (tieWinners.length === 1) return tieWinners[0]
+      winners = tieWinners
+    }
+    return winners[0] || null
   })()
 
   const currentHole = holes[currentHoleIndex] || null
@@ -233,6 +270,7 @@ export function GameProvider({ children }) {
     spinnerPreference, setSpinnerPreference,
     showPostHole8Camera, setShowPostHole8Camera,
     startGame, goToHole, nextHole, dismissSpinner, playAgain,
+    pendingPlayers, setPendingPlayers,
   }
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>
