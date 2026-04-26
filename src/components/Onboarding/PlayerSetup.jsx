@@ -4,10 +4,22 @@ import { useGame } from '../../context/GameContext'
 import PlayingCardsRules from '../Rules/PlayingCardsRules'
 
 const PLAYER_COLORS = [
-  '#FFD600','#60a5fa','#f87171','#a78bfa',
-  '#34d399','#fb923c','#f472b6','#38bdf8',
-  '#facc15','#4ade80','#fb7185','#818cf8',
-  '#2dd4bf','#e879f9','#a3e635','#67e8f9',
+  '#FFD600',
+  '#60a5fa',
+  '#a78bfa',
+  '#34d399',
+  '#fb923c',
+  '#f472b6',
+  '#38bdf8',
+  '#facc15',
+  '#4ade80',
+  '#818cf8',
+  '#2dd4bf',
+  '#e879f9',
+  '#a3e635',
+  '#67e8f9',
+  '#fb7185',
+  '#f87171',
 ]
 
 const STYLE_LABELS = { casual:'Casual', competitive:'Competitive', silly:'Silly', fun:'Just for Fun' }

@@ -309,57 +309,109 @@ export default function HoleScreen() {
 
         {playStyle!=='fun' ? (
           <div style={{ display:'flex', flexDirection:'column', gap:cardGap, marginBottom:10 }}>
-            {/* Render in leaderboard order when scored, otherwise original player order */}
             {(leaderboard.length > 0 ? leaderboard : players.map(p => ({ ...p, holesPlayed: 0 }))).map((lbPlayer, rank) => {
               const player = players.find(p => p.name === lbPlayer.name)
               if (!player) return null
-              const val = localScores[player.name]
-              const isSet = val !== null && val !== undefined
+              const val       = localScores[player.name]
+              const isSet     = val !== null && val !== undefined
               const prevTotal = Object.entries(scores)
                 .filter(([hid]) => hid !== currentHole.id)
                 .reduce((a,[,h]) => a + (h[player.name]||0), 0)
               const runningTotal = prevTotal + (isSet ? val : 0)
-              const isWinner = previousHoleWinner?.name === player.name
-              const isFirst  = rank === 0 && lbPlayer.holesPlayed > 0
+              const leaderTotal  = leaderboard[0]?.total || 0
+              const gap          = rank === 0 ? null : runningTotal - leaderTotal
+              const isWinner     = previousHoleWinner?.name === player.name
+              const isFirst      = rank === 0 && lbPlayer.holesPlayed > 0
+              const isUnscored   = !isSet && lbPlayer.holesPlayed === 0
+
+              // Adaptive sizes based on player count
+              const avSize    = pCount <= 3 ? 32 : pCount <= 5 ? 28 : pCount <= 7 ? 24 : 22
+              const avFont    = pCount <= 3 ? 14 : pCount <= 5 ? 12 : 10
+              const hdrPadV   = pCount <= 3 ? 12 : pCount <= 5 ? 10 : pCount <= 7 ? 8 : 7
+              const hdrPadH   = 13
+              const totalSize = pCount <= 3 ? 24 : pCount <= 5 ? 20 : pCount <= 7 ? 17 : 15
+              const rowPadV   = pCount <= 3 ? 9 : pCount <= 5 ? 7 : pCount <= 7 ? 6 : 5
+
+              const rank1 = rank===0?'1st':rank===1?'2nd':rank===2?'3rd':`${rank+1}th`
+
               return (
                 <div key={player.name} style={{
-                  background: isFirst ? `${player.color}0a` : 'var(--bg-card)',
-                  border:`1.5px solid ${isFirst ? player.color+'35' : isSet ? player.color+'20' : 'var(--border)'}`,
-                  borderRadius:14, overflow:'hidden', transition:'border-color 0.2s'
+                  borderRadius: pCount <= 5 ? 14 : 12,
+                  overflow:'hidden',
+                  border: `1.5px solid ${isFirst ? player.color+'40' : isSet ? player.color+'22' : isUnscored ? 'rgba(255,255,255,0.05)' : player.color+'18'}`,
+                  background: isFirst ? `${player.color}0c` : isUnscored ? '#0e0e0e' : `${player.color}04`,
+                  opacity: isUnscored && rank > 4 ? 0.55 : 1,
+                  transition: 'opacity 0.2s',
                 }}>
-                  {/* Header row — avatar, name, position, total */}
-                  <div style={{ display:'flex', alignItems:'center', gap:10, padding:`${pCount <= 4 ? 11 : pCount <= 6 ? 9 : 7}px 13px`, background: isFirst ? `${player.color}10` : 'transparent', borderBottom:`1px solid ${isFirst ? player.color+'18' : 'rgba(255,255,255,0.04)'}` }}>
-                    {/* Initial avatar */}
-                    <div style={{ width:pCount<=4?30:26, height:pCount<=4?30:26, borderRadius:'50%', background:player.color, display:'flex', alignItems:'center', justifyContent:'center', fontWeight:900, fontSize:pCount<=4?13:11, color:'#000', flexShrink:0, letterSpacing:'-0.02em' }}>
+
+                  {/* ── Header ── */}
+                  <div style={{
+                    display:'flex', alignItems:'center', gap:9,
+                    padding:`${hdrPadV}px ${hdrPadH}px`,
+                    background: isFirst ? `${player.color}0f` : 'transparent',
+                    borderBottom:`1px solid ${isFirst ? player.color+'15' : 'rgba(255,255,255,0.04)'}`,
+                  }}>
+                    {/* Avatar */}
+                    <div style={{
+                      width:avSize, height:avSize, borderRadius:'50%',
+                      background: isUnscored ? 'rgba(255,255,255,0.06)' : player.color,
+                      display:'flex', alignItems:'center', justifyContent:'center',
+                      fontWeight:900, fontSize:avFont,
+                      color: isUnscored ? '#333' : '#000',
+                      flexShrink:0, letterSpacing:'-0.01em',
+                    }}>
                       {player.name.trim()[0].toUpperCase()}
                     </div>
-                    {/* Name + position badge */}
-                    <div style={{ flex:1, minWidth:0 }}>
-                      <div style={{ display:'flex', alignItems:'center', gap:6 }}>
-                        <span style={{ fontWeight:800, fontSize:nameSize, color:isFirst?player.color:'var(--text)', letterSpacing:'-0.01em', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{player.name}</span>
-                        {isWinner && <Crown size={11} color="var(--yellow)"/>}
-                        {lbPlayer.holesPlayed > 0 && (
-                          <span style={{ fontSize:10, fontWeight:800, padding:'1px 7px', borderRadius:10, textTransform:'uppercase', letterSpacing:'0.05em', background:isFirst?`${player.color}20`:'rgba(255,255,255,0.06)', color:isFirst?player.color:'var(--text-3)', flexShrink:0 }}>
-                            {rank===0?'1st':rank===1?'2nd':rank===2?'3rd':`${rank+1}th`}
-                          </span>
-                        )}
+
+                    {/* Name + badge */}
+                    <div style={{ flex:1, minWidth:0, display:'flex', alignItems:'center', gap:6, overflow:'hidden' }}>
+                      <span style={{
+                        fontWeight:800, fontSize:nameSize,
+                        color: isFirst ? player.color : isUnscored ? 'var(--text-3)' : 'var(--text)',
+                        letterSpacing:'-0.01em', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap',
+                      }}>{player.name}</span>
+                      {isWinner && <Crown size={10} color="var(--yellow)" style={{ flexShrink:0 }}/>}
+                      {lbPlayer.holesPlayed > 0 && (
+                        <span style={{
+                          fontSize:9, fontWeight:800, padding:'1px 6px', borderRadius:8,
+                          textTransform:'uppercase', letterSpacing:'0.06em', flexShrink:0,
+                          background: isFirst ? `${player.color}20` : 'rgba(255,255,255,0.06)',
+                          color: isFirst ? player.color : 'var(--text-3)',
+                        }}>{rank1}</span>
+                      )}
+                    </div>
+
+                    {/* Gap + Total */}
+                    <div style={{ textAlign:'right', flexShrink:0 }}>
+                      {gap !== null && lbPlayer.holesPlayed > 0 && (
+                        <div style={{ fontSize:9, fontWeight:700, color:'var(--text-3)', marginBottom:1 }}>+{gap}</div>
+                      )}
+                      {gap === null && isFirst && (
+                        <div style={{ fontSize:9, fontWeight:700, color:`${player.color}60`, marginBottom:1, textTransform:'uppercase', letterSpacing:'0.05em' }}>Leading</div>
+                      )}
+                      <div style={{ fontSize:9, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color: isFirst?`${player.color}55`:'var(--text-3)', lineHeight:1, marginBottom:1 }}>Total</div>
+                      <div style={{ fontSize:totalSize, fontWeight:900, color:isFirst?player.color:isUnscored?'var(--text-3)':'var(--text-2)', letterSpacing:'-0.03em', lineHeight:1 }}>
+                        {lbPlayer.holesPlayed > 0 ? runningTotal : '—'}
                       </div>
                     </div>
-                    {/* Total */}
-                    <div style={{ textAlign:'right', flexShrink:0 }}>
-                      <div style={{ fontSize:9, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color:isFirst?`${player.color}70`:'var(--text-3)', lineHeight:1, marginBottom:2 }}>Total</div>
-                      <div style={{ fontSize:pCount<=4?22:18, fontWeight:900, color:isFirst?player.color:'var(--text-2)', letterSpacing:'-0.03em', lineHeight:1 }}>{runningTotal}</div>
-                    </div>
                   </div>
-                  {/* Score input row */}
-                  <div style={{ padding:`${pCount<=4?8:6}px 13px` }}>
+
+                  {/* ── Score input ── */}
+                  <div style={{ padding:`${rowPadV}px ${hdrPadH}px` }}>
                     <div className="score-input-wrap">
                       <button id={`score-minus-${player.name}`}
                         className="score-btn score-btn-minus"
                         onClick={() => decrement(player.name)}
-                        style={{ width:btnSize, height:btnSize, fontSize:btnFont }}>−</button>
-                      <div className={`score-display${isSet?' active':''}`} key={`${player.name}-${val}`}
-                        style={{ animation:'countUp 0.18s cubic-bezier(0.34,1.56,0.64,1)', fontSize:scoreFont, padding:'6px 4px', borderColor: isSet ? player.color+'40' : undefined, color: isSet ? player.color : undefined }}>
+                        style={{ width:btnSize, height:btnSize, fontSize:btnFont, opacity:isSet?1:0.3 }}>−</button>
+                      <div className={`score-display${isSet?' active':''}`}
+                        key={`${player.name}-${val}`}
+                        style={{
+                          animation:'countUp 0.18s cubic-bezier(0.34,1.56,0.64,1)',
+                          fontSize:scoreFont, padding:'5px 4px',
+                          borderColor: isSet ? player.color+'45' : undefined,
+                          color: isSet ? player.color : undefined,
+                          background: isSet ? `${player.color}08` : undefined,
+                        }}>
                         {isSet ? val : '—'}
                       </div>
                       <button id={`score-plus-${player.name}`}
