@@ -118,7 +118,7 @@ export default function HoleScreen() {
     showPhotoGallery, setShowPhotoGallery,
     showSpinner, dismissSpinner, setShowSpinner, setSpinnerEffect,
     currentTurnIndex, setCurrentTurnIndex,
-    previousHoleWinner,
+    previousHoleWinner, leaderboard,
     spinnerPreference,
     showPostHole8Camera, setShowPostHole8Camera,
   } = useGame()

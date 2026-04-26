@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react'
-import { Trophy, Sun, Calendar, TrendingDown, TrendingUp, Minus, BarChart3, Target } from 'lucide-react'
+import { Trophy, Sun, Calendar, CalendarDays, TrendingDown, TrendingUp, Minus, BarChart3, Target } from 'lucide-react'
 import { supabase, getLeaderboard, getHoleAverages, getAllPhotos, getLeaderboardPlayerPhotos } from '../lib/supabase'
 
 // ── Rank badge ─────────────────────────────────────────────────
@@ -175,6 +175,7 @@ const TAB_DURATION = 14000
 export default function TVLeaderboard() {
   const [bestDay,      setBestDay]      = useState([])
   const [bestWeek,     setBestWeek]     = useState([])
+  const [bestMonth,    setBestMonth]    = useState([])
   const [bestAll,      setBestAll]      = useState([])
   const [holeAvgs,     setHoleAvgs]     = useState([])
   const [photos,       setPhotos]       = useState([])
@@ -198,11 +199,11 @@ export default function TVLeaderboard() {
   }, [photos.length])
 
   const load = useCallback(async () => {
-    const [d, w, a, h, p, lbp] = await Promise.all([
-      getLeaderboard('day'), getLeaderboard('week'), getLeaderboard('all'),
+    const [d, w, mo, a, h, p, lbp] = await Promise.all([
+      getLeaderboard('day'), getLeaderboard('week'), getLeaderboard('month'), getLeaderboard('all'),
       getHoleAverages(), getAllPhotos(30), getLeaderboardPlayerPhotos(),
     ])
-    setBestDay(d); setBestWeek(w); setBestAll(a); setHoleAvgs(h)
+    setBestDay(d); setBestWeek(w); setBestMonth(mo); setBestAll(a); setHoleAvgs(h)
     setPhotos(p.map(x => x.storage_path).filter(Boolean))
     const pm = {}
     lbp.forEach(lp => { pm[`${lp.session_id}-${lp.player_name}`] = lp.photo_url })
@@ -264,9 +265,10 @@ export default function TVLeaderboard() {
 
   // Tabs — only show if they have data
   const allTabs = [
-    { id:'day',   label:'Best Today',    Icon:Sun,      data:bestDay,  desc:'Lowest strokes today — full course only' },
-    { id:'week',  label:'Best Week',     Icon:Calendar, data:bestWeek, desc:'Lowest strokes this week — full course only' },
-    { id:'all',   label:'All Time',      Icon:Trophy,   data:bestAll,  desc:'Lowest strokes ever — full course only' },
+    { id:'day',   label:'Best Today',    Icon:Sun,      data:bestDay,   desc:'Lowest strokes today — full course only' },
+    { id:'week',  label:'Best Week',     Icon:Calendar, data:bestWeek,  desc:'Lowest strokes this week — full course only' },
+    { id:'month', label:'This Month',    Icon:CalendarDays, data:bestMonth, desc:'Lowest strokes this month — full course only' },
+    { id:'all',   label:'All Time',      Icon:Trophy,   data:bestAll,   desc:'Lowest strokes ever — full course only' },
     { id:'holes', label:'Hole Stats',    Icon:BarChart3, data:[],       desc:'All-time average strokes per hole' },
   ]
   const availableTabs = allTabs.filter(t => t.id === 'holes' ? holeAvgs.length > 0 : t.data.length > 0)

@@ -386,6 +386,9 @@ export async function getAdminLeaderboard(period = 'all') {
   } else if (period === 'week') {
     const s = new Date(); s.setDate(s.getDate()-7); s.setHours(0,0,0,0)
     query = query.gte('started_at', s.toISOString())
+  } else if (period === 'month') {
+    const s = new Date(); s.setDate(1); s.setHours(0,0,0,0)
+    query = query.gte('started_at', s.toISOString())
   }
 
   const { data, error } = await query
