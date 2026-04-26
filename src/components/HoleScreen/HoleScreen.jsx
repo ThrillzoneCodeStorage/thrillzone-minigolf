@@ -305,8 +305,8 @@ export default function HoleScreen() {
 
         {playStyle!=='fun' ? (
           <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:12 }}>
-            {/* Render in leaderboard order (lowest total first) so position is always visible */}
-            {leaderboard.map((lbPlayer, rank) => {
+            {/* Render in leaderboard order when scored, otherwise original player order */}
+            {(leaderboard.length > 0 ? leaderboard : players.map(p => ({ ...p, holesPlayed: 0 }))).map((lbPlayer, rank) => {
               const player = players.find(p => p.name === lbPlayer.name)
               if (!player) return null
               const val = localScores[player.name]

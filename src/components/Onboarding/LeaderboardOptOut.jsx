@@ -2,12 +2,12 @@ import { ChevronLeft, ChevronRight, Tv, EyeOff } from 'lucide-react'
 import { useGame } from '../../context/GameContext'
 
 export default function LeaderboardOptOut() {
-  const { optOut, setOptOut, setOnboardStep, playStyle, startGame, isLoading, spinnerPreference, players } = useGame()
+  const { optOut, setOptOut, setOnboardStep, playStyle, startGame, isLoading, spinnerPreference, pendingPlayers } = useGame()
 
   // This screen only appears after rules for non-fun modes
   // "Start Game" is called from here with the already-set players
   async function handleStart() {
-    await startGame({ playStyle, optOut, spinnerPreference, players })
+    await startGame({ playStyle, optOut, spinnerPreference, players: pendingPlayers })
   }
 
   return (
