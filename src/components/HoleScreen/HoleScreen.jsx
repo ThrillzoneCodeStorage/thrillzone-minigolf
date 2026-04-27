@@ -5,8 +5,8 @@ import {
   Shuffle, Camera, RefreshCw
 } from 'lucide-react'
 import { useGame } from '../../context/GameContext'
+import { useTranslation } from '../../lib/TranslationContext'
 import { supabase as supabaseClient, getSpinnerEffects, getGameModeRules } from '../../lib/supabase'
-import { STRINGS } from '../../lib/i18n'
 import SpinnerWheel from '../SpinnerWheel/SpinnerWheel'
 import { CameraNavButton, PhotoGallery } from '../PhotoSystem/PhotoSystem'
 import { HoleInOnePopup, FloatNumber, HoleTransition } from './Celebrations'
@@ -119,7 +119,7 @@ export default function HoleScreen() {
     showPhotoGallery, setShowPhotoGallery,
     showSpinner, dismissSpinner, setShowSpinner, setSpinnerEffect,
     currentTurnIndex, setCurrentTurnIndex,
-    previousHoleWinner, leaderboard, language,
+    previousHoleWinner, leaderboard,
     spinnerPreference,
     showPostHole8Camera, setShowPostHole8Camera,
   } = useGame()
@@ -145,7 +145,7 @@ export default function HoleScreen() {
 
   useEffect(() => {
     if (playStyle === 'silly') getSpinnerEffects().then(setSpinnerEffects)
-    getGameModeRules(playStyle).then(r => setRules(r.length > 0 ? r : FALLBACK_RULES[playStyle] || []))
+    getGameModeRules(playStyle).then(r => setRules(r.length > 0 ? r : (t['rules_'+playStyle] || [])))
   }, [playStyle])
 
   useEffect(() => {
@@ -189,7 +189,7 @@ export default function HoleScreen() {
   )
 
   // Adaptive card sizing based on player count
-  const t = STRINGS[language] || STRINGS.en
+  const t = useTranslation()
   const pCount = players.length
   // 1-4 large | 5-6 medium | 7-8 small | 9+ compact
   const nameSize    = pCount <= 4 ? 15 : pCount <= 6 ? 13 : pCount <= 8 ? 12 : 11
@@ -466,7 +466,7 @@ export default function HoleScreen() {
           </div>
         ) : (
           <div style={{ background:'var(--yellow-dim)', border:'1.5px solid var(--border-y)', borderRadius:'var(--radius)', padding:24, marginBottom:12, textAlign:'center' }}>
-            <p style={{ color:'var(--text-2)', fontSize:15, lineHeight:1.6 }}>Just for Fun mode — enjoy the hole and tap Next when ready!</p>
+            <p style={{ color:'var(--text-2)', fontSize:15, lineHeight:1.6 }}>{t.funModeMsg}</p>
           </div>
         )}
 
@@ -628,7 +628,7 @@ export default function HoleScreen() {
                 <X size={16}/>
               </button>
             </div>
-            <div className="pill pill-yellow" style={{ marginBottom:14 }}>{playStyle?.toUpperCase()} MODE</div>
+            <div className="pill pill-yellow" style={{ marginBottom:14 }}>{(t[playStyle]||playStyle).toUpperCase()}</div>
             {rules.map((r,i) => (
               <div key={i} style={{ display:'flex', gap:11, marginBottom:13, alignItems:'flex-start' }}>
                 <CheckCircle size={15} color="var(--yellow)" style={{ flexShrink:0, marginTop:2 }}/>

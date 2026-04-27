@@ -144,6 +144,7 @@ async function generateScorecardPng({ players, holes, scores, skippedHoles }) {
 }
 
 export default function ScorecardShare({ players, holes, scores, skippedHoles }) {
+  const t = useTranslation()
   const [generating, setGenerating] = useState(false)
   const [previewUrl, setPreviewUrl] = useState(null)
   const [showSheet, setShowSheet]   = useState(false)
@@ -184,14 +185,14 @@ export default function ScorecardShare({ players, holes, scores, skippedHoles })
     <>
       <button className="btn btn-ghost btn-full" onClick={generate} disabled={generating}
         style={{ gap:7, marginBottom:8 }}>
-        <Share2 size={17}/>{generating ? 'Creating…' : 'Share Scorecard'}
+        <Share2 size={17}/>{generating ? t.creating : t.shareScorecard}
       </button>
 
       {showSheet && previewUrl && (
         <div className="modal-overlay" style={{ zIndex:300 }}>
           <div className="modal-sheet" style={{ maxHeight:'90dvh', overflowY:'auto' }}>
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
-              <h3 style={{ fontSize:18, fontWeight:900, letterSpacing:'-0.02em', margin:0 }}>Your Scorecard</h3>
+              <h3 style={{ fontSize:18, fontWeight:900, letterSpacing:'-0.02em', margin:0 }}>{t.yourScorecard}</h3>
               <button onClick={() => setShowSheet(false)} style={{ background:'none', border:'none', color:'var(--text-2)', cursor:'pointer', display:'flex' }}>
                 <X size={20}/>
               </button>

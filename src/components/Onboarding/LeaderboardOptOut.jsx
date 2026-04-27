@@ -1,10 +1,10 @@
 import { ChevronLeft, ChevronRight, Tv, EyeOff } from 'lucide-react'
-import { STRINGS } from '../../lib/i18n'
 import { useGame } from '../../context/GameContext'
+import { useTranslation } from '../../lib/TranslationContext'
 
 export default function LeaderboardOptOut() {
-  const { optOut, setOptOut, setOnboardStep, playStyle, startGame, isLoading, spinnerPreference, pendingPlayers, language } = useGame()
-  const t = STRINGS[language] || STRINGS.en
+  const { optOut, setOptOut, setOnboardStep, playStyle, startGame, isLoading, spinnerPreference, pendingPlayers } = useGame()
+  const t = useTranslation()
 
   // This screen only appears after rules for non-fun modes
   // "Start Game" is called from here with the already-set players

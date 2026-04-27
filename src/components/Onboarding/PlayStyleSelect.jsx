@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ChevronRight, X, Zap, Trophy, Shuffle, Smile, Smartphone, Disc } from 'lucide-react'
 import { useGame } from '../../context/GameContext'
+import { useTranslation } from '../../lib/TranslationContext'
 import { STRINGS, LANGUAGES } from '../../lib/i18n'
 
 const STYLE_META = [
@@ -12,7 +13,7 @@ const STYLE_META = [
 
 export default function PlayStyleSelect() {
   const { setPlayStyle, setOnboardStep, setSpinnerPreference, setOptOut, language, setLanguage } = useGame()
-  const t = STRINGS[language] || STRINGS.en
+  const t = useTranslation()
   const STYLES = STYLE_META.map(s => ({
     ...s,
     name: t[s.id],

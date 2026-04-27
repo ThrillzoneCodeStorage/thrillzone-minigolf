@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect } from 'react'
 import { Camera, X, RotateCcw, Check, SwitchCamera, Zap, ZapOff } from 'lucide-react'
 import { useGame } from '../../context/GameContext'
+import { useTranslation } from '../../lib/TranslationContext'
 
 // ── Polaroid composer — adapts to actual image dimensions ──────
 export function composePolaroid(photoBlob, isFrontCamera = false) {
@@ -114,6 +115,7 @@ export function CameraNavButton({ onClick, photoCount }) {
 
 // ── Full-screen camera ────────────────────────────────────────
 function FullScreenCamera({ onCapture, onClose }) {
+  const t = useTranslation()
   const videoRef      = useRef(null)
   const streamRef     = useRef(null)
   const [facingMode, setFacingMode] = useState('user')  // user = front, environment = back
@@ -147,7 +149,7 @@ function FullScreenCamera({ onCapture, onClose }) {
     } catch (err) {
       let msg = 'Could not access camera.'
       if (err.name === 'NotAllowedError')  msg = 'Camera permission denied. Tap Allow in your browser settings.'
-      if (err.name === 'NotFoundError')    msg = 'No camera found on this device.'
+      if (err.name === 'NotFoundError')    msg = t.cameraNotFound
       if (err.name === 'NotReadableError') msg = 'Camera is in use by another app.'
       if (location.protocol !== 'https:' && location.hostname !== 'localhost')
         msg = 'Camera requires HTTPS. Use the live site URL.'
@@ -301,6 +303,7 @@ function PolaroidPreview({ url, label }) {
 // ── Photo Gallery Sheet ───────────────────────────────────────
 export function PhotoGallery({ onClose }) {
   const { photos, addPhoto } = useGame()
+  const t = useTranslation()
   const [showCamera,    setShowCamera]    = useState(false)
   const [capturedBlob,  setCapturedBlob]  = useState(null)
   const [isFront,       setIsFront]       = useState(true)
@@ -350,7 +353,7 @@ export function PhotoGallery({ onClose }) {
     <div className="modal-overlay" style={{ zIndex:150 }}>
       <div className="modal-sheet" style={{ maxHeight:'94dvh', overflowY:'auto' }}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
-          <h3 style={{ fontSize:19, fontWeight:900, letterSpacing:'-0.02em', margin:0 }}>Save this memory?</h3>
+          <h3 style={{ fontSize:19, fontWeight:900, letterSpacing:'-0.02em', margin:0 }}>{t.saveMemory}</h3>
           <button onClick={retake} style={{ background:'none', border:'none', color:'var(--text-2)', cursor:'pointer', display:'flex', alignItems:'center', gap:5, fontSize:13, fontFamily:'inherit', fontWeight:600 }}>
             <RotateCcw size={15}/> Retake
           </button>
@@ -363,7 +366,7 @@ export function PhotoGallery({ onClose }) {
             Cancel
           </button>
           <button className="btn btn-primary" onClick={confirmPhoto} disabled={processing} style={{ flex:2, gap:7 }}>
-            {processing ? 'Saving…' : <><Check size={16}/> Save Polaroid</>}
+            {processing ? t.saving : <>{t.savePolaroid}</>}
           </button>
         </div>
       </div>
@@ -378,7 +381,7 @@ export function PhotoGallery({ onClose }) {
         {/* Header */}
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
           <div>
-            <h3 style={{ fontSize:19, fontWeight:900, margin:0, letterSpacing:'-0.02em' }}>Memories</h3>
+            <h3 style={{ fontSize:19, fontWeight:900, margin:0, letterSpacing:'-0.02em' }}>{t.memories}</h3>
             <p style={{ fontSize:13, color:'var(--text-2)', margin:0 }}>{photos.length} photo{photos.length!==1?'s':''} taken</p>
           </div>
           <button onClick={onClose} style={{ background:'var(--bg-card-2)', border:'1px solid var(--border)', borderRadius:8, color:'var(--text-2)', cursor:'pointer', padding:8, display:'flex' }}>
@@ -424,8 +427,8 @@ export function PhotoGallery({ onClose }) {
         {photos.length === 0 && (
           <div style={{ textAlign:'center', padding:'32px 0 20px' }}>
             <Camera size={40} color="var(--text-3)" style={{ marginBottom:12 }}/>
-            <p style={{ fontSize:16, fontWeight:700, color:'var(--text-2)', marginBottom:6 }}>No memories yet</p>
-            <p style={{ fontSize:14, color:'var(--text-3)' }}>Take your first Polaroid below.</p>
+            <p style={{ fontSize:16, fontWeight:700, color:'var(--text-2)', marginBottom:6 }}>{t.noMemoriesYet}</p>
+            <p style={{ fontSize:14, color:'var(--text-3)' }}>{t.noMemoriesDesc}</p>
           </div>
         )}
 

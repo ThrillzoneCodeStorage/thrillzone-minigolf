@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Trophy, Mail, RotateCcw, AlertTriangle, CheckCircle, SkipForward, Camera, Star } from 'lucide-react'
 import { useGame } from '../../context/GameContext'
+import { useTranslation } from '../../lib/TranslationContext'
 import { updateSession, upsertScore, uploadLeaderboardPhoto } from '../../lib/supabase'
 import { EndConfetti } from '../HoleScreen/Celebrations'
 import ScorecardShare from './ScorecardShare'
@@ -58,7 +59,7 @@ function LbSelfieButton({ sessionId, player, onDone }) {
       <div style={{ display:'flex', gap:9 }}>
         <button className="btn btn-ghost" style={{ flex:1 }} onClick={() => { setBlob(null); setPreviewUrl(null); openCam() }}>Retake</button>
         <button className="btn btn-primary" style={{ flex:2 }} onClick={confirm} disabled={uploading}>
-          {uploading?'Uploading…':'Save to leaderboard'}
+          {uploading?t.uploading:t.saveToLeaderboard}
         </button>
       </div>
     </div>
@@ -95,6 +96,7 @@ export default function EndScreen() {
   // For filling in skipped holes at end
   const [skipScores, setSkipScores] = useState({}) // { holeId: { playerName: value } }
 
+  const t = useTranslation()
   const winner = leaderboard[0]
 
   // Detect qualifying players for leaderboard selfie
@@ -159,7 +161,7 @@ export default function EndScreen() {
 <tfoot><tr style="background:#222;border-top:2px solid rgba(255,214,0,0.25);"><td style="padding:10px 14px;font-weight:900;color:#FFD600;">TOTAL</td>${totals}</tr></tfoot>
 </table>
 <div style="background:#141414;border:1px solid rgba(255,214,0,0.2);border-radius:12px;padding:22px;margin-bottom:24px;">
-<h2 style="color:#FFD600;font-weight:900;margin:0 0 14px;">Final Standings</h2>
+<h2 style="color:#FFD600;font-weight:900;margin:0 0 14px;">{t.finalStandings}</h2>
 ${leaderboard.map((p, i) => `<p style="margin:5px 0;color:${i === 0 ? p.color : '#888'};font-weight:${i === 0 ? 900 : 500};">${i + 1}. ${p.name} — ${p.total} strokes${p.avg ? ` (${p.avg} avg/hole)` : ''}</p>`).join('')}
 </div>
 ${photos.length ? `<p style="color:#888;font-size:14px;">Your ${photos.length} Polaroid photo${photos.length !== 1 ? 's are' : ' is'} attached!</p>` : ''}
@@ -228,7 +230,7 @@ ${photos.length ? `<p style="color:#888;font-size:14px;">Your ${photos.length} P
 
         {/* Standings */}
         <div className="card" style={{ marginBottom: 14 }}>
-          <p style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-3)', marginBottom: 14 }}>Final Standings</p>
+          <p style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-3)', marginBottom: 14 }}>{t.finalStandings}</p>
           {leaderboard.map((p, i) => (
             <div key={p.name} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8, padding: '11px 14px', borderRadius: 12, background: i === 0 ? 'var(--yellow-dim)' : 'var(--bg-card-2)', border: `1.5px solid ${i === 0 ? 'var(--border-y)' : 'transparent'}`, animation: `fadeIn 0.4s ${i * 0.08}s both` }}>
               <span style={{ fontSize: 20, width: 26, textAlign: 'center', flexShrink: 0 }}>
@@ -286,13 +288,13 @@ ${photos.length ? `<p style="color:#888;font-size:14px;">Your ${photos.length} P
               <p style={{ fontSize: 15, fontWeight: 800, letterSpacing: '-0.01em' }}>Get your scorecard + photos</p>
             </div>
             <p style={{ fontSize: 14, color: 'var(--text-2)', marginBottom: 14, lineHeight: 1.55 }}>
-              We'll email your scorecard and all {photos.length} Polaroid{photos.length !== 1 ? 's' : ''} straight to your inbox.
+              {t.emailScorecard} {photos.length} Polaroid{photos.length !== 1 ? 's' : ''} straight to your inbox.
             </p>
             <div style={{ display: 'flex', gap: 10 }}>
               <input className="input" type="email" placeholder="your@email.com" value={email}
                 onChange={e => { setEmail(e.target.value); setError('') }} style={{ flex: 1 }} />
               <button className="btn btn-primary" onClick={sendEmail} disabled={sending || !email.trim()} style={{ flexShrink: 0 }}>
-                {sending ? '…' : 'Send'}
+                {sending ? '…' : t.send}
               </button>
             </div>
             {error && <p style={{ fontSize: 13, color: 'var(--red)', marginTop: 8 }}>{error}</p>}
@@ -321,13 +323,13 @@ ${photos.length ? `<p style="color:#888;font-size:14px;">Your ${photos.length} P
               {skippedList.length} hole{skippedList.length !== 1 ? 's' : ''} were skipped
             </h3>
             <p style={{ fontSize: 14, color: 'var(--text-2)', lineHeight: 1.6, marginBottom: 6 }}>
-              The following holes weren't scored:
+              {t.skippedHolesWarning}:
             </p>
             {skippedList.map(h => (
               <p key={h.id} style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 3 }}>— {h.title}</p>
             ))}
             <p style={{ fontSize: 14, color: 'var(--text-2)', lineHeight: 1.6, margin: '14px 0 20px' }}>
-              You can fill in scores above, or finish without them.
+              {t.skippedHolesDesc}
             </p>
             <div style={{ display: 'flex', gap: 10 }}>
               <button className="btn btn-ghost" style={{ flex: 1 }} onClick={() => setShowFinishWarn(false)}>Go back</button>

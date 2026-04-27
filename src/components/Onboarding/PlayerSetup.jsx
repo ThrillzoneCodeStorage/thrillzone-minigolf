@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { ChevronLeft, ChevronRight, Plus, X } from 'lucide-react'
 import { useGame } from '../../context/GameContext'
+import { useTranslation } from '../../lib/TranslationContext'
 import PlayingCardsRules from '../Rules/PlayingCardsRules'
-import { STRINGS } from '../../lib/i18n'
 import { checkAllNames } from '../../lib/filter'
 
 const PLAYER_COLORS = [
@@ -26,18 +26,13 @@ const PLAYER_COLORS = [
 
 // STYLE_LABELS computed dynamically from t inside component
 
-const RULES_MAP = {
-  casual:      ['Count every stroke honestly.','Your ball must stop before your next shot.','Ball out of bounds = +1 penalty stroke.','Lowest total strokes at the end wins!'],
-  competitive: ['One player takes their full turn before the next.','You may nudge other players\' balls out of your path.','Ball must stop before the next player goes.','Winner of each hole goes first on the next.'],
-  silly:       ['Normal scoring applies — every stroke counts.','After each hole, someone spins the wheel.','Whatever the wheel lands on must be carried out!','Lowest total strokes still wins — even with chaos.'],
-  fun:         ['No scores are tracked — no winner or loser.','Read each hole\'s description as you go.','Take as many shots as you like.','The only goal is to have a great time!'],
-}
+// Rules come from t.rules_{mode}
 
 const STYLE_COLORS = { casual:'#FFD600', competitive:'#60a5fa', silly:'#a78bfa', fun:'#fb923c' }
 
 export default function PlayerSetup() {
-  const { setOnboardStep, playStyle, optOut, startGame, isLoading, spinnerPreference, setPendingPlayers, language } = useGame()
-  const t = STRINGS[language] || STRINGS.en
+  const { setOnboardStep, playStyle, optOut, startGame, isLoading, spinnerPreference, setPendingPlayers } = useGame()
+  const t = useTranslation()
   const [names,     setNames]     = useState([''])
   const [showRules, setShowRules]   = useState(false)
   const [filterWarning, setFilterWarning] = useState(null) // names that triggered filter
@@ -105,7 +100,7 @@ export default function PlayerSetup() {
                 <div style={{ width:34, height:34, borderRadius:'50%', flexShrink:0, background:PLAYER_COLORS[i % PLAYER_COLORS.length], display:'flex', alignItems:'center', justifyContent:'center', color:'#000', fontWeight:900, fontSize:13 }}>
                   {name.trim() ? name.trim()[0].toUpperCase() : i+1}
                 </div>
-                <input className="input" placeholder={`Player ${i+1}`} value={name}
+                <input className="input" placeholder={`${t.playerPlaceholder} ${i+1}`} value={name}
                   onChange={e => update(i, e.target.value)}
                   maxLength={20} autoComplete="off" autoCapitalize="words"
                   onKeyDown={e => e.key==='Enter' && i===names.length-1 && add()}
@@ -177,7 +172,7 @@ export default function PlayerSetup() {
               <div>
                 <h3 style={{ fontSize:19, fontWeight:900, letterSpacing:'-0.02em', margin:0 }}>{t.gameRules}</h3>
                 <p style={{ fontSize:13, color:'var(--text-2)', margin:'2px 0 0' }}>
-                  {validNames.length} player{validNames.length!==1?'s':''} · {t[playStyle]||playStyle}
+                  {validNames.length} {t.playersCount} · {t[playStyle]||playStyle}
                 </p>
               </div>
               <button onClick={() => setShowRules(false)} style={{ background:'none', border:'none', color:'var(--text-3)', cursor:'pointer', padding:4 }}>
@@ -186,7 +181,7 @@ export default function PlayerSetup() {
             </div>
             <PlayingCardsRules
               title={t[playStyle]||playStyle}
-              rules={RULES_MAP[playStyle] || []}
+              rules={t['rules_'+playStyle] || []}
               accent={accentColor}
               onDone={() => {
                 setShowRules(false)

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Play, RotateCcw } from 'lucide-react'
 
 export default function Hole8Timer({ seconds = 30 }) {
+  const t = useTranslation()
   const [phase, setPhase] = useState('idle') // idle | countdown | running | done
   const [count, setCount]  = useState(3)
   const [secs,  setSecs]   = useState(seconds)
@@ -59,7 +60,7 @@ export default function Hole8Timer({ seconds = 30 }) {
           <div style={{ fontSize: 72, fontWeight: 900, color: 'var(--yellow)', lineHeight: 1, letterSpacing: '-0.04em', animation: 'popIn 0.3s cubic-bezier(0.34,1.56,0.64,1)' }}>
             {count}
           </div>
-          <p style={{ color: 'var(--text-2)', fontSize: 14, marginTop: 6 }}>Get ready…</p>
+          <p style={{ color: 'var(--text-2)', fontSize: 14, marginTop: 6 }}>{t.getReady}</p>
         </div>
       )}
 
@@ -80,13 +81,13 @@ export default function Hole8Timer({ seconds = 30 }) {
               </span>
             </div>
           </div>
-          <p style={{ color: 'var(--text-2)', fontSize: 13, fontWeight: 600 }}>seconds remaining</p>
+          <p style={{ color: 'var(--text-2)', fontSize: 13, fontWeight: 600 }}>{t.secondsRemaining}</p>
         </div>
       )}
 
       {phase === 'done' && (
         <div style={{ animation: 'popIn 0.4s cubic-bezier(0.34,1.56,0.64,1)' }}>
-          <p style={{ fontSize: 24, fontWeight: 900, color: 'var(--yellow)', marginBottom: 8 }}>Time's up!</p>
+          <p style={{ fontSize: 24, fontWeight: 900, color: 'var(--yellow)', marginBottom: 8 }}>{t.timesUp}</p>
           <button className="btn btn-ghost btn-sm" onClick={reset} style={{ gap: 6 }}>
             <RotateCcw size={14}/> Reset
           </button>

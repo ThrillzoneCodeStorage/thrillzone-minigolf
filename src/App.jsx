@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { GameProvider } from './context/GameContext'
+import { TranslationProvider } from './lib/TranslationContext'
 import PlayerApp from './pages/PlayerApp'
 import TVLeaderboard from './pages/TVLeaderboard'
 import AdminPanel from './pages/AdminPanel'
@@ -11,7 +12,9 @@ export default function App() {
       <Routes>
         <Route path="/" element={
           <GameProvider>
-            <PlayerApp />
+            <TranslationProvider>
+              <PlayerApp />
+            </TranslationProvider>
           </GameProvider>
         } />
         <Route path="/leaderboard" element={<TVLeaderboard />} />
