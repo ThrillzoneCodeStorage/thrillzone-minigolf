@@ -27,16 +27,16 @@ const STYLE_CONFIG = {
 }
 
 // Physical spinner prompt — shown instead of digital wheel
-function PhysicalSpinnerPrompt({ onDone }) {
+function PhysicalSpinnerPrompt({ onDone, t }) {
   return (
     <div className="modal-center">
       <div className="modal-box" style={{ textAlign: 'center' }}>
         <div style={{ fontSize: 64, marginBottom: 16 }}>🎡</div>
         <h3 style={{ fontSize: 22, fontWeight: 900, letterSpacing: '-0.02em', marginBottom: 8 }}>
-          Spin the wheel!
+          {t.spinTheWheelTitle}
         </h3>
         <p style={{ fontSize: 15, color: 'var(--text-2)', lineHeight: 1.6, marginBottom: 24 }}>
-          Head to the physical wheel in the corner and give it a spin. Come back when you're done!
+          {t.physicalWheelMsg}
         </p>
         <button className="btn btn-primary btn-full btn-lg" onClick={onDone}>
           <CheckCircle size={18}/> {t.doneLetsContinue}
@@ -47,10 +47,9 @@ function PhysicalSpinnerPrompt({ onDone }) {
 }
 
 // Mode change modal
-function ModeChangeModal({ current, onSelect, onClose, onRestart, language }) {
+function ModeChangeModal({ current, onSelect, onClose, onRestart, t }) {
   const styles = ['casual','competitive','silly','fun']
   const [confirmRestart, setConfirmRestart] = useState(false)
-  const t = STRINGS[language] || STRINGS.en
 
   if (confirmRestart) return (
     <div className="modal-center">
@@ -500,7 +499,7 @@ export default function HoleScreen() {
       {showPhotoGallery && <PhotoGallery onClose={() => setShowPhotoGallery(false)}/>}
       {showSpinner && spinnerPreference==='digital' && <SpinnerWheel effects={spinnerEffects} forcedEffect={pickedEffect} onDismiss={dismissSpinner}/>}
       {showPhysicalSpin && (
-        <PhysicalSpinnerPrompt onDone={() => {
+        <PhysicalSpinnerPrompt t={t} onDone={() => {
           setShowPhysicalSpin(false)
           dismissSpinner()
         }}/>
@@ -657,7 +656,7 @@ export default function HoleScreen() {
           onSelect={changePlayStyle}
           onClose={() => setShowModeChange(false)}
           onRestart={() => { setShowModeChange(false); playAgain() }}
-          language={language}
+          t={t}
         />
       )}
 
