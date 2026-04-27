@@ -189,6 +189,7 @@ export default function HoleScreen() {
   )
 
   // Adaptive card sizing based on player count
+  const t = STRINGS[language] || STRINGS.en
   const pCount = players.length
   // 1-4 large | 5-6 medium | 7-8 small | 9+ compact
   const nameSize    = pCount <= 4 ? 15 : pCount <= 6 ? 13 : pCount <= 8 ? 12 : 11
