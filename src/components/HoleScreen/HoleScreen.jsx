@@ -47,9 +47,10 @@ function PhysicalSpinnerPrompt({ onDone }) {
 }
 
 // Mode change modal
-function ModeChangeModal({ current, onSelect, onClose, onRestart }) {
+function ModeChangeModal({ current, onSelect, onClose, onRestart, language }) {
   const styles = ['casual','competitive','silly','fun']
   const [confirmRestart, setConfirmRestart] = useState(false)
+  const t = STRINGS[language] || STRINGS.en
 
   if (confirmRestart) return (
     <div className="modal-center">
@@ -59,7 +60,7 @@ function ModeChangeModal({ current, onSelect, onClose, onRestart }) {
         </div>
         <h3 style={{ fontSize:18, fontWeight:900, marginBottom:8, letterSpacing:'-0.02em' }}>{t.restartQ}</h3>
         <p style={{ fontSize:14, color:'var(--text-2)', lineHeight:1.6, marginBottom:20 }}>
-          All scores and photos from this round will be lost. This cannot be undone.
+          {t.restartDesc}
         </p>
         <div style={{ display:'flex', gap:9 }}>
           <button className="btn btn-ghost" style={{ flex:1 }} onClick={() => setConfirmRestart(false)}>{t.cancel}</button>
