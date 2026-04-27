@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useTranslation } from '../../lib/TranslationContext'
 import { Play, RotateCcw } from 'lucide-react'
 
 export default function Hole8Timer({ seconds = 30 }) {

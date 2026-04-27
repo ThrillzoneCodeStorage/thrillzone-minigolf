@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { Download, Share2, X } from 'lucide-react'
+import { useTranslation } from '../../lib/TranslationContext'
 
 // Generate scorecard PNG on a canvas
 async function generateScorecardPng({ players, holes, scores, skippedHoles }) {
