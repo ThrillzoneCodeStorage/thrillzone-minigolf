@@ -91,7 +91,7 @@ export default function PlayerSetup() {
 
         <div style={{ textAlign:'center', marginBottom:24 }}>
           <div style={{ display:'inline-flex', alignItems:'center', gap:8, background:`${accentColor}12`, border:`1px solid ${accentColor}30`, borderRadius:20, padding:'5px 14px', marginBottom:12 }}>
-            <span style={{ fontSize:13, fontWeight:700, color:accentColor }}>{STYLE_LABELS[playStyle]}</span>
+            <span style={{ fontSize:13, fontWeight:700, color:accentColor }}>{t[playStyle]||playStyle}</span>
           </div>
           <h2 style={{ fontSize:26, fontWeight:900, letterSpacing:'-0.03em', marginBottom:6 }}>{t.whoIsPlaying}</h2>
           <p style={{ color:'var(--text-2)', fontSize:14 }}>{t.upTo16}</p>
@@ -177,7 +177,7 @@ export default function PlayerSetup() {
               <div>
                 <h3 style={{ fontSize:19, fontWeight:900, letterSpacing:'-0.02em', margin:0 }}>{t.gameRules}</h3>
                 <p style={{ fontSize:13, color:'var(--text-2)', margin:'2px 0 0' }}>
-                  {validNames.length} player{validNames.length!==1?'s':''} · {STYLE_LABELS[playStyle]}
+                  {validNames.length} player{validNames.length!==1?'s':''} · {t[playStyle]||playStyle}
                 </p>
               </div>
               <button onClick={() => setShowRules(false)} style={{ background:'none', border:'none', color:'var(--text-3)', cursor:'pointer', padding:4 }}>
@@ -185,7 +185,7 @@ export default function PlayerSetup() {
               </button>
             </div>
             <PlayingCardsRules
-              title={STYLE_LABELS[playStyle]}
+              title={t[playStyle]||playStyle}
               rules={RULES_MAP[playStyle] || []}
               accent={accentColor}
               onDone={() => {
