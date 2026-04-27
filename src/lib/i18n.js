@@ -1,7 +1,7 @@
 export const LANGUAGES = { en:'EN', de:'DE', fr:'FR', es:'ES', zh:'中文', hi:'हिन्दी' }
 
 export const LANG_META = {
-  en: { flag:'🇬🇧', name:'English',    native:'English'   },
+  en: { flag:'🇳🇿', name:'English',    native:'New Zealand' },
   de: { flag:'🇩🇪', name:'German',     native:'Deutsch'   },
   fr: { flag:'🇫🇷', name:'French',     native:'Français'  },
   es: { flag:'🇪🇸', name:'Spanish',    native:'Español'   },

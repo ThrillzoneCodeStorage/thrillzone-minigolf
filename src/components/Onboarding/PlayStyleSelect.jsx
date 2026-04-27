@@ -15,11 +15,28 @@ const STYLE_META = [
 const FLAGS = {
   en: () => (
     <svg width="22" height="16" viewBox="0 0 22 16" style={{ borderRadius:2, flexShrink:0 }}>
-      <rect width="22" height="16" fill="#012169"/>
-      <path d="M0,0 L22,16 M22,0 L0,16" stroke="#fff" strokeWidth="3"/>
-      <path d="M0,0 L22,16 M22,0 L0,16" stroke="#C8102E" strokeWidth="2"/>
-      <path d="M11,0 V16 M0,8 H22" stroke="#fff" strokeWidth="5"/>
-      <path d="M11,0 V16 M0,8 H22" stroke="#C8102E" strokeWidth="3"/>
+      {/* NZ Flag — blue ensign with Union Jack + Southern Cross */}
+      <rect width="22" height="16" fill="#00247D"/>
+      {/* Union Jack canton (top left, half size) */}
+      <g transform="scale(0.5)">
+        <path d="M0,0 L11,8 M11,0 L0,8" stroke="#fff" strokeWidth="3"/>
+        <path d="M0,0 L11,8 M11,0 L0,8" stroke="#C8102E" strokeWidth="2"/>
+        <path d="M5.5,0 V8 M0,4 H11" stroke="#fff" strokeWidth="2.5"/>
+        <path d="M5.5,0 V8 M0,4 H11" stroke="#C8102E" strokeWidth="1.5"/>
+      </g>
+      {/* Southern Cross — 4 red stars with white border on right side */}
+      {/* Alpha Crucis (bottom) */}
+      <polygon points="17,13 17.5,11.5 18,13 16.5,12 19,12" fill="#fff" transform="scale(0.85) translate(2,1)"/>
+      <polygon points="17,13 17.5,11.5 18,13 16.5,12 19,12" fill="#C8102E" transform="scale(0.72) translate(3.5,2)"/>
+      {/* Beta Crucis (left) */}
+      <polygon points="14,9 14.4,7.8 14.8,9 13.6,8.2 15.6,8.2" fill="#fff" transform="scale(0.75) translate(4,2)"/>
+      <polygon points="14,9 14.4,7.8 14.8,9 13.6,8.2 15.6,8.2" fill="#C8102E" transform="scale(0.62) translate(6,3)"/>
+      {/* Gamma Crucis (top) */}
+      <polygon points="17,5.5 17.4,4.3 17.8,5.5 16.6,4.7 18.6,4.7" fill="#fff" transform="scale(0.75) translate(2,0.5)"/>
+      <polygon points="17,5.5 17.4,4.3 17.8,5.5 16.6,4.7 18.6,4.7" fill="#C8102E" transform="scale(0.62) translate(4,1)"/>
+      {/* Delta Crucis (right) */}
+      <polygon points="20,9 20.4,7.8 20.8,9 19.6,8.2 21.6,8.2" fill="#fff" transform="scale(0.7) translate(0.5,2)"/>
+      <polygon points="20,9 20.4,7.8 20.8,9 19.6,8.2 21.6,8.2" fill="#C8102E" transform="scale(0.58) translate(2.5,3)"/>
     </svg>
   ),
   de: () => (
