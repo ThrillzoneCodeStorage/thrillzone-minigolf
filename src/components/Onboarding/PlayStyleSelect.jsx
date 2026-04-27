@@ -3,16 +3,22 @@ import { ChevronRight, X, Zap, Trophy, Shuffle, Smile, Smartphone, Disc } from '
 import { useGame } from '../../context/GameContext'
 import { STRINGS, LANGUAGES } from '../../lib/i18n'
 
-const STYLES = [
-  { id:'casual',      Icon:Zap,     name:'Casual',        tag:'Classic',        desc:'Normal scoring. Relaxed, no pressure.', color:'#FFD600', bg:'rgba(255,214,0,0.07)',   border:'rgba(255,214,0,0.25)' },
-  { id:'competitive', Icon:Trophy,  name:'Competitive',   tag:'One at a time',  desc:'Take turns. You can nudge other balls.', color:'#60a5fa', bg:'rgba(96,165,250,0.07)', border:'rgba(96,165,250,0.25)' },
-  { id:'silly',       Icon:Shuffle, name:'Silly',         tag:'Spin the wheel', desc:'Normal scoring + a spin wheel after every hole.', color:'#a78bfa', bg:'rgba(167,139,250,0.07)', border:'rgba(167,139,250,0.25)' },
-  { id:'fun',         Icon:Smile,   name:'Just for Fun',  tag:'No scores',      desc:'No scores, no leaderboard. Just enjoy the course.', color:'#fb923c', bg:'rgba(251,146,60,0.07)',  border:'rgba(251,146,60,0.25)' },
+const STYLE_META = [
+  { id:'casual',      Icon:Zap,     color:'#FFD600', bg:'rgba(255,214,0,0.07)',   border:'rgba(255,214,0,0.25)' },
+  { id:'competitive', Icon:Trophy,  color:'#60a5fa', bg:'rgba(96,165,250,0.07)', border:'rgba(96,165,250,0.25)' },
+  { id:'silly',       Icon:Shuffle, color:'#a78bfa', bg:'rgba(167,139,250,0.07)', border:'rgba(167,139,250,0.25)' },
+  { id:'fun',         Icon:Smile,   color:'#fb923c', bg:'rgba(251,146,60,0.07)',  border:'rgba(251,146,60,0.25)' },
 ]
 
 export default function PlayStyleSelect() {
   const { setPlayStyle, setOnboardStep, setSpinnerPreference, setOptOut, language, setLanguage } = useGame()
   const t = STRINGS[language] || STRINGS.en
+  const STYLES = STYLE_META.map(s => ({
+    ...s,
+    name: t[s.id],
+    tag:  s.id==='casual' ? t.classic : s.id==='competitive' ? t.oneAtATime : s.id==='silly' ? t.spinTheWheel : t.noScores,
+    desc: t[s.id+'Desc'],
+  }))
   const [showSpinChoice, setShowSpinChoice] = useState(false)
   const [pendingStyle,   setPendingStyle]   = useState(null)
 
@@ -98,18 +104,16 @@ export default function PlayStyleSelect() {
             <div style={{ width:60, height:60, borderRadius:16, background:'rgba(167,139,250,0.10)', border:'1.5px solid rgba(167,139,250,0.25)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 16px' }}>
               <Shuffle size={28} color="#a78bfa" strokeWidth={1.75}/>
             </div>
-            <h3 style={{ fontSize:20, fontWeight:900, letterSpacing:'-0.02em', marginBottom:8 }}>How do you want to spin?</h3>
-            <p style={{ fontSize:14, color:'var(--text-2)', lineHeight:1.65, marginBottom:24 }}>
-              After each hole someone spins for a challenge — digital on your phone or the physical wheel in the corner!
-            </p>
+            <h3 style={{ fontSize:20, fontWeight:900, letterSpacing:'-0.02em', marginBottom:8 }}>{t.howToSpin || 'How do you want to spin?'}</h3>
+            <p style={{ fontSize:14, color:'var(--text-2)', lineHeight:1.65, marginBottom:24 }}>{t.spinChoiceDesc || 'After each hole someone spins for a challenge — digital on your phone or the physical wheel in the corner!'}</p>
             <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
               <button className="btn btn-full" onClick={() => handleSpinChoice('digital')}
                 style={{ background:'rgba(167,139,250,0.10)', border:'1.5px solid rgba(167,139,250,0.30)', color:'#a78bfa', fontWeight:800, fontSize:15, padding:'16px', gap:10, display:'flex', alignItems:'center', justifyContent:'center', borderRadius:'var(--radius)', cursor:'pointer', fontFamily:'inherit' }}>
-                <Smartphone size={20}/> Spin on my phone
+                <Smartphone size={20}/>{t.spinOnPhone || 'Spin on my phone'}
               </button>
               <button className="btn btn-full" onClick={() => handleSpinChoice('physical')}
                 style={{ background:'var(--bg-card-2)', border:'1px solid var(--border)', color:'var(--text-2)', fontWeight:700, fontSize:15, padding:'16px', gap:10, display:'flex', alignItems:'center', justifyContent:'center', borderRadius:'var(--radius)', cursor:'pointer', fontFamily:'inherit' }}>
-                <Disc size={20}/> Use physical wheel in the corner
+                <Disc size={20}/>{t.spinPhysical || 'Use physical wheel in the corner'}
               </button>
             </div>
           </div>

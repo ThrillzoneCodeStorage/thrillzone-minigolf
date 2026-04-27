@@ -270,3 +270,47 @@ Object.assign(STRINGS, {
     gameOver:'खेल समाप्त',finalStandings:'अंतिम स्थिति',playAgain:'फिर खेलें',shareScorecard:'स्कोरकार्ड साझा करें',downloadPng:'PNG डाउनलोड करें',
   },
 })
+
+// Additional strings
+if (STRINGS.en) STRINGS.en.howToSpin = 'How do you want to spin?';
+if (STRINGS.en) STRINGS.en.spinChoiceDesc = 'After each hole someone spins for a challenge — digital on your phone or the physical wheel in the corner!';
+if (STRINGS.en) STRINGS.en.spinOnPhone = 'Spin on my phone';
+if (STRINGS.en) STRINGS.en.spinPhysical = 'Use physical wheel in the corner';
+if (STRINGS.en) STRINGS.en.duplicateNamesWarning = "Duplicate names — we'll add a number automatically (e.g. Max (2))";
+if (STRINGS.en) STRINGS.en.private = 'Private';
+if (STRINGS.en) STRINGS.en.public = 'Public';
+if (STRINGS.de) STRINGS.de.howToSpin = 'Wie möchtet ihr drehen?';
+if (STRINGS.de) STRINGS.de.spinChoiceDesc = 'Nach jedem Loch dreht jemand für eine Herausforderung — digital am Handy oder am physischen Rad in der Ecke!';
+if (STRINGS.de) STRINGS.de.spinOnPhone = 'Am Handy drehen';
+if (STRINGS.de) STRINGS.de.spinPhysical = 'Physisches Rad in der Ecke benutzen';
+if (STRINGS.de) STRINGS.de.duplicateNamesWarning = 'Doppelte Namen – wir fügen automatisch eine Zahl hinzu (z.B. Max (2))';
+if (STRINGS.de) STRINGS.de.private = 'Privat';
+if (STRINGS.de) STRINGS.de.public = 'Öffentlich';
+if (STRINGS.fr) STRINGS.fr.howToSpin = 'Comment voulez-vous tourner ?';
+if (STRINGS.fr) STRINGS.fr.spinChoiceDesc = "Après chaque trou quelqu'un tourne pour un défi — numérique sur le téléphone ou la roue physique dans le coin !";
+if (STRINGS.fr) STRINGS.fr.spinOnPhone = 'Tourner sur mon téléphone';
+if (STRINGS.fr) STRINGS.fr.spinPhysical = 'Utiliser la roue physique dans le coin';
+if (STRINGS.fr) STRINGS.fr.duplicateNamesWarning = 'Noms en double — nous ajouterons un numéro automatiquement (ex: Max (2))';
+if (STRINGS.fr) STRINGS.fr.private = 'Privé';
+if (STRINGS.fr) STRINGS.fr.public = 'Public';
+if (STRINGS.es) STRINGS.es.howToSpin = '¿Cómo quieres girar?';
+if (STRINGS.es) STRINGS.es.spinChoiceDesc = 'Después de cada hoyo alguien gira para un desafío — digital en el teléfono o la rueda física en la esquina.';
+if (STRINGS.es) STRINGS.es.spinOnPhone = 'Girar en mi teléfono';
+if (STRINGS.es) STRINGS.es.spinPhysical = 'Usar la rueda física en la esquina';
+if (STRINGS.es) STRINGS.es.duplicateNamesWarning = 'Nombres duplicados — añadiremos un número automáticamente (ej: Max (2))';
+if (STRINGS.es) STRINGS.es.private = 'Privado';
+if (STRINGS.es) STRINGS.es.public = 'Público';
+if (STRINGS.zh) STRINGS.zh.howToSpin = '你想怎么转？';
+if (STRINGS.zh) STRINGS.zh.spinChoiceDesc = '每个洞后有人转动获得挑战任务 — 用手机数字转盘或角落的实体转盘！';
+if (STRINGS.zh) STRINGS.zh.spinOnPhone = '用手机转';
+if (STRINGS.zh) STRINGS.zh.spinPhysical = '使用角落的实体转盘';
+if (STRINGS.zh) STRINGS.zh.duplicateNamesWarning = '重复名字 — 我们会自动添加编号（如 Max (2)）';
+if (STRINGS.zh) STRINGS.zh.private = '私密';
+if (STRINGS.zh) STRINGS.zh.public = '公开';
+if (STRINGS.hi) STRINGS.hi.howToSpin = 'आप कैसे घुमाना चाहते हैं?';
+if (STRINGS.hi) STRINGS.hi.spinChoiceDesc = 'हर होल के बाद कोई एक चुनौती के लिए घुमाता है — फोन पर या कोने में फिजिकल व्हील!';
+if (STRINGS.hi) STRINGS.hi.spinOnPhone = 'फोन पर घुमाएं';
+if (STRINGS.hi) STRINGS.hi.spinPhysical = 'कोने का फिजिकल व्हील इस्तेमाल करें';
+if (STRINGS.hi) STRINGS.hi.duplicateNamesWarning = 'डुप्लिकेट नाम — हम स्वचालित रूप से एक नंबर जोड़ेंगे (जैसे Max (2))';
+if (STRINGS.hi) STRINGS.hi.private = 'निजी';
+if (STRINGS.hi) STRINGS.hi.public = 'सार्वजनिक';

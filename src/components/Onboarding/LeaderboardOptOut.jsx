@@ -1,8 +1,10 @@
 import { ChevronLeft, ChevronRight, Tv, EyeOff } from 'lucide-react'
+import { STRINGS } from '../../lib/i18n'
 import { useGame } from '../../context/GameContext'
 
 export default function LeaderboardOptOut() {
-  const { optOut, setOptOut, setOnboardStep, playStyle, startGame, isLoading, spinnerPreference, pendingPlayers } = useGame()
+  const { optOut, setOptOut, setOnboardStep, playStyle, startGame, isLoading, spinnerPreference, pendingPlayers, language } = useGame()
+  const t = STRINGS[language] || STRINGS.en
 
   // This screen only appears after rules for non-fun modes
   // "Start Game" is called from here with the already-set players
@@ -15,14 +17,14 @@ export default function LeaderboardOptOut() {
       <div className="screen-content" style={{ display:'flex', flexDirection:'column', justifyContent:'center', minHeight:'100dvh' }}>
         <button onClick={() => setOnboardStep('players')}
           style={{ background:'none', border:'none', color:'var(--text-2)', fontSize:14, cursor:'pointer', textAlign:'left', marginBottom:32, fontFamily:'inherit', display:'flex', alignItems:'center', gap:6, fontWeight:600, padding:0 }}>
-          <ChevronLeft size={18}/> Back
+          <ChevronLeft size={18}/> {t.back}
         </button>
 
         <div style={{ textAlign:'center', marginBottom:32 }}>
           <div style={{ width:68, height:68, borderRadius:18, background:'var(--yellow-dim)', border:'1.5px solid var(--border-y)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 18px' }}>
             <Tv size={32} color="var(--yellow)" strokeWidth={1.5}/>
           </div>
-          <h2 style={{ fontSize:24, fontWeight:900, letterSpacing:'-0.03em', marginBottom:10 }}>Live Leaderboard</h2>
+          <h2 style={{ fontSize:24, fontWeight:900, letterSpacing:'-0.03em', marginBottom:10 }}>{t.leaderboard}</h2>
           <p style={{ color:'var(--text-2)', fontSize:15, lineHeight:1.65, maxWidth:300, margin:'0 auto' }}>
             Add your scores to the live room leaderboard?
           </p>
@@ -30,8 +32,8 @@ export default function LeaderboardOptOut() {
 
         <div style={{ display:'flex', flexDirection:'column', gap:12, marginBottom:28 }}>
           {[
-            { val:false, Icon:Tv,     title:'Yes, show us!',   desc:'Names and scores appear on the screen in the room.', color:'var(--yellow)', border:'var(--border-y)', bg:'var(--yellow-dim)' },
-            { val:true,  Icon:EyeOff, title:'No thanks',        desc:'We\'ll play without appearing on the public board.', color:'var(--text-2)',  border:'var(--border)',   bg:'var(--bg-card)'   },
+            { val:false, Icon:Tv,     titleKey:'yesShowUs', descKey:'namesAppear', color:'var(--yellow)', border:'var(--border-y)', bg:'var(--yellow-dim)' },
+            { val:true,  Icon:EyeOff, titleKey:'noThanks',  descKey:'playPrivate', color:'var(--text-2)',  border:'var(--border)',   bg:'var(--bg-card)'   },
           ].map(opt => (
             <button key={String(opt.val)} onClick={() => setOptOut(opt.val)}
               style={{ display:'flex', alignItems:'center', gap:16, background:optOut===opt.val?opt.bg:'var(--bg-card)', border:`1.5px solid ${optOut===opt.val?opt.border:'var(--border)'}`, borderRadius:'var(--radius)', padding:'16px 18px', cursor:'pointer', textAlign:'left', fontFamily:'inherit', width:'100%', transition:'all 0.15s' }}>
@@ -39,8 +41,8 @@ export default function LeaderboardOptOut() {
                 <opt.Icon size={20} color={optOut===opt.val?opt.color:'var(--text-3)'} strokeWidth={1.75}/>
               </div>
               <div style={{ flex:1 }}>
-                <p style={{ fontSize:15, fontWeight:800, color:optOut===opt.val?opt.color:'var(--text)', marginBottom:3, letterSpacing:'-0.01em' }}>{opt.title}</p>
-                <p style={{ fontSize:13, color:'var(--text-2)', lineHeight:1.4 }}>{opt.desc}</p>
+                <p style={{ fontSize:15, fontWeight:800, color:optOut===opt.val?opt.color:'var(--text)', marginBottom:3, letterSpacing:'-0.01em' }}>{t[opt.titleKey]}</p>
+                <p style={{ fontSize:13, color:'var(--text-2)', lineHeight:1.4 }}>{t[opt.descKey]}</p>
               </div>
               <div style={{ width:22, height:22, borderRadius:'50%', border:`2px solid ${optOut===opt.val?opt.color:'var(--text-3)'}`, background:optOut===opt.val?opt.color:'transparent', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, transition:'all 0.15s' }}>
                 {optOut===opt.val && <span style={{ color:'#000', fontSize:11, fontWeight:900 }}>✓</span>}
@@ -50,7 +52,7 @@ export default function LeaderboardOptOut() {
         </div>
 
         <button className="btn btn-primary btn-full btn-lg" onClick={handleStart} disabled={isLoading}>
-          {isLoading ? 'Starting…' : 'Start Game'} {!isLoading && <ChevronRight size={18}/>}
+          {isLoading ? t.starting : t.startGame} {!isLoading && <ChevronRight size={18}/>}
         </button>
       </div>
     </div>

@@ -274,28 +274,17 @@ export default function HoleScreen() {
 
   const currentPlayer = players[currentTurnIndex % players.length]
 
-  // Pick 3 player colours for the ambient orbs
-  const orbColors = players.slice(0, 3).map(p => p.color)
-  while (orbColors.length < 3) orbColors.push('#FFD600')
+  // Player colours for background sheen
+  const orbColors = [players[0]?.color||'#FFD600', players[1]?.color||'#FFD600', players[2]?.color||'#FFD600']
 
   return (
     <div className="screen" style={{ position:'relative', overflow:'hidden' }}>
-      {/* Ambient background orbs — very subtle */}
+      {/* Shining background — moving light sweep */}
       <div style={{ position:'absolute', inset:0, zIndex:0, pointerEvents:'none', overflow:'hidden' }}>
-        {orbColors.map((col, i) => (
-          <div key={i} style={{
-            position:'absolute',
-            width: i === 0 ? 280 : i === 1 ? 220 : 180,
-            height: i === 0 ? 280 : i === 1 ? 220 : 180,
-            borderRadius:'50%',
-            background: col,
-            opacity: 0.028,
-            top: i === 0 ? '-60px' : i === 1 ? '40%' : '70%',
-            left: i === 0 ? '-40px' : i === 1 ? '55%' : '-20px',
-            animation: `orbFloat${i} ${14 + i * 5}s ease-in-out infinite`,
-            filter:'blur(0px)',
-          }}/>
-        ))}
+        <div style={{ position:'absolute', inset:0, background:`radial-gradient(ellipse 80% 60% at 50% -10%, ${orbColors[0]}12 0%, transparent 70%)` }}/>
+        <div style={{ position:'absolute', inset:0, background:`linear-gradient(105deg, transparent 30%, ${orbColors[0]}09 50%, transparent 70%)`, animation:'shineSweep1 8s ease-in-out infinite' }}/>
+        <div style={{ position:'absolute', inset:0, background:`linear-gradient(75deg, transparent 40%, ${orbColors[1]}06 58%, transparent 76%)`, animation:'shineSweep2 13s ease-in-out infinite' }}/>
+        <div style={{ position:'absolute', bottom:0, left:0, right:0, height:'35%', background:`linear-gradient(to top, ${orbColors[2]}08, transparent)`, animation:'glowPulse 6s ease-in-out infinite' }}/>
       </div>
       {/* Progress */}
       <div style={{ height:3, background:'var(--bg-card-2)', flexShrink:0, position:'relative', zIndex:1 }}>
@@ -664,9 +653,9 @@ export default function HoleScreen() {
       <style>{`
         @keyframes countUp{from{transform:translateY(8px) scale(0.88);opacity:0}to{transform:none;opacity:1}}
         @keyframes popIn{0%{opacity:0;transform:scale(0.6)}80%{transform:scale(1.04)}100%{opacity:1;transform:scale(1)}}
-        @keyframes orbFloat0{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(30px,40px) scale(1.08)}66%{transform:translate(-20px,20px) scale(0.95)}}
-        @keyframes orbFloat1{0%,100%{transform:translate(0,0) scale(1)}40%{transform:translate(-40px,-30px) scale(1.1)}70%{transform:translate(25px,15px) scale(0.92)}}
-        @keyframes orbFloat2{0%,100%{transform:translate(0,0) scale(1)}30%{transform:translate(20px,-40px) scale(1.06)}65%{transform:translate(-30px,30px) scale(0.97)}}
+        @keyframes shineSweep1{0%,100%{transform:translateX(-60%) skewX(-8deg);opacity:0.5}50%{transform:translateX(60%) skewX(-8deg);opacity:1}}
+        @keyframes shineSweep2{0%,100%{transform:translateX(50%) skewX(6deg);opacity:0.3}50%{transform:translateX(-50%) skewX(6deg);opacity:0.8}}
+        @keyframes glowPulse{0%,100%{opacity:0.5}50%{opacity:1}}
       `}</style>
     </div>
   )

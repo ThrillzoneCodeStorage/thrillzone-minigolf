@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { ChevronLeft, ChevronRight, Plus, X } from 'lucide-react'
 import { useGame } from '../../context/GameContext'
 import PlayingCardsRules from '../Rules/PlayingCardsRules'
+import { STRINGS } from '../../lib/i18n'
 import { checkAllNames } from '../../lib/filter'
 
 const PLAYER_COLORS = [
@@ -23,7 +24,7 @@ const PLAYER_COLORS = [
   '#f87171',
 ]
 
-const STYLE_LABELS = { casual:'Casual', competitive:'Competitive', silly:'Silly', fun:'Just for Fun' }
+// STYLE_LABELS computed dynamically from t inside component
 
 const RULES_MAP = {
   casual:      ['Count every stroke honestly.','Your ball must stop before your next shot.','Ball out of bounds = +1 penalty stroke.','Lowest total strokes at the end wins!'],
@@ -35,7 +36,8 @@ const RULES_MAP = {
 const STYLE_COLORS = { casual:'#FFD600', competitive:'#60a5fa', silly:'#a78bfa', fun:'#fb923c' }
 
 export default function PlayerSetup() {
-  const { setOnboardStep, playStyle, optOut, startGame, isLoading, spinnerPreference, setPendingPlayers } = useGame()
+  const { setOnboardStep, playStyle, optOut, startGame, isLoading, spinnerPreference, setPendingPlayers, language } = useGame()
+  const t = STRINGS[language] || STRINGS.en
   const [names,     setNames]     = useState([''])
   const [showRules, setShowRules]   = useState(false)
   const [filterWarning, setFilterWarning] = useState(null) // names that triggered filter
@@ -84,15 +86,15 @@ export default function PlayerSetup() {
       <div className="screen-content" style={{ paddingBottom:40 }}>
         <button onClick={() => setOnboardStep('playStyle')}
           style={{ background:'none', border:'none', color:'var(--text-2)', fontSize:14, cursor:'pointer', textAlign:'left', marginBottom:24, fontFamily:'inherit', display:'flex', alignItems:'center', gap:6, fontWeight:600, padding:0 }}>
-          <ChevronLeft size={18}/> Back
+          <ChevronLeft size={18}/>{t.back}
         </button>
 
         <div style={{ textAlign:'center', marginBottom:24 }}>
           <div style={{ display:'inline-flex', alignItems:'center', gap:8, background:`${accentColor}12`, border:`1px solid ${accentColor}30`, borderRadius:20, padding:'5px 14px', marginBottom:12 }}>
             <span style={{ fontSize:13, fontWeight:700, color:accentColor }}>{STYLE_LABELS[playStyle]}</span>
           </div>
-          <h2 style={{ fontSize:26, fontWeight:900, letterSpacing:'-0.03em', marginBottom:6 }}>Who's playing?</h2>
-          <p style={{ color:'var(--text-2)', fontSize:14 }}>Add up to 16 players</p>
+          <h2 style={{ fontSize:26, fontWeight:900, letterSpacing:'-0.03em', marginBottom:6 }}>{t.whoIsPlaying}</h2>
+          <p style={{ color:'var(--text-2)', fontSize:14 }}>{t.upTo16}</p>
         </div>
 
         <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:14 }}>
@@ -121,20 +123,20 @@ export default function PlayerSetup() {
 
         {hasDupe && (
           <p style={{ fontSize:12, color:'var(--yellow)', marginBottom:12, paddingLeft:4 }}>
-            Duplicate names will get a number added automatically (e.g. "Max (2)")
+            {t.duplicateNamesWarning || 'Duplicate names — we\'ll add a number automatically'}
           </p>
         )}
 
         {names.length < 16 && (
           <button className="btn btn-ghost btn-full" onClick={add} style={{ marginBottom:16, gap:7 }}>
-            <Plus size={15}/> Add player
+            <Plus size={15}/> {t.addPlayer}
           </button>
         )}
 
         <button className="btn btn-primary btn-full btn-lg" onClick={handleContinue}
           disabled={!validNames.length || isLoading}
           style={{ gap:7 }}>
-          View rules &amp; start <ChevronRight size={18}/>
+          {t.viewRulesStart} <ChevronRight size={18}/>
         </button>
       </div>
 
@@ -173,7 +175,7 @@ export default function PlayerSetup() {
           <div className="modal-sheet" onClick={e => e.stopPropagation()}>
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:22 }}>
               <div>
-                <h3 style={{ fontSize:19, fontWeight:900, letterSpacing:'-0.02em', margin:0 }}>Game Rules</h3>
+                <h3 style={{ fontSize:19, fontWeight:900, letterSpacing:'-0.02em', margin:0 }}>{t.gameRules}</h3>
                 <p style={{ fontSize:13, color:'var(--text-2)', margin:'2px 0 0' }}>
                   {validNames.length} player{validNames.length!==1?'s':''} · {STYLE_LABELS[playStyle]}
                 </p>
