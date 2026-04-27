@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import { useGame } from '../../context/GameContext'
 import { supabase as supabaseClient, getSpinnerEffects, getGameModeRules } from '../../lib/supabase'
+import { STRINGS } from '../../lib/i18n'
 import SpinnerWheel from '../SpinnerWheel/SpinnerWheel'
 import { CameraNavButton, PhotoGallery } from '../PhotoSystem/PhotoSystem'
 import { HoleInOnePopup, FloatNumber, HoleTransition } from './Celebrations'
@@ -38,7 +39,7 @@ function PhysicalSpinnerPrompt({ onDone }) {
           Head to the physical wheel in the corner and give it a spin. Come back when you're done!
         </p>
         <button className="btn btn-primary btn-full btn-lg" onClick={onDone}>
-          <CheckCircle size={18}/> Done — let's continue!
+          <CheckCircle size={18}/> {t.doneLetsContinue}
         </button>
       </div>
     </div>
@@ -56,13 +57,13 @@ function ModeChangeModal({ current, onSelect, onClose, onRestart }) {
         <div style={{ width:52, height:52, borderRadius:14, background:'rgba(255,59,59,0.10)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 14px' }}>
           <AlertTriangle size={26} color="var(--red)"/>
         </div>
-        <h3 style={{ fontSize:18, fontWeight:900, marginBottom:8, letterSpacing:'-0.02em' }}>Restart the game?</h3>
+        <h3 style={{ fontSize:18, fontWeight:900, marginBottom:8, letterSpacing:'-0.02em' }}>{t.restartQ}</h3>
         <p style={{ fontSize:14, color:'var(--text-2)', lineHeight:1.6, marginBottom:20 }}>
           All scores and photos from this round will be lost. This cannot be undone.
         </p>
         <div style={{ display:'flex', gap:9 }}>
-          <button className="btn btn-ghost" style={{ flex:1 }} onClick={() => setConfirmRestart(false)}>Cancel</button>
-          <button className="btn btn-danger" style={{ flex:1 }} onClick={onRestart}>Restart</button>
+          <button className="btn btn-ghost" style={{ flex:1 }} onClick={() => setConfirmRestart(false)}>{t.cancel}</button>
+          <button className="btn btn-danger" style={{ flex:1 }} onClick={onRestart}>{t.restart}</button>
         </div>
       </div>
     </div>
@@ -72,7 +73,7 @@ function ModeChangeModal({ current, onSelect, onClose, onRestart }) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-sheet" onClick={e => e.stopPropagation()}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
-          <h3 style={{ fontSize:19, fontWeight:900, letterSpacing:'-0.02em' }}>Game Options</h3>
+          <h3 style={{ fontSize:19, fontWeight:900, letterSpacing:'-0.02em' }}>{t.gameOptions}</h3>
           <button onClick={onClose} style={{ background:'none', border:'none', color:'var(--text-2)', cursor:'pointer', padding:4, display:'flex' }}>
             <X size={20}/>
           </button>
@@ -93,7 +94,7 @@ function ModeChangeModal({ current, onSelect, onClose, onRestart }) {
                 }}>
                 <div style={{ width:10, height:10, borderRadius:'50%', background:cfg.color, flexShrink:0 }}/>
                 <span style={{ fontSize:15, fontWeight:800, color:isCurrent?cfg.color:'var(--text)', letterSpacing:'-0.01em' }}>{cfg.label}</span>
-                {isCurrent && <span style={{ marginLeft:'auto', fontSize:12, color:cfg.color, fontWeight:700 }}>Current</span>}
+                {isCurrent && <span style={{ marginLeft:'auto', fontSize:12, color:cfg.color, fontWeight:700 }}>{t.current}</span>}
               </button>
             )
           })}
@@ -118,7 +119,7 @@ export default function HoleScreen() {
     showPhotoGallery, setShowPhotoGallery,
     showSpinner, dismissSpinner, setShowSpinner, setSpinnerEffect,
     currentTurnIndex, setCurrentTurnIndex,
-    previousHoleWinner, leaderboard,
+    previousHoleWinner, leaderboard, language,
     spinnerPreference,
     showPostHole8Camera, setShowPostHole8Camera,
   } = useGame()
@@ -314,7 +315,7 @@ export default function HoleScreen() {
               border:`1px solid ${currentHole.type==='hole'?'rgba(255,214,0,0.22)':'rgba(167,139,250,0.22)'}`,
             }}>
               {currentHole.type==='hole'?<Flag size={10}/>:<Target size={10}/>}
-              {currentHole.type==='hole'?'Hole':'Challenge'}
+              {currentHole.type==='hole'?t.hole:t.challenge}
             </span>
           </div>
           <div style={{ display:'flex', gap:7 }}>
@@ -326,7 +327,7 @@ export default function HoleScreen() {
             </button>
             <button onClick={() => setShowRules(true)}
               style={{ background:'var(--bg-card-2)', border:'1px solid var(--border)', borderRadius:8, padding:'6px 12px', color:'var(--text-2)', fontSize:13, cursor:'pointer', fontFamily:'inherit', fontWeight:600, display:'flex', alignItems:'center', gap:5, minHeight:36 }}>
-              <Info size={14}/> Rules
+              <Info size={14}/> {t.rules}
             </button>
           </div>
         </div>
@@ -436,9 +437,9 @@ export default function HoleScreen() {
                         <div style={{ fontSize:9, fontWeight:700, color:'var(--text-3)', marginBottom:1 }}>+{gap}</div>
                       )}
                       {gap === null && isFirst && (
-                        <div style={{ fontSize:9, fontWeight:700, color:`${player.color}60`, marginBottom:1, textTransform:'uppercase', letterSpacing:'0.05em' }}>Leading</div>
+                        <div style={{ fontSize:9, fontWeight:700, color:`${player.color}60`, marginBottom:1, textTransform:'uppercase', letterSpacing:'0.05em' }}>{t.leading}</div>
                       )}
-                      <div style={{ fontSize:9, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color: isFirst?`${player.color}55`:'var(--text-3)', lineHeight:1, marginBottom:1 }}>Total</div>
+                      <div style={{ fontSize:9, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color: isFirst?`${player.color}55`:'var(--text-3)', lineHeight:1, marginBottom:1 }}>{t.total}</div>
                       <div style={{ fontSize:totalSize, fontWeight:900, color:isFirst?player.color:isUnscored?'var(--text-3)':'var(--text-2)', letterSpacing:'-0.03em', lineHeight:1 }}>
                         {lbPlayer.holesPlayed > 0 ? runningTotal : '—'}
                       </div>
@@ -482,11 +483,11 @@ export default function HoleScreen() {
         {/* Nav */}
         <div style={{ display:'flex', gap:9, marginBottom:9 }}>
           <button className="btn btn-ghost" onClick={() => goToHole(currentHoleIndex-1)} disabled={currentHoleIndex===0} style={{ flex:1, gap:5 }}>
-            <ChevronLeft size={17}/> Back
+            <ChevronLeft size={17}/> {t.back}
           </button>
           <CameraNavButton onClick={() => setShowPhotoGallery(true)} photoCount={0}/>
           <button className="btn btn-primary" onClick={handleNext} style={{ flex:2, gap:5 }}>
-            {isLast ? 'Finish' : 'Next'}{!isLast && <ChevronRight size={17}/>}
+            {isLast ? t.finish : t.next}{!isLast && <ChevronRight size={17}/>}
           </button>
         </div>
 
@@ -546,8 +547,8 @@ export default function HoleScreen() {
           <div className="modal-sheet" style={{ maxHeight:'80dvh' }} onClick={e => e.stopPropagation()}>
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:16 }}>
               <div>
-                <h3 style={{ fontSize:18, fontWeight:900, letterSpacing:'-0.02em', margin:0 }}>Jump to a hole</h3>
-                <p style={{ fontSize:13, color:'var(--text-2)', margin:0 }}>Tap any hole to go there, or skip the current one</p>
+                <h3 style={{ fontSize:18, fontWeight:900, letterSpacing:'-0.02em', margin:0 }}>{t.jumpToHole}</h3>
+                <p style={{ fontSize:13, color:'var(--text-2)', margin:0 }}>{t.skipHole}</p>
               </div>
               <button onClick={() => setShowHoleList(false)} style={{ background:'none', border:'none', color:'var(--text-2)', cursor:'pointer', display:'flex' }}><X size={20}/></button>
             </div>
@@ -573,9 +574,9 @@ export default function HoleScreen() {
                     <span style={{ flex:1, fontSize:14, fontWeight:isCurrent?800:600, color:isCurrent?'var(--yellow)':'var(--text)', letterSpacing:'-0.01em', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
                       {h.title}
                     </span>
-                    {isCurrent && <span style={{ fontSize:11, color:'var(--yellow)', fontWeight:700, flexShrink:0 }}>Current</span>}
-                    {isSkipped && <span style={{ fontSize:11, color:'var(--text-3)', fontWeight:600, flexShrink:0 }}>Skipped</span>}
-                    {!isCurrent && !isSkipped && hasScores && <span style={{ fontSize:11, color:'var(--text-3)', fontWeight:600, flexShrink:0 }}>Scored</span>}
+                    {isCurrent && <span style={{ fontSize:11, color:'var(--yellow)', fontWeight:700, flexShrink:0 }}>{t.current}</span>}
+                    {isSkipped && <span style={{ fontSize:11, color:'var(--text-3)', fontWeight:600, flexShrink:0 }}>{t.skipped}</span>}
+                    {!isCurrent && !isSkipped && hasScores && <span style={{ fontSize:11, color:'var(--text-3)', fontWeight:600, flexShrink:0 }}>{t.scored}</span>}
                   </button>
                 )
               })}
@@ -596,15 +597,13 @@ export default function HoleScreen() {
             <div style={{ width:52, height:52, borderRadius:14, background:'rgba(255,59,59,0.10)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 14px' }}>
               <AlertTriangle size={26} color="var(--red)"/>
             </div>
-            <h3 style={{ fontSize:18, fontWeight:900, marginBottom:8, letterSpacing:'-0.02em' }}>No scores entered</h3>
-            <p style={{ fontSize:14, color:'var(--text-2)', lineHeight:1.6, marginBottom:20 }}>
-              None of your players have a score yet. Skip this hole, or go back and score it.
-            </p>
+            <h3 style={{ fontSize:18, fontWeight:900, marginBottom:8, letterSpacing:'-0.02em' }}>{t.noScoresEntered}</h3>
+            <p style={{ fontSize:14, color:'var(--text-2)', lineHeight:1.6, marginBottom:20 }}>{t.noScoresMsg}</p>
             <div style={{ display:'flex', flexDirection:'column', gap:9 }}>
               <button className="btn btn-primary btn-full" onClick={() => { setShowZeroWarn(false); skipHole() }}>
                 <SkipForward size={15}/> Skip this hole
               </button>
-              <button className="btn btn-ghost btn-full" onClick={() => setShowZeroWarn(false)}>Go back and score it</button>
+              <button className="btn btn-ghost btn-full" onClick={() => setShowZeroWarn(false)}>{t.goBackScore}</button>
             </div>
           </div>
         </div>
@@ -617,13 +616,13 @@ export default function HoleScreen() {
             <div style={{ width:52, height:52, borderRadius:14, background:'var(--yellow-dim)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 14px' }}>
               <SkipForward size={26} color="var(--yellow)"/>
             </div>
-            <h3 style={{ fontSize:18, fontWeight:900, marginBottom:8, letterSpacing:'-0.02em' }}>Skip this hole?</h3>
+            <h3 style={{ fontSize:18, fontWeight:900, marginBottom:8, letterSpacing:'-0.02em' }}>{t.skipHoleQ}</h3>
             <p style={{ fontSize:14, color:'var(--text-2)', lineHeight:1.6, marginBottom:20 }}>
-              Shows as <strong style={{ color:'var(--text)' }}>—</strong> in your scorecard and won't count. You can fill it in at the end.
+              Shows as {t.skipHoleDesc}
             </p>
             <div style={{ display:'flex', gap:9 }}>
-              <button className="btn btn-ghost" style={{ flex:1 }} onClick={() => setShowSkipConfirm(false)}>Cancel</button>
-              <button className="btn btn-primary" style={{ flex:2 }} onClick={() => { setShowSkipConfirm(false); skipHole() }}>Skip it</button>
+              <button className="btn btn-ghost" style={{ flex:1 }} onClick={() => setShowSkipConfirm(false)}>{t.cancel}</button>
+              <button className="btn btn-primary" style={{ flex:2 }} onClick={() => { setShowSkipConfirm(false); skipHole() }}>{t.skipIt}</button>
             </div>
           </div>
         </div>
@@ -657,6 +656,7 @@ export default function HoleScreen() {
           onSelect={changePlayStyle}
           onClose={() => setShowModeChange(false)}
           onRestart={() => { setShowModeChange(false); playAgain() }}
+          language={language}
         />
       )}
 

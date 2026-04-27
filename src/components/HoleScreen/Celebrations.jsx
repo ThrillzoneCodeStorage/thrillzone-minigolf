@@ -255,7 +255,9 @@ export function HoleInOnePopup({ players, onDismiss }) {
           background:'linear-gradient(135deg,#FFD600,#fff,#FFD600)',
           WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent', backgroundClip:'text',
         }}>
-          {multi ? 'HOLE IN ONES!' : 'HOLE IN ONE!'}
+          {animType === 'kiwi'
+            ? (multi ? 'Sweet as! Hole in Ones!' : 'Sweet as! Hole in One!')
+            : (multi ? 'HOLE IN ONES!' : 'HOLE IN ONE!')}
         </div>
 
         <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:8, marginBottom:28, animation:'bounceIn 0.6s 0.16s cubic-bezier(0.34,1.56,0.64,1) both' }}>
