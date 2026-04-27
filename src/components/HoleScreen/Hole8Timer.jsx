@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { Play, RotateCcw } from 'lucide-react'
 
-export default function Hole8Timer() {
+export default function Hole8Timer({ seconds = 30 }) {
   const [phase, setPhase] = useState('idle') // idle | countdown | running | done
   const [count, setCount]  = useState(3)
-  const [secs,  setSecs]   = useState(30)
+  const [secs,  setSecs]   = useState(seconds)
   const intervalRef = useRef(null)
 
   function clearAll() { clearInterval(intervalRef.current) }
@@ -19,8 +19,8 @@ export default function Hole8Timer() {
       else {
         clearAll()
         setPhase('running')
-        setSecs(30)
-        let s = 30
+        setSecs(seconds)
+        let s = seconds
         intervalRef.current = setInterval(() => {
           s--
           setSecs(s)
@@ -30,11 +30,11 @@ export default function Hole8Timer() {
     }, 1000)
   }
 
-  function reset() { clearAll(); setPhase('idle'); setCount(3); setSecs(30) }
+  function reset() { clearAll(); setPhase('idle'); setCount(3); setSecs(seconds) }
 
   useEffect(() => () => clearAll(), [])
 
-  const pct = secs / 30
+  const pct = secs / seconds
   const r   = 52
   const circ = 2 * Math.PI * r
 

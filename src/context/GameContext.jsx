@@ -53,6 +53,7 @@ export function GameProvider({ children }) {
   const [isLoading, setIsLoading]             = useState(false)
   // New state
   const [spinnerPreference, setSpinnerPreference] = useState('digital') // 'digital' | 'physical'
+  const [language, setLanguage]                   = useState(() => localStorage.getItem('tz_lang') || 'en')
   const [showPostHole8Camera, setShowPostHole8Camera] = useState(false)
 
   // Resume session on mount
@@ -283,6 +284,7 @@ export function GameProvider({ children }) {
     showPostHole8Camera, setShowPostHole8Camera,
     startGame, goToHole, nextHole, dismissSpinner, playAgain,
     pendingPlayers, setPendingPlayers,
+    language, setLanguage: (lang) => { localStorage.setItem('tz_lang', lang); setLanguage(lang) },
   }
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>

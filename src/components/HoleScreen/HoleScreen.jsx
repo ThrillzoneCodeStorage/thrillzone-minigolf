@@ -5,7 +5,7 @@ import {
   Shuffle, Camera, RefreshCw
 } from 'lucide-react'
 import { useGame } from '../../context/GameContext'
-import { getSpinnerEffects, getGameModeRules } from '../../lib/supabase'
+import { supabase as supabaseClient, getSpinnerEffects, getGameModeRules } from '../../lib/supabase'
 import SpinnerWheel from '../SpinnerWheel/SpinnerWheel'
 import { CameraNavButton, PhotoGallery } from '../PhotoSystem/PhotoSystem'
 import { HoleInOnePopup, FloatNumber, HoleTransition } from './Celebrations'
@@ -124,6 +124,7 @@ export default function HoleScreen() {
   } = useGame()
 
   const [localScores, setLocalScores]           = useState({})
+  const [displayOrder, setDisplayOrder]         = useState([])  // locked per hole
   const [showRules, setShowRules]               = useState(false)
   const [showModeChange, setShowModeChange]     = useState(false)
   const [rules, setRules]                       = useState([])
@@ -132,6 +133,9 @@ export default function HoleScreen() {
   const [showZeroWarn, setShowZeroWarn]         = useState(false)
   const [showSkipConfirm, setShowSkipConfirm]   = useState(false)
   const [showHoleList, setShowHoleList]         = useState(false)
+  const [timerHoleIndex, setTimerHoleIndex]     = useState(7) // 0-indexed, default hole 8
+  const [timerSeconds,   setTimerSeconds]       = useState(30)
+  const [timerEnabled,   setTimerEnabled]       = useState(true)
   const [showPhysicalSpin, setShowPhysicalSpin] = useState(false)
   const [holeInOnePlayers, setHoleInOnePlayers] = useState([])
   const [floaters, setFloaters]                 = useState([])
@@ -144,6 +148,24 @@ export default function HoleScreen() {
   }, [playStyle])
 
   useEffect(() => {
+    async function loadTimerSettings() {
+      try {
+        const [en, hole, secs] = await Promise.all([
+          supabaseClient.from('admin_settings').select('value').eq('key','timer_enabled').single(),
+          supabaseClient.from('admin_settings').select('value').eq('key','timer_hole').single(),
+          supabaseClient.from('admin_settings').select('value').eq('key','timer_seconds').single(),
+        ])
+        if (en.data)   setTimerEnabled(en.data.value !== 'false')
+        if (hole.data) setTimerHoleIndex((parseInt(hole.data.value) || 8) - 1)
+        if (secs.data) setTimerSeconds(parseInt(secs.data.value) || 30)
+      } catch {}
+    }
+    loadTimerSettings()
+  }, [])
+
+  // Lock leaderboard order when hole loads — no resorting during scoring
+  const [lockedOrder, setLockedOrder] = useState([])
+  useEffect(() => {
     if (!currentHole) return
     const existing = scores[currentHole.id] || {}
     const initial = {}
@@ -152,6 +174,11 @@ export default function HoleScreen() {
       initial[p.name] = (saved !== undefined && saved !== null) ? saved : null
     })
     setLocalScores(initial)
+    // Snapshot current leaderboard order (or player order if no scores yet)
+    const order = leaderboard.length > 0
+      ? leaderboard.map(p => p.name)
+      : players.map(p => p.name)
+    setLockedOrder(order)
   }, [currentHole?.id])
 
   if (!currentHole) return (
@@ -162,18 +189,18 @@ export default function HoleScreen() {
 
   // Adaptive card sizing based on player count
   const pCount = players.length
-  const cardPad     = pCount <= 2 ? '14px 14px' : pCount <= 4 ? '10px 12px' : pCount <= 6 ? '8px 11px' : '6px 10px'
-  const nameSize    = pCount <= 2 ? 15 : pCount <= 4 ? 14 : pCount <= 6 ? 13 : 12
-  const btnSize     = pCount <= 2 ? 48 : pCount <= 4 ? 42 : pCount <= 6 ? 38 : 34
-  const btnFont     = pCount <= 2 ? 22 : pCount <= 4 ? 20 : pCount <= 6 ? 18 : 16
-  const scoreFont   = pCount <= 2 ? 28 : pCount <= 4 ? 24 : pCount <= 6 ? 20 : 18
-  const cardGap     = pCount <= 4 ? 8 : pCount <= 6 ? 6 : 4
+  // 1-4 large | 5-6 medium | 7-8 small | 9+ compact
+  const nameSize    = pCount <= 4 ? 15 : pCount <= 6 ? 13 : pCount <= 8 ? 12 : 11
+  const btnSize     = pCount <= 4 ? 44 : pCount <= 6 ? 38 : pCount <= 8 ? 34 : 30
+  const btnFont     = pCount <= 4 ? 20 : pCount <= 6 ? 18 : pCount <= 8 ? 16 : 14
+  const scoreFont   = pCount <= 4 ? 26 : pCount <= 6 ? 22 : pCount <= 8 ? 19 : 17
+  const cardGap     = pCount <= 4 ? 9 : pCount <= 6 ? 7 : pCount <= 8 ? 5 : 4
   const headerMb    = pCount <= 4 ? 6 : 4
 
   const holeNum    = currentHoleIndex + 1
   const totalHoles = holes.length
   const isLast     = currentHoleIndex === totalHoles - 1
-  const isHole8    = currentHoleIndex === 7
+  const isHole8    = timerEnabled && currentHoleIndex === timerHoleIndex
   const allUnset   = players.every(p => localScores[p.name] === null || localScores[p.name] === undefined)
 
   function increment(playerName) {
@@ -245,15 +272,36 @@ export default function HoleScreen() {
 
   const currentPlayer = players[currentTurnIndex % players.length]
 
+  // Pick 3 player colours for the ambient orbs
+  const orbColors = players.slice(0, 3).map(p => p.color)
+  while (orbColors.length < 3) orbColors.push('#FFD600')
+
   return (
-    <div className="screen">
+    <div className="screen" style={{ position:'relative', overflow:'hidden' }}>
+      {/* Ambient background orbs — very subtle */}
+      <div style={{ position:'absolute', inset:0, zIndex:0, pointerEvents:'none', overflow:'hidden' }}>
+        {orbColors.map((col, i) => (
+          <div key={i} style={{
+            position:'absolute',
+            width: i === 0 ? 280 : i === 1 ? 220 : 180,
+            height: i === 0 ? 280 : i === 1 ? 220 : 180,
+            borderRadius:'50%',
+            background: col,
+            opacity: 0.028,
+            top: i === 0 ? '-60px' : i === 1 ? '40%' : '70%',
+            left: i === 0 ? '-40px' : i === 1 ? '55%' : '-20px',
+            animation: `orbFloat${i} ${14 + i * 5}s ease-in-out infinite`,
+            filter:'blur(0px)',
+          }}/>
+        ))}
+      </div>
       {/* Progress */}
-      <div style={{ height:3, background:'var(--bg-card-2)', flexShrink:0 }}>
+      <div style={{ height:3, background:'var(--bg-card-2)', flexShrink:0, position:'relative', zIndex:1 }}>
         <div style={{ height:'100%', width:`${(holeNum/totalHoles)*100}%`, background:'var(--yellow)', transition:'width 0.5s cubic-bezier(0.16,1,0.3,1)', borderRadius:'0 2px 2px 0', boxShadow:'0 0 8px rgba(255,214,0,0.4)' }}/>
       </div>
 
-      {/* Header */}
-      <div style={{ padding:'13px 20px 0', flexShrink:0 }}>
+      {/* Header — sticky, never scrolls */}
+      <div style={{ padding:'13px 20px 8px', flexShrink:0, position:'relative', zIndex:2, background:'var(--bg)', borderBottom:'1px solid rgba(255,255,255,0.04)' }}>
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:9 }}>
           <div style={{ display:'flex', alignItems:'center', gap:8 }}>
             <span style={{ fontSize:13, fontWeight:900, color:'var(--yellow)', letterSpacing:'-0.01em' }}>
@@ -302,15 +350,16 @@ export default function HoleScreen() {
       </div>
 
       {/* Score inputs */}
-      <div className="screen-content" style={{ paddingTop:8 }}>
+      <div className="screen-content" style={{ paddingTop:10, paddingBottom:16, position:'relative', zIndex:1, overflowY:'auto', WebkitOverflowScrolling:'touch', flex:1 }}>
 
         {/* Hole 8 timer */}
-        {isHole8 && <Hole8Timer/>}
+        {isHole8 && <Hole8Timer seconds={timerSeconds}/>}
 
         {playStyle!=='fun' ? (
           <div style={{ display:'flex', flexDirection:'column', gap:cardGap, marginBottom:10 }}>
-            {(leaderboard.length > 0 ? leaderboard : players.map(p => ({ ...p, holesPlayed: 0 }))).map((lbPlayer, rank) => {
-              const player = players.find(p => p.name === lbPlayer.name)
+            {(lockedOrder.length > 0 ? lockedOrder : players.map(p => p.name)).map((playerName, rank) => {
+              const lbPlayer = leaderboard.find(p => p.name === playerName) || players.find(p => p.name === playerName) || { name: playerName, holesPlayed: 0, total: 0 }
+              const player = players.find(p => p.name === playerName)
               if (!player) return null
               const val       = localScores[player.name]
               const isSet     = val !== null && val !== undefined
@@ -324,13 +373,13 @@ export default function HoleScreen() {
               const isFirst      = rank === 0 && lbPlayer.holesPlayed > 0
               const isUnscored   = !isSet && lbPlayer.holesPlayed === 0
 
-              // Adaptive sizes based on player count
-              const avSize    = pCount <= 3 ? 32 : pCount <= 5 ? 28 : pCount <= 7 ? 24 : 22
-              const avFont    = pCount <= 3 ? 14 : pCount <= 5 ? 12 : 10
-              const hdrPadV   = pCount <= 3 ? 12 : pCount <= 5 ? 10 : pCount <= 7 ? 8 : 7
+              // Adaptive sizes: 1-4 large | 5-6 medium | 7-8 small | 9+ compact
+              const avSize    = pCount <= 4 ? 32 : pCount <= 6 ? 27 : pCount <= 8 ? 23 : 20
+              const avFont    = pCount <= 4 ? 14 : pCount <= 6 ? 12 : 10
+              const hdrPadV   = pCount <= 4 ? 12 : pCount <= 6 ? 9 : pCount <= 8 ? 7 : 6
               const hdrPadH   = 13
-              const totalSize = pCount <= 3 ? 24 : pCount <= 5 ? 20 : pCount <= 7 ? 17 : 15
-              const rowPadV   = pCount <= 3 ? 9 : pCount <= 5 ? 7 : pCount <= 7 ? 6 : 5
+              const totalSize = pCount <= 4 ? 24 : pCount <= 6 ? 19 : pCount <= 8 ? 16 : 14
+              const rowPadV   = pCount <= 4 ? 9 : pCount <= 6 ? 7 : pCount <= 8 ? 5 : 4
 
               const rank1 = rank===0?'1st':rank===1?'2nd':rank===2?'3rd':`${rank+1}th`
 
@@ -613,8 +662,10 @@ export default function HoleScreen() {
 
       <style>{`
         @keyframes countUp{from{transform:translateY(8px) scale(0.88);opacity:0}to{transform:none;opacity:1}}
-        @keyframes glowRing{0%,100%{box-shadow:0 0 0 0 rgba(255,214,0,0.4)}50%{box-shadow:0 0 0 5px rgba(255,214,0,0)}}
         @keyframes popIn{0%{opacity:0;transform:scale(0.6)}80%{transform:scale(1.04)}100%{opacity:1;transform:scale(1)}}
+        @keyframes orbFloat0{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(30px,40px) scale(1.08)}66%{transform:translate(-20px,20px) scale(0.95)}}
+        @keyframes orbFloat1{0%,100%{transform:translate(0,0) scale(1)}40%{transform:translate(-40px,-30px) scale(1.1)}70%{transform:translate(25px,15px) scale(0.92)}}
+        @keyframes orbFloat2{0%,100%{transform:translate(0,0) scale(1)}30%{transform:translate(20px,-40px) scale(1.06)}65%{transform:translate(-30px,30px) scale(0.97)}}
       `}</style>
     </div>
   )

@@ -3,6 +3,7 @@ import { Trophy, Mail, RotateCcw, AlertTriangle, CheckCircle, SkipForward, Camer
 import { useGame } from '../../context/GameContext'
 import { updateSession, upsertScore, uploadLeaderboardPhoto } from '../../lib/supabase'
 import { EndConfetti } from '../HoleScreen/Celebrations'
+import ScorecardShare from './ScorecardShare'
 import { composePolaroid } from '../PhotoSystem/PhotoSystem'
 
 // ── Leaderboard selfie button ─────────────────────────────────

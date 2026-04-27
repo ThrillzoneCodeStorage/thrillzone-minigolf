@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ChevronRight, X, Zap, Trophy, Shuffle, Smile, Smartphone, Disc } from 'lucide-react'
 import { useGame } from '../../context/GameContext'
+import { STRINGS, LANGUAGES } from '../../lib/i18n'
 
 const STYLES = [
   { id:'casual',      Icon:Zap,     name:'Casual',        tag:'Classic',        desc:'Normal scoring. Relaxed, no pressure.', color:'#FFD600', bg:'rgba(255,214,0,0.07)',   border:'rgba(255,214,0,0.25)' },
@@ -10,7 +11,8 @@ const STYLES = [
 ]
 
 export default function PlayStyleSelect() {
-  const { setPlayStyle, setOnboardStep, setSpinnerPreference, setOptOut } = useGame()
+  const { setPlayStyle, setOnboardStep, setSpinnerPreference, setOptOut, language, setLanguage } = useGame()
+  const t = STRINGS[language] || STRINGS.en
   const [showSpinChoice, setShowSpinChoice] = useState(false)
   const [pendingStyle,   setPendingStyle]   = useState(null)
 
@@ -35,10 +37,25 @@ export default function PlayStyleSelect() {
   return (
     <div className="screen animate-in">
       <div className="screen-content" style={{ paddingBottom:40 }}>
-        <div style={{ textAlign:'center', padding:'28px 0 24px' }}>
+        <div style={{ textAlign:'center', padding:'28px 0 24px', position:'relative' }}>
+          {/* Language switcher — 6 languages in 2 rows of 3 */}
+          <div style={{ position:'absolute', top:0, right:0, display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:4, width:118 }}>
+            {Object.entries(LANGUAGES).map(([lang, label]) => (
+              <button key={lang} onClick={() => setLanguage(lang)}
+                style={{ padding:'4px 6px', borderRadius:7, border:'1px solid', fontFamily:'inherit',
+                  fontSize: lang === 'hi' ? 10 : 11, fontWeight:700, cursor:'pointer', transition:'all 0.15s',
+                  background: language===lang ? 'var(--yellow)' : 'var(--bg-card-2)',
+                  color: language===lang ? '#000' : 'var(--text-3)',
+                  borderColor: language===lang ? 'var(--yellow)' : 'var(--border)',
+                  lineHeight: 1.2, textAlign:'center',
+                }}>
+                {label}
+              </button>
+            ))}
+          </div>
           <img src="/logo.png" alt="Thrillzone" style={{ height:56, objectFit:'contain', marginBottom:18 }}/>
           <h1 style={{ fontSize:28, fontWeight:900, letterSpacing:'-0.03em', marginBottom:6 }}>Mini Golf</h1>
-          <p style={{ color:'var(--text-2)', fontSize:15 }}>Choose your play style to begin</p>
+          <p style={{ color:'var(--text-2)', fontSize:15 }}>{t.chooseStyle}</p>
         </div>
 
         <div style={{ display:'flex', flexDirection:'column', gap:10 }}>

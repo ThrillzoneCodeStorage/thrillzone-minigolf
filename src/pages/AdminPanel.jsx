@@ -852,9 +852,37 @@ function DataTab() {
 
 // ── Settings Tab ───────────────────────────────────────────────
 function SettingsTab({ onLogout }) {
-  const [newPw, setNewPw]     = useState('')
-  const [confirm, setConfirm] = useState('')
-  const [msg, setMsg]         = useState('')
+  const [newPw, setNewPw]           = useState('')
+  const [confirm, setConfirm]       = useState('')
+  const [msg, setMsg]               = useState('')
+  const [timerEnabled, setTimerEnabled] = useState(true)
+  const [timerHole, setTimerHole]   = useState(8)
+  const [timerSecs, setTimerSecs]   = useState(30)
+  const [timerSaved, setTimerSaved] = useState(false)
+
+  useEffect(() => {
+    async function loadTimerSettings() {
+      const [en, hole, secs] = await Promise.all([
+        supabase.from('admin_settings').select('value').eq('key','timer_enabled').single(),
+        supabase.from('admin_settings').select('value').eq('key','timer_hole').single(),
+        supabase.from('admin_settings').select('value').eq('key','timer_seconds').single(),
+      ])
+      if (en.data)   setTimerEnabled(en.data.value !== 'false')
+      if (hole.data) setTimerHole(parseInt(hole.data.value) || 8)
+      if (secs.data) setTimerSecs(parseInt(secs.data.value) || 30)
+    }
+    loadTimerSettings()
+  }, [])
+
+  async function saveTimerSettings() {
+    await Promise.all([
+      setAdminSetting('timer_enabled', String(timerEnabled)),
+      setAdminSetting('timer_hole',    String(timerHole)),
+      setAdminSetting('timer_seconds', String(timerSecs)),
+    ])
+    setTimerSaved(true)
+    setTimeout(() => setTimerSaved(false), 2000)
+  }
 
   async function changePw() {
     if (newPw.length<4) { setMsg('Password must be at least 4 characters'); return }
@@ -866,6 +894,44 @@ function SettingsTab({ onLogout }) {
   return (
     <div>
       <h3 style={{ color:A.text, fontSize:15, fontWeight:800, marginBottom:16 }}>Settings</h3>
+
+      {/* Timer settings */}
+      <div style={{ background:'#161616', border:`1px solid ${A.border}`, borderRadius:12, padding:18, marginBottom:14 }}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:14 }}>
+          <div>
+            <p style={{ color:A.text, fontSize:14, fontWeight:700, margin:0 }}>Challenge Timer</p>
+            <p style={{ color:A.text3, fontSize:12, margin:'2px 0 0' }}>Controls the countdown timer shown on a specific hole</p>
+          </div>
+          <button onClick={() => setTimerEnabled(v => !v)}
+            style={{ width:44, height:26, borderRadius:13, border:'none', cursor:'pointer', position:'relative', transition:'background 0.2s',
+              background: timerEnabled ? A.yellow : '#333' }}>
+            <div style={{ width:20, height:20, borderRadius:'50%', background:'#fff', position:'absolute', top:3, transition:'left 0.2s',
+              left: timerEnabled ? 21 : 3 }}/>
+          </button>
+        </div>
+        {timerEnabled && (
+          <div style={{ display:'flex', gap:12 }}>
+            <div style={{ flex:1 }}>
+              <label style={lbl}>Hole number</label>
+              <input style={{ ...inp, marginBottom:0 }} type="number" min={1} max={17} value={timerHole}
+                onChange={e => setTimerHole(parseInt(e.target.value)||8)}/>
+            </div>
+            <div style={{ flex:1 }}>
+              <label style={lbl}>Timer seconds</label>
+              <input style={{ ...inp, marginBottom:0 }} type="number" min={10} max={120} value={timerSecs}
+                onChange={e => setTimerSecs(parseInt(e.target.value)||30)}/>
+            </div>
+          </div>
+        )}
+        {timerEnabled && (
+          <button onClick={saveTimerSettings} style={{ ...saveBtn, marginTop:12, width:'100%', justifyContent:'center',
+            background: timerSaved ? A.green : A.yellow }}>
+            <Save size={14}/> {timerSaved ? 'Saved!' : 'Save Timer Settings'}
+          </button>
+        )}
+      </div>
+
+      {/* Password */}
       <div style={{ background:'#161616', border:`1px solid ${A.border}`, borderRadius:12, padding:18, marginBottom:14 }}>
         <p style={{ color:A.text2, fontSize:14, fontWeight:700, marginBottom:14 }}>Change Admin Password</p>
         <label style={lbl}>New password</label>

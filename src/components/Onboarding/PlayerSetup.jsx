@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { ChevronLeft, ChevronRight, Plus, X } from 'lucide-react'
 import { useGame } from '../../context/GameContext'
 import PlayingCardsRules from '../Rules/PlayingCardsRules'
+import { checkAllNames } from '../../lib/filter'
 
 const PLAYER_COLORS = [
   '#FFD600',
@@ -36,7 +37,8 @@ const STYLE_COLORS = { casual:'#FFD600', competitive:'#60a5fa', silly:'#a78bfa',
 export default function PlayerSetup() {
   const { setOnboardStep, playStyle, optOut, startGame, isLoading, spinnerPreference, setPendingPlayers } = useGame()
   const [names,     setNames]     = useState([''])
-  const [showRules, setShowRules] = useState(false)
+  const [showRules, setShowRules]   = useState(false)
+  const [filterWarning, setFilterWarning] = useState(null) // names that triggered filter
 
   const add    = () => names.length < 16 && setNames(n => [...n, ''])
   const remove = i  => setNames(n => n.filter((_,j) => j !== i))
@@ -59,6 +61,11 @@ export default function PlayerSetup() {
 
   async function handleContinue() {
     if (!validNames.length) return
+    const flagged = checkAllNames(validNames)
+    if (flagged.length > 0) {
+      setFilterWarning(flagged)
+      return
+    }
     setShowRules(true)
   }
 
@@ -130,6 +137,35 @@ export default function PlayerSetup() {
           View rules &amp; start <ChevronRight size={18}/>
         </button>
       </div>
+
+      {/* Inappropriate name warning */}
+      {filterWarning && (
+        <div className="modal-center">
+          <div className="modal-box" style={{ textAlign:'center' }}>
+            <div style={{ fontSize:40, marginBottom:12 }}>🙈</div>
+            <h3 style={{ fontSize:19, fontWeight:900, letterSpacing:'-0.02em', marginBottom:8 }}>
+              Hold on a sec!
+            </h3>
+            <p style={{ fontSize:14, color:'var(--text-2)', lineHeight:1.65, marginBottom:16 }}>
+              {filterWarning.length === 1
+                ? <>The name <strong style={{ color:'var(--text)' }}>{filterWarning[0].name}</strong> might not be appropriate for all ages.</>
+                : <>Some names might not be appropriate for all ages.</>
+              }
+            </p>
+            <p style={{ fontSize:13, color:'var(--text-3)', marginBottom:22 }}>
+              This is a family-friendly venue. You can continue anyway or change the name.
+            </p>
+            <div style={{ display:'flex', gap:10 }}>
+              <button className="btn btn-ghost" style={{ flex:1 }} onClick={() => setFilterWarning(null)}>
+                Change name
+              </button>
+              <button className="btn btn-primary" style={{ flex:1 }} onClick={() => { setFilterWarning(null); setShowRules(true) }}>
+                Continue anyway
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Rules sheet shown after players entered */}
       {showRules && (
