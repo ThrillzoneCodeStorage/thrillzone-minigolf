@@ -11,25 +11,77 @@ const STYLE_META = [
   { id:'fun',         Icon:Smile,   color:'#fb923c', bg:'rgba(251,146,60,0.07)',  border:'rgba(251,146,60,0.25)' },
 ]
 
+// SVG flag components — reliable cross-platform rendering
+const FLAGS = {
+  en: () => (
+    <svg width="22" height="16" viewBox="0 0 22 16" style={{ borderRadius:2, flexShrink:0 }}>
+      <rect width="22" height="16" fill="#012169"/>
+      <path d="M0,0 L22,16 M22,0 L0,16" stroke="#fff" strokeWidth="3"/>
+      <path d="M0,0 L22,16 M22,0 L0,16" stroke="#C8102E" strokeWidth="2"/>
+      <path d="M11,0 V16 M0,8 H22" stroke="#fff" strokeWidth="5"/>
+      <path d="M11,0 V16 M0,8 H22" stroke="#C8102E" strokeWidth="3"/>
+    </svg>
+  ),
+  de: () => (
+    <svg width="22" height="16" viewBox="0 0 22 16" style={{ borderRadius:2, flexShrink:0 }}>
+      <rect width="22" height="16" fill="#000"/>
+      <rect y="5.3" width="22" height="5.4" fill="#D00"/>
+      <rect y="10.6" width="22" height="5.4" fill="#FFCE00"/>
+    </svg>
+  ),
+  fr: () => (
+    <svg width="22" height="16" viewBox="0 0 22 16" style={{ borderRadius:2, flexShrink:0 }}>
+      <rect width="22" height="16" fill="#ED2939"/>
+      <rect width="14.6" height="16" fill="#fff"/>
+      <rect width="7.3" height="16" fill="#002395"/>
+    </svg>
+  ),
+  es: () => (
+    <svg width="22" height="16" viewBox="0 0 22 16" style={{ borderRadius:2, flexShrink:0 }}>
+      <rect width="22" height="16" fill="#AA151B"/>
+      <rect y="4" width="22" height="8" fill="#F1BF00"/>
+    </svg>
+  ),
+  zh: () => (
+    <svg width="22" height="16" viewBox="0 0 22 16" style={{ borderRadius:2, flexShrink:0 }}>
+      <rect width="22" height="16" fill="#DE2910"/>
+      <text x="3" y="10" fontSize="7" fill="#FFDE00" fontFamily="serif">★</text>
+      <text x="9" y="6.5" fontSize="4" fill="#FFDE00" fontFamily="serif">★</text>
+      <text x="12" y="9" fontSize="4" fill="#FFDE00" fontFamily="serif">★</text>
+      <text x="12" y="13" fontSize="4" fill="#FFDE00" fontFamily="serif">★</text>
+      <text x="9" y="13.5" fontSize="4" fill="#FFDE00" fontFamily="serif">★</text>
+    </svg>
+  ),
+  hi: () => (
+    <svg width="22" height="16" viewBox="0 0 22 16" style={{ borderRadius:2, flexShrink:0 }}>
+      <rect width="22" height="16" fill="#fff"/>
+      <rect width="22" height="5.3" fill="#FF9933"/>
+      <rect y="10.7" width="22" height="5.3" fill="#138808"/>
+      <circle cx="11" cy="8" r="2.5" fill="none" stroke="#000080" strokeWidth="0.7"/>
+      <circle cx="11" cy="8" r="0.5" fill="#000080"/>
+    </svg>
+  ),
+}
+
 function LanguagePicker({ language, setLanguage }) {
   const [open, setOpen] = useState(false)
   const current = LANG_META[language]
+  const Flag = FLAGS[language] || FLAGS.en
 
   return (
     <div style={{ position:'relative' }}>
-      {/* Trigger button */}
-      <button
-        onClick={() => setOpen(o => !o)}
-        style={{
-          display:'flex', alignItems:'center', gap:6,
-          background:'var(--bg-card-2)', border:'1px solid var(--border)',
-          borderRadius:10, padding:'7px 11px', cursor:'pointer',
-          fontFamily:'inherit', transition:'all 0.15s',
-          boxShadow: open ? '0 4px 20px rgba(0,0,0,0.4)' : 'none',
-        }}>
-        <span style={{ fontSize:18, lineHeight:1 }}>{current.flag}</span>
+      {/* Trigger */}
+      <button onClick={() => setOpen(o => !o)} style={{
+        display:'flex', alignItems:'center', gap:8,
+        background:'var(--bg-card-2)', border:'1px solid var(--border)',
+        borderRadius:10, padding:'7px 12px', cursor:'pointer',
+        fontFamily:'inherit', transition:'all 0.15s',
+        boxShadow: open ? '0 4px 20px rgba(0,0,0,0.4)' : 'none',
+      }}>
+        <Flag/>
         <span style={{ fontSize:12, fontWeight:700, color:'var(--text-2)' }}>{current.name}</span>
-        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ transition:'transform 0.15s', transform: open ? 'rotate(180deg)' : 'none' }}>
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none"
+          style={{ transition:'transform 0.15s', transform: open ? 'rotate(180deg)' : 'none' }}>
           <path d="M2 3.5 L5 6.5 L8 3.5" stroke="var(--text-3)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
       </button>
@@ -37,17 +89,17 @@ function LanguagePicker({ language, setLanguage }) {
       {/* Dropdown */}
       {open && (
         <>
-          {/* Backdrop */}
           <div style={{ position:'fixed', inset:0, zIndex:98 }} onClick={() => setOpen(false)}/>
           <div style={{
             position:'absolute', top:'calc(100% + 6px)', right:0, zIndex:99,
             background:'var(--bg-card)', border:'1px solid var(--border)',
-            borderRadius:12, overflow:'hidden', minWidth:160,
+            borderRadius:12, overflow:'hidden', minWidth:180,
             boxShadow:'0 8px 32px rgba(0,0,0,0.5)',
             animation:'dropIn 0.15s cubic-bezier(0.16,1,0.3,1)',
           }}>
             {Object.entries(LANG_META).map(([code, meta]) => {
               const isActive = code === language
+              const F = FLAGS[code] || FLAGS.en
               return (
                 <button key={code}
                   onClick={() => { setLanguage(code); setOpen(false) }}
@@ -56,11 +108,11 @@ function LanguagePicker({ language, setLanguage }) {
                     padding:'10px 14px', border:'none', cursor:'pointer',
                     fontFamily:'inherit', textAlign:'left', transition:'background 0.1s',
                     background: isActive ? 'rgba(255,214,0,0.08)' : 'transparent',
-                    borderLeft: isActive ? '2px solid var(--yellow)' : '2px solid transparent',
+                    borderLeft: `2px solid ${isActive ? 'var(--yellow)' : 'transparent'}`,
                   }}>
-                  <span style={{ fontSize:20, lineHeight:1, flexShrink:0 }}>{meta.flag}</span>
+                  <F/>
                   <div>
-                    <div style={{ fontSize:13, fontWeight: isActive ? 800 : 600, color: isActive ? 'var(--yellow)' : 'var(--text)', lineHeight:1.2 }}>
+                    <div style={{ fontSize:13, fontWeight:isActive?800:600, color:isActive?'var(--yellow)':'var(--text)', lineHeight:1.2 }}>
                       {meta.name}
                     </div>
                     <div style={{ fontSize:10, color:'var(--text-3)', marginTop:1 }}>{meta.native}</div>

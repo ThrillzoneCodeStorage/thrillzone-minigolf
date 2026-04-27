@@ -372,8 +372,26 @@ function HolesTab({ holes, onRefresh }) {
   const [dragging, setDragging] = useState(null)
   const [dragOver, setDragOver] = useState(null)
 
-  function openNew()   { setForm({ title:'', description:'', type:'hole', par:3 }); setEditing('new') }
-  function openEdit(h) { setForm({ title:h.title, description:h.description||'', type:h.type||'hole', par:h.par||3 }); setEditing(h) }
+  function openNew() {
+    setForm({
+      title:'', description:'', type:'hole', par:3,
+      title_de:'', description_de:'', title_fr:'', description_fr:'',
+      title_es:'', description_es:'', title_zh:'', description_zh:'',
+      title_hi:'', description_hi:'',
+    })
+    setEditing('new')
+  }
+  function openEdit(h) {
+    setForm({
+      title:h.title, description:h.description||'', type:h.type||'hole', par:h.par||3,
+      title_de:h.title_de||'', description_de:h.description_de||'',
+      title_fr:h.title_fr||'', description_fr:h.description_fr||'',
+      title_es:h.title_es||'', description_es:h.description_es||'',
+      title_zh:h.title_zh||'', description_zh:h.description_zh||'',
+      title_hi:h.title_hi||'', description_hi:h.description_hi||'',
+    })
+    setEditing(h)
+  }
 
   async function save() {
     if (!form.title.trim()) return
@@ -434,9 +452,9 @@ function HolesTab({ holes, onRefresh }) {
               <h4 style={{ color:A.text, fontSize:17, fontWeight:800 }}>{editing==='new'?'New Station':'Edit Station'}</h4>
               <button onClick={()=>setEditing(null)} style={{ background:'none', border:'none', color:A.text2, cursor:'pointer' }}><X size={20}/></button>
             </div>
-            <Field label="Title" value={form.title} onChange={v=>setForm(f=>({...f,title:v}))}/>
-            <Field label="Description" value={form.description} onChange={v=>setForm(f=>({...f,description:v}))} rows={3}/>
-            <div style={{ display:'flex', gap:10, marginBottom:16 }}>
+            <Field label="Title (English)" value={form.title} onChange={v=>setForm(f=>({...f,title:v}))}/>
+            <Field label="Description (English)" value={form.description} onChange={v=>setForm(f=>({...f,description:v}))} rows={2}/>
+            <div style={{ display:'flex', gap:10, marginBottom:14 }}>
               <div style={{ flex:1 }}>
                 <label style={lbl}>Type</label>
                 <select style={{ ...inp, marginBottom:0 }} value={form.type} onChange={e=>setForm(f=>({...f,type:e.target.value}))}>
@@ -448,6 +466,35 @@ function HolesTab({ holes, onRefresh }) {
                 <label style={lbl}>Par</label>
                 <input style={{ ...inp, marginBottom:0 }} type="number" min={1} max={10} value={form.par} onChange={e=>setForm(f=>({...f,par:parseInt(e.target.value)||3}))}/>
               </div>
+            </div>
+
+            {/* Translations */}
+            <div style={{ borderTop:`1px solid ${A.border}`, paddingTop:14, marginBottom:4 }}>
+              <p style={{ fontSize:12, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.07em', color:A.text3, marginBottom:12 }}>
+                Translations (optional)
+              </p>
+              {[
+                {code:'de', flag:'🇩🇪', lang:'German / Deutsch'},
+                {code:'fr', flag:'🇫🇷', lang:'French / Français'},
+                {code:'es', flag:'🇪🇸', lang:'Spanish / Español'},
+                {code:'zh', flag:'🇨🇳', lang:'Chinese / 中文'},
+                {code:'hi', flag:'🇮🇳', lang:'Hindi / हिन्दी'},
+              ].map(({code, flag, lang}) => (
+                <div key={code} style={{ marginBottom:14 }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:6 }}>
+                    <span style={{ fontSize:16 }}>{flag}</span>
+                    <span style={{ fontSize:11, fontWeight:700, color:A.text2 }}>{lang}</span>
+                  </div>
+                  <input style={{ ...inp, marginBottom:6 }}
+                    placeholder={`Title in ${lang.split('/')[0].trim()}…`}
+                    value={form[`title_${code}`]||''}
+                    onChange={e=>setForm(f=>({...f,[`title_${code}`]:e.target.value}))}/>
+                  <textarea style={{ ...inp, minHeight:50, resize:'vertical', marginBottom:0 }}
+                    placeholder={`Description in ${lang.split('/')[0].trim()}…`}
+                    value={form[`description_${code}`]||''}
+                    onChange={e=>setForm(f=>({...f,[`description_${code}`]:e.target.value}))}/>
+                </div>
+              ))}
             </div>
             <div style={{ display:'flex', gap:9 }}>
               <button onClick={()=>setEditing(null)} style={{ ...cancelBtn, flex:1 }}>Cancel</button>

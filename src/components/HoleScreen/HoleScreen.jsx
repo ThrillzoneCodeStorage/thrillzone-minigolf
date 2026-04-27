@@ -119,7 +119,7 @@ export default function HoleScreen() {
     showPhotoGallery, setShowPhotoGallery,
     showSpinner, dismissSpinner, setShowSpinner, setSpinnerEffect,
     currentTurnIndex, setCurrentTurnIndex,
-    previousHoleWinner, leaderboard,
+    previousHoleWinner, leaderboard, language,
     spinnerPreference,
     showPostHole8Camera, setShowPostHole8Camera,
   } = useGame()
@@ -322,9 +322,9 @@ export default function HoleScreen() {
           </div>
         </div>
 
-        <h2 style={{ fontSize:22, fontWeight:900, letterSpacing:'-0.03em', marginBottom:3, lineHeight:1.2 }}>{currentHole.title}</h2>
-        {currentHole.description && (
-          <p style={{ fontSize:14, color:'var(--text-2)', lineHeight:1.58, marginBottom:9 }}>{currentHole.description}</p>
+        <h2 style={{ fontSize:22, fontWeight:900, letterSpacing:'-0.03em', marginBottom:3, lineHeight:1.2 }}>{currentHole[`title_${language}`] || currentHole.title}</h2>
+        {(currentHole[`description_${language}`] || currentHole.description) && (
+          <p style={{ fontSize:14, color:'var(--text-2)', lineHeight:1.58, marginBottom:9 }}>{currentHole[`description_${language}`] || currentHole.description}</p>
         )}
 
 
