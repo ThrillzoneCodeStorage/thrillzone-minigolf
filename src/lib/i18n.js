@@ -1,5 +1,14 @@
 export const LANGUAGES = { en:'EN', de:'DE', fr:'FR', es:'ES', zh:'中文', hi:'हिन्दी' }
 
+export const LANG_META = {
+  en: { flag:'🇬🇧', name:'English',    native:'English'   },
+  de: { flag:'🇩🇪', name:'German',     native:'Deutsch'   },
+  fr: { flag:'🇫🇷', name:'French',     native:'Français'  },
+  es: { flag:'🇪🇸', name:'Spanish',    native:'Español'   },
+  zh: { flag:'🇨🇳', name:'Chinese',    native:'中文'       },
+  hi: { flag:'🇮🇳', name:'Hindi',      native:'हिन्दी'    },
+}
+
 const en = {
   casual:'Casual', competitive:'Competitive', silly:'Silly', fun:'Just for Fun',
   casualTag:'Classic', competitiveTag:'One at a time', sillyTag:'Spin the wheel', funTag:'No scores',

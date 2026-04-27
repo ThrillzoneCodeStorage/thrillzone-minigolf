@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { ChevronRight, X, Zap, Trophy, Shuffle, Smile, Smartphone, Disc } from 'lucide-react'
 import { useGame } from '../../context/GameContext'
 import { useTranslation } from '../../lib/TranslationContext'
-import { STRINGS, LANGUAGES } from '../../lib/i18n'
+import { STRINGS, LANGUAGES, LANG_META } from '../../lib/i18n'
 
 const STYLE_META = [
   { id:'casual',      Icon:Zap,     color:'#FFD600', bg:'rgba(255,214,0,0.07)',   border:'rgba(255,214,0,0.25)' },
@@ -10,6 +10,77 @@ const STYLE_META = [
   { id:'silly',       Icon:Shuffle, color:'#a78bfa', bg:'rgba(167,139,250,0.07)', border:'rgba(167,139,250,0.25)' },
   { id:'fun',         Icon:Smile,   color:'#fb923c', bg:'rgba(251,146,60,0.07)',  border:'rgba(251,146,60,0.25)' },
 ]
+
+function LanguagePicker({ language, setLanguage }) {
+  const [open, setOpen] = useState(false)
+  const current = LANG_META[language]
+
+  return (
+    <div style={{ position:'relative' }}>
+      {/* Trigger button */}
+      <button
+        onClick={() => setOpen(o => !o)}
+        style={{
+          display:'flex', alignItems:'center', gap:6,
+          background:'var(--bg-card-2)', border:'1px solid var(--border)',
+          borderRadius:10, padding:'7px 11px', cursor:'pointer',
+          fontFamily:'inherit', transition:'all 0.15s',
+          boxShadow: open ? '0 4px 20px rgba(0,0,0,0.4)' : 'none',
+        }}>
+        <span style={{ fontSize:18, lineHeight:1 }}>{current.flag}</span>
+        <span style={{ fontSize:12, fontWeight:700, color:'var(--text-2)' }}>{current.name}</span>
+        <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ transition:'transform 0.15s', transform: open ? 'rotate(180deg)' : 'none' }}>
+          <path d="M2 3.5 L5 6.5 L8 3.5" stroke="var(--text-3)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </button>
+
+      {/* Dropdown */}
+      {open && (
+        <>
+          {/* Backdrop */}
+          <div style={{ position:'fixed', inset:0, zIndex:98 }} onClick={() => setOpen(false)}/>
+          <div style={{
+            position:'absolute', top:'calc(100% + 6px)', right:0, zIndex:99,
+            background:'var(--bg-card)', border:'1px solid var(--border)',
+            borderRadius:12, overflow:'hidden', minWidth:160,
+            boxShadow:'0 8px 32px rgba(0,0,0,0.5)',
+            animation:'dropIn 0.15s cubic-bezier(0.16,1,0.3,1)',
+          }}>
+            {Object.entries(LANG_META).map(([code, meta]) => {
+              const isActive = code === language
+              return (
+                <button key={code}
+                  onClick={() => { setLanguage(code); setOpen(false) }}
+                  style={{
+                    display:'flex', alignItems:'center', gap:10, width:'100%',
+                    padding:'10px 14px', border:'none', cursor:'pointer',
+                    fontFamily:'inherit', textAlign:'left', transition:'background 0.1s',
+                    background: isActive ? 'rgba(255,214,0,0.08)' : 'transparent',
+                    borderLeft: isActive ? '2px solid var(--yellow)' : '2px solid transparent',
+                  }}>
+                  <span style={{ fontSize:20, lineHeight:1, flexShrink:0 }}>{meta.flag}</span>
+                  <div>
+                    <div style={{ fontSize:13, fontWeight: isActive ? 800 : 600, color: isActive ? 'var(--yellow)' : 'var(--text)', lineHeight:1.2 }}>
+                      {meta.name}
+                    </div>
+                    <div style={{ fontSize:10, color:'var(--text-3)', marginTop:1 }}>{meta.native}</div>
+                  </div>
+                  {isActive && (
+                    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ marginLeft:'auto', flexShrink:0 }}>
+                      <path d="M2.5 7 L5.5 10 L11.5 4" stroke="var(--yellow)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        </>
+      )}
+
+      <style>{`@keyframes dropIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}`}</style>
+    </div>
+  )
+}
 
 export default function PlayStyleSelect() {
   const { setPlayStyle, setOnboardStep, setSpinnerPreference, setOptOut, language, setLanguage } = useGame()
@@ -45,20 +116,9 @@ export default function PlayStyleSelect() {
     <div className="screen animate-in">
       <div className="screen-content" style={{ paddingBottom:40 }}>
         <div style={{ textAlign:'center', padding:'28px 0 24px', position:'relative' }}>
-          {/* Language switcher — 6 languages in 2 rows of 3 */}
-          <div style={{ position:'absolute', top:0, right:0, display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:4, width:118 }}>
-            {Object.entries(LANGUAGES).map(([lang, label]) => (
-              <button key={lang} onClick={() => setLanguage(lang)}
-                style={{ padding:'4px 6px', borderRadius:7, border:'1px solid', fontFamily:'inherit',
-                  fontSize: lang === 'hi' ? 10 : 11, fontWeight:700, cursor:'pointer', transition:'all 0.15s',
-                  background: language===lang ? 'var(--yellow)' : 'var(--bg-card-2)',
-                  color: language===lang ? '#000' : 'var(--text-3)',
-                  borderColor: language===lang ? 'var(--yellow)' : 'var(--border)',
-                  lineHeight: 1.2, textAlign:'center',
-                }}>
-                {label}
-              </button>
-            ))}
+          {/* Language dropdown with flags */}
+          <div style={{ position:'absolute', top:0, right:0 }}>
+            <LanguagePicker language={language} setLanguage={setLanguage}/>
           </div>
           <img src="/logo.png" alt="Thrillzone" style={{ height:56, objectFit:'contain', marginBottom:18 }}/>
           <h1 style={{ fontSize:28, fontWeight:900, letterSpacing:'-0.03em', marginBottom:6 }}>Mini Golf</h1>
