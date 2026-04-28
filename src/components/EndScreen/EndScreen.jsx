@@ -150,28 +150,96 @@ export default function EndScreen() {
         `<td style="padding:10px 14px;text-align:center;font-weight:900;font-size:17px;color:${p.color};">${p.total}</td>`
       ).join('')
 
-      const html = `<!DOCTYPE html><html><body style="margin:0;background:#0a0a0a;font-family:Inter,sans-serif;color:#fff;">
-<div style="max-width:600px;margin:0 auto;padding:40px 24px;">
-<img src="${window.location.origin}/logo.png" style="height:56px;margin-bottom:28px;"/>
-<h1 style="color:#FFD600;font-size:30px;font-weight:900;letter-spacing:-0.03em;margin:0 0 6px;">Your Scorecard!</h1>
-<p style="color:#666;margin:0 0 32px;">Thanks for playing at Thrillzone Escape Quest!</p>
-<table style="width:100%;border-collapse:collapse;background:#141414;border-radius:12px;overflow:hidden;margin-bottom:24px;">
-<thead><tr style="background:#1c1c1c;"><th style="padding:10px 14px;text-align:left;color:#555;">Hole</th>${playerHeaders}</tr></thead>
-<tbody>${rows}</tbody>
-<tfoot><tr style="background:#222;border-top:2px solid rgba(255,214,0,0.25);"><td style="padding:10px 14px;font-weight:900;color:#FFD600;">TOTAL</td>${totals}</tr></tfoot>
+      const date = new Date().toLocaleDateString('en-NZ', { day:'numeric', month:'long', year:'numeric' })
+      const winnerName = leaderboard[0]?.name || ''
+      const winnerTotal = leaderboard[0]?.total || 0
+
+      const html = `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Your Putt N Glow Scorecard</title></head>
+<body style="margin:0;padding:0;background:#f4f4f4;font-family:'Helvetica Neue',Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:32px 0;">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background:#0a0a0a;border-radius:16px;overflow:hidden;">
+
+  <!-- Header -->
+  <tr><td style="background:linear-gradient(135deg,#1a1400,#0a0a0a);padding:36px 40px 28px;text-align:center;border-bottom:3px solid #FFD600;">
+    <div style="font-size:32px;font-weight:900;color:#FFD600;letter-spacing:-0.03em;margin-bottom:4px;">Putt N Glow</div>
+    <div style="font-size:14px;color:#555;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:20px;">Queenstown</div>
+    <div style="font-size:13px;color:#333;">${date}</div>
+  </td></tr>
+
+  <!-- Winner banner -->
+  ${leaderboard.length > 0 ? `<tr><td style="background:#FFD600;padding:18px 40px;text-align:center;">
+    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#7a6400;margin-bottom:4px;">🏆 Winner</div>
+    <div style="font-size:24px;font-weight:900;color:#000;letter-spacing:-0.02em;">${winnerName} — ${winnerTotal} strokes</div>
+  </td></tr>` : ''}
+
+  <!-- Final standings -->
+  <tr><td style="padding:28px 40px 0;">
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#444;margin-bottom:14px;">Final Standings</div>
+    ${leaderboard.map((p, i) => `
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:8px;">
+    <tr>
+      <td width="32" style="vertical-align:middle;">
+        <div style="width:28px;height:28px;border-radius:50%;background:${p.color};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#000;text-align:center;line-height:28px;">${p.name.charAt(0).toUpperCase()}</div>
+      </td>
+      <td style="vertical-align:middle;padding-left:10px;">
+        <span style="font-size:15px;font-weight:${i===0?900:600};color:${i===0?p.color:'#aaa'};">${p.name}</span>
+        ${p.holesPlayed > 0 ? `<span style="font-size:11px;color:#444;margin-left:6px;">${p.holesPlayed} holes</span>` : ''}
+      </td>
+      <td align="right" style="vertical-align:middle;">
+        <span style="font-size:20px;font-weight:900;color:${i===0?p.color:'#fff'};">${p.total > 0 ? p.total : '—'}</span>
+        <span style="font-size:11px;color:#444;margin-left:4px;">strokes</span>
+      </td>
+    </tr>
+    </table>`).join('')}
+  </td></tr>
+
+  <!-- Scorecard table -->
+  <tr><td style="padding:24px 40px 0;">
+    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#444;margin-bottom:14px;">Hole by Hole</div>
+    <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:12px;">
+      <thead>
+        <tr style="background:#1c1c1c;">
+          <th style="padding:9px 12px;text-align:left;color:#555;font-weight:700;border-radius:6px 0 0 0;">Hole</th>
+          ${playerHeaders}
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+      <tfoot>
+        <tr style="background:#1a1200;border-top:2px solid rgba(255,214,0,0.3);">
+          <td style="padding:10px 12px;font-weight:900;color:#FFD600;font-size:13px;">TOTAL</td>
+          ${totals}
+        </tr>
+      </tfoot>
+    </table>
+  </td></tr>
+
+  <!-- Photos note -->
+  ${photos.length > 0 ? `<tr><td style="padding:20px 40px 0;">
+    <div style="background:#141414;border:1px solid rgba(255,214,0,0.15);border-radius:10px;padding:14px 18px;display:flex;align-items:center;">
+      <span style="font-size:20px;margin-right:10px;">📸</span>
+      <span style="color:#888;font-size:13px;">Your ${photos.length} Polaroid memory${photos.length !== 1 ? 's are' : ' is'} attached to this email!</span>
+    </div>
+  </td></tr>` : ''}
+
+  <!-- Footer -->
+  <tr><td style="padding:32px 40px 36px;text-align:center;border-top:1px solid #1c1c1c;margin-top:24px;">
+    <div style="font-size:13px;color:#FFD600;font-weight:700;margin-bottom:6px;">Putt N Glow · Queenstown</div>
+    <div style="font-size:12px;color:#333;">Thanks for playing — come back soon!</div>
+    <div style="font-size:11px;color:#222;margin-top:12px;">scores.thrillzone.co.nz</div>
+  </td></tr>
+
 </table>
-<div style="background:#141414;border:1px solid rgba(255,214,0,0.2);border-radius:12px;padding:22px;margin-bottom:24px;">
-<h2 style="color:#FFD600;font-weight:900;margin:0 0 14px;">{t.finalStandings}</h2>
-${leaderboard.map((p, i) => `<p style="margin:5px 0;color:${i === 0 ? p.color : '#888'};font-weight:${i === 0 ? 900 : 500};">${i + 1}. ${p.name} — ${p.total} strokes${p.avg ? ` (${p.avg} avg/hole)` : ''}</p>`).join('')}
-</div>
-${photos.length ? `<p style="color:#888;font-size:14px;">Your ${photos.length} Polaroid photo${photos.length !== 1 ? 's are' : ' is'} attached!</p>` : ''}
-<p style="color:#333;font-size:13px;text-align:center;margin-top:36px;">Thrillzone Escape Quest — Come back soon!</p>
-</div></body></html>`
+</td></tr>
+</table>
+</body></html>`
 
       const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}` },
-        body: JSON.stringify({ to: email, subject: 'Your Thrillzone Mini Golf Scorecard', html, photos }),
+        body: JSON.stringify({ to: email, subject: `Putt N Glow Scorecard — ${date}`, html, photos }),
       })
       if (res.ok) { await updateSession(sessionId, { email }); setSent(true) }
       else { const d = await res.json().catch(() => ({})); setError(d.error || 'Could not send. Try again.') }
@@ -307,8 +375,15 @@ ${photos.length ? `<p style="color:#888;font-size:14px;">Your ${photos.length} P
           </div>
         )}
 
+        <ScorecardShare
+          players={players}
+          holes={holes}
+          scores={scores}
+          skippedHoles={skippedHoles}
+        />
+
         <button className="btn btn-secondary btn-full btn-lg" onClick={handleFinishAttempt} style={{ gap: 8 }}>
-          <RotateCcw size={18} /> Play Again
+          <RotateCcw size={18} /> {t.playAgain}
         </button>
       </div>
 
