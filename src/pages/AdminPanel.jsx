@@ -294,13 +294,14 @@ import {
   Users, Camera, Zap, TrendingDown,
   BarChart3, Trophy, CheckCircle, XCircle, RefreshCw, Image
 } from 'lucide-react'
+import { supabase } from '../lib/supabase'
 import {
   checkAdminPassword, getHoles, upsertHole, deleteHole, reorderHoles,
   getAllSpinnerEffects, upsertSpinnerEffect, deleteSpinnerEffect,
   getAllSessions, setAdminSetting, deleteSession, deletePlayerScores,
   getAllGameModeRules, upsertGameModeRule, deleteGameModeRule, reorderGameModeRules,
   getReportingStats, getAdminLeaderboard, getPlayerScoresBySession, setSessionOptOut,
-  getLeaderboardPlayerPhotos,
+  getLeaderboardPlayerPhotos, lockSession, unlockSession,
 } from '../lib/supabase'
 
 // ── Style constants ────────────────────────────────────────────
@@ -692,6 +693,7 @@ function LBPhotosTab() {
   const [photos, setPhotos] = useState([])
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState(null)
+  const [locking, setLocking] = useState(null)
 
   async function load() {
     setLoading(true)
@@ -754,8 +756,16 @@ function DataTab() {
   const [sessions, setSessions] = useState([])
   const [expanded, setExpanded] = useState(null)
   const [deleting, setDeleting] = useState(null)
+  const [locking, setLocking] = useState(null)
 
-  async function load() { getAllSessions(60).then(setSessions) }
+  async function load() {
+    const { data } = await supabase
+      .from('sessions')
+      .select('id, play_style, players, started_at, completed_at, opt_out_leaderboard, locked, scores(hole_id, player_name, strokes, created_at)')
+      .order('started_at', { ascending: false })
+      .limit(60)
+    setSessions(data || [])
+  }
   useEffect(() => { load(); const t=setInterval(load,20000); return()=>clearInterval(t) }, [])
 
   function elapsed(start) {
@@ -990,7 +1000,69 @@ function SettingsTab({ onLogout }) {
           <Save size={14}/> Update Password
         </button>
       </div>
+      {/* Custom banned words */}
+      <BannedWordsSection/>
+
       <button onClick={onLogout} style={{ ...cancelBtn, width:'100%', textAlign:'center' }}>Log Out</button>
+    </div>
+  )
+}
+
+// ── Banned Words Section ──────────────────────────────────────
+function BannedWordsSection() {
+  const [words, setWords]   = useState([])
+  const [input, setInput]   = useState('')
+  const [saved,  setSaved]  = useState(false)
+
+  useEffect(() => {
+    supabase.from('admin_settings').select('value').eq('key','banned_words').single()
+      .then(({ data }) => {
+        if (data?.value) {
+          try { setWords(JSON.parse(data.value)) } catch {}
+        }
+      })
+  }, [])
+
+  async function save(list) {
+    await supabase.from('admin_settings').upsert({ key:'banned_words', value: JSON.stringify(list) })
+    setSaved(true); setTimeout(() => setSaved(false), 2000)
+  }
+
+  function add() {
+    const w = input.trim().toLowerCase()
+    if (!w || words.includes(w)) return
+    const next = [...words, w]
+    setWords(next); save(next); setInput('')
+  }
+
+  function remove(w) {
+    const next = words.filter(x => x !== w)
+    setWords(next); save(next)
+  }
+
+  return (
+    <div style={{ background:'#161616', border:`1px solid ${A.border}`, borderRadius:12, padding:18, marginBottom:14 }}>
+      <p style={{ color:A.text, fontSize:14, fontWeight:700, marginBottom:6 }}>Custom Banned Names/Words</p>
+      <p style={{ color:A.text3, fontSize:12, marginBottom:14 }}>These are flagged during player name entry. Players can still continue after the warning.</p>
+      <div style={{ display:'flex', gap:8, marginBottom:12 }}>
+        <input style={{ ...inp, flex:1, marginBottom:0 }} placeholder="Add a word…" value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={e => e.key==='Enter' && add()}/>
+        <button onClick={add} style={{ ...saveBtn, flexShrink:0, background:saved?A.green:A.yellow }}>
+          <Plus size={14}/> Add
+        </button>
+      </div>
+      <div style={{ display:'flex', flexWrap:'wrap', gap:7 }}>
+        {words.length === 0 && <p style={{ color:A.text3, fontSize:13 }}>No custom words yet.</p>}
+        {words.map(w => (
+          <div key={w} style={{ display:'flex', alignItems:'center', gap:6, background:'#1e1e1e', border:`1px solid ${A.border}`, borderRadius:8, padding:'4px 10px', fontSize:13, color:A.text2 }}>
+            <span>{w}</span>
+            <button onClick={() => remove(w)} style={{ background:'none', border:'none', color:A.red, cursor:'pointer', padding:0, display:'flex', lineHeight:1 }}>
+              <X size={12}/>
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

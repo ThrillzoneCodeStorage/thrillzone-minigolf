@@ -52,7 +52,8 @@ export function GameProvider({ children }) {
   const [currentTurnIndex, setCurrentTurnIndex] = useState(0)
   const [isLoading, setIsLoading]             = useState(false)
   // New state
-  const [spinnerPreference, setSpinnerPreference] = useState('digital') // 'digital' | 'physical'
+  const [spinnerPreference, setSpinnerPreference] = useState('digital')
+  const [sessionLocked, setSessionLocked]         = useState(false) // 'digital' | 'physical'
   const [language, setLanguage]                   = useState(() => localStorage.getItem('tz_lang') || 'en')
   const [showPostHole8Camera, setShowPostHole8Camera] = useState(false)
 
@@ -79,6 +80,12 @@ export function GameProvider({ children }) {
           setScores(scoreMap)
           const existingPhotos = await getSessionPhotos(existing.id)
           setPhotos(existingPhotos.map(p => p.storage_path))
+          setSessionLocked(existing.locked || false)
+          // Subscribe to lock changes for this session
+          supabase.channel('session-lock-'+existing.id)
+            .on('postgres_changes', { event:'UPDATE', schema:'public', table:'sessions', filter:'id=eq.'+existing.id },
+              p => setSessionLocked(p.new.locked || false))
+            .subscribe()
           setPhase('playing'); return
         }
       }
@@ -284,6 +291,7 @@ export function GameProvider({ children }) {
     showPostHole8Camera, setShowPostHole8Camera,
     startGame, goToHole, nextHole, dismissSpinner, playAgain,
     pendingPlayers, setPendingPlayers,
+    sessionLocked,
     language, setLanguage: (lang) => { localStorage.setItem('tz_lang', lang); setLanguage(lang) },
   }
 

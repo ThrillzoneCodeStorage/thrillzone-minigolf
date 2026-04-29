@@ -3,13 +3,18 @@ import { Download, Share2, X } from 'lucide-react'
 import { useTranslation } from '../../lib/TranslationContext'
 
 // Generate scorecard PNG on a canvas
-async function generateScorecardPng({ players, holes, scores, skippedHoles }) {
-  const CARD_W  = 900
-  const PAD     = 36
-  const ROW_H   = 44
-  const HDR_H   = 120
-  const COL_W   = Math.min(52, Math.floor((CARD_W - PAD*2 - 180) / Math.min(holes.length, 17)))
-  const TOTAL_H = HDR_H + PAD + (players.length + 1) * ROW_H + PAD * 2
+async function generateScorecardPng({ players, holes, scores, skippedHoles, format = '4:5' }) {
+  // format: '4:5' (feed post) or '9:16' (story)
+  const IS_STORY = format === '9:16'
+  const CARD_W  = IS_STORY ? 1080 : 1080
+  const PAD     = 44
+  const ROW_H   = IS_STORY ? 52 : 44
+  const HDR_H   = IS_STORY ? 280 : 140
+  const COL_W   = Math.min(52, Math.floor((CARD_W - PAD*2 - 200) / Math.min(holes.length, 17)))
+  const CONTENT_H = PAD + (players.length + 1) * ROW_H + PAD * 2
+  const TOTAL_H = IS_STORY
+    ? Math.max(1920, HDR_H + CONTENT_H + 200)  // 9:16
+    : Math.max(1350, HDR_H + CONTENT_H + 100)  // 4:5
 
   const canvas = document.createElement('canvas')
   canvas.width  = CARD_W
@@ -149,11 +154,15 @@ export default function ScorecardShare({ players, holes, scores, skippedHoles })
   const [generating, setGenerating] = useState(false)
   const [previewUrl, setPreviewUrl] = useState(null)
   const [showSheet, setShowSheet]   = useState(false)
+  const [showFormatPicker, setShowFormatPicker] = useState(false)
+  const [format, setFormat]         = useState(null)
 
-  async function generate() {
+  async function generate(fmt) {
+    setFormat(fmt)
+    setShowFormatPicker(false)
     setGenerating(true)
     try {
-      const canvas = await generateScorecardPng({ players, holes, scores, skippedHoles })
+      const canvas = await generateScorecardPng({ players, holes, scores, skippedHoles, format: fmt })
       const url = canvas.toDataURL('image/png')
       setPreviewUrl(url)
       setShowSheet(true)
@@ -184,10 +193,39 @@ export default function ScorecardShare({ players, holes, scores, skippedHoles })
 
   return (
     <>
-      <button className="btn btn-ghost btn-full" onClick={generate} disabled={generating}
+      <button className="btn btn-ghost btn-full" onClick={() => setShowFormatPicker(true)} disabled={generating}
         style={{ gap:7, marginBottom:8 }}>
         <Share2 size={17}/>{generating ? t.creating : t.shareScorecard}
       </button>
+
+      {/* Format picker modal */}
+      {showFormatPicker && (
+        <div className="modal-center" style={{ zIndex:350 }}>
+          <div className="modal-box" style={{ textAlign:'center' }}>
+            <h3 style={{ fontSize:19, fontWeight:900, letterSpacing:'-0.02em', marginBottom:8 }}>Choose format</h3>
+            <p style={{ fontSize:14, color:'var(--text-2)', marginBottom:22 }}>What format would you like to share?</p>
+            <div style={{ display:'flex', gap:12, marginBottom:14 }}>
+              <button onClick={() => generate('4:5')}
+                style={{ flex:1, background:'var(--bg-card-2)', border:'1px solid var(--border)', borderRadius:14, padding:'18px 10px', cursor:'pointer', fontFamily:'inherit', transition:'border-color 0.15s' }}>
+                <div style={{ fontSize:28, fontWeight:900, color:'var(--yellow)', marginBottom:6, letterSpacing:'-0.03em' }}>4:5</div>
+                <div style={{ fontSize:12, fontWeight:700, color:'var(--text-2)', marginBottom:4 }}>Feed Post</div>
+                <div style={{ fontSize:11, color:'var(--text-3)' }}>Instagram, Facebook</div>
+                {/* Preview shape */}
+                <div style={{ width:32, height:40, background:'rgba(255,214,0,0.15)', border:'1.5px solid rgba(255,214,0,0.3)', borderRadius:4, margin:'10px auto 0' }}/>
+              </button>
+              <button onClick={() => generate('9:16')}
+                style={{ flex:1, background:'var(--bg-card-2)', border:'1px solid var(--border)', borderRadius:14, padding:'18px 10px', cursor:'pointer', fontFamily:'inherit', transition:'border-color 0.15s' }}>
+                <div style={{ fontSize:28, fontWeight:900, color:'var(--yellow)', marginBottom:6, letterSpacing:'-0.03em' }}>9:16</div>
+                <div style={{ fontSize:12, fontWeight:700, color:'var(--text-2)', marginBottom:4 }}>Story / Reel</div>
+                <div style={{ fontSize:11, color:'var(--text-3)' }}>Instagram Stories, TikTok</div>
+                {/* Preview shape */}
+                <div style={{ width:22, height:40, background:'rgba(255,214,0,0.15)', border:'1.5px solid rgba(255,214,0,0.3)', borderRadius:4, margin:'10px auto 0' }}/>
+              </button>
+            </div>
+            <button className="btn btn-ghost btn-full btn-sm" onClick={() => setShowFormatPicker(false)}>Cancel</button>
+          </div>
+        </div>
+      )}
 
       {showSheet && previewUrl && (
         <div className="modal-overlay" style={{ zIndex:300 }}>

@@ -459,3 +459,11 @@ export async function getLeaderboardPlayerPhotos() {
     .select('session_id, player_name, photo_url')
   return data || []
 }
+
+// ── Session lock/unlock ────────────────────────────────────────
+export async function lockSession(id) {
+  await supabase.from('sessions').update({ locked: true }).eq('id', id)
+}
+export async function unlockSession(id) {
+  await supabase.from('sessions').update({ locked: false }).eq('id', id)
+}

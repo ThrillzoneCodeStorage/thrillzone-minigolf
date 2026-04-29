@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import {
   ChevronLeft, ChevronRight, Info, SkipForward, Crown,
   Flag, Target, AlertTriangle, CheckCircle, X,
-  Shuffle, Camera, RefreshCw
+  Shuffle, Camera, RefreshCw, Smartphone, Disc
 } from 'lucide-react'
 import { useGame } from '../../context/GameContext'
 import { useTranslation } from '../../lib/TranslationContext'
@@ -120,7 +120,7 @@ export default function HoleScreen() {
     showSpinner, dismissSpinner, setShowSpinner, setSpinnerEffect,
     currentTurnIndex, setCurrentTurnIndex,
     previousHoleWinner, leaderboard, language,
-    spinnerPreference,
+    spinnerPreference, setSpinnerPreference, sessionLocked,
     showPostHole8Camera, setShowPostHole8Camera,
   } = useGame()
 
@@ -138,6 +138,7 @@ export default function HoleScreen() {
   const [timerSeconds,   setTimerSeconds]       = useState(30)
   const [timerEnabled,   setTimerEnabled]       = useState(true)
   const [showPhysicalSpin, setShowPhysicalSpin] = useState(false)
+  const [showSpinnerChoice, setShowSpinnerChoice] = useState(false)
   const [holeInOnePlayers, setHoleInOnePlayers] = useState([])
   const [floaters, setFloaters]                 = useState([])
   const [transition, setTransition]             = useState(null)
@@ -286,6 +287,29 @@ export default function HoleScreen() {
         <div style={{ position:'absolute', inset:0, background:`linear-gradient(75deg, transparent 40%, ${orbColors[1]}06 58%, transparent 76%)`, animation:'shineSweep2 13s ease-in-out infinite' }}/>
         <div style={{ position:'absolute', bottom:0, left:0, right:0, height:'35%', background:`linear-gradient(to top, ${orbColors[2]}08, transparent)`, animation:'glowPulse 6s ease-in-out infinite' }}/>
       </div>
+      {/* Session locked overlay */}
+      {sessionLocked && (
+        <div style={{ position:'fixed', inset:0, zIndex:9999, background:'rgba(0,0,0,0.97)', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:32, backdropFilter:'blur(12px)' }}>
+          <div style={{ width:72, height:72, borderRadius:20, background:'rgba(255,59,59,0.12)', border:'2px solid rgba(255,59,59,0.3)', display:'flex', alignItems:'center', justifyContent:'center', marginBottom:24 }}>
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#FF3B3B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </div>
+          <h2 style={{ fontSize:26, fontWeight:900, color:'#fff', textAlign:'center', letterSpacing:'-0.03em', marginBottom:12, lineHeight:1.2 }}>
+            Scorecard Locked
+          </h2>
+          <p style={{ fontSize:16, color:'rgba(255,255,255,0.6)', textAlign:'center', lineHeight:1.65, maxWidth:320 }}>
+            Not all players have been paid for. Please go to reception to complete payment before continuing.
+          </p>
+          <div style={{ marginTop:32, padding:'12px 24px', background:'rgba(255,59,59,0.10)', border:'1px solid rgba(255,59,59,0.2)', borderRadius:12 }}>
+            <p style={{ fontSize:13, color:'rgba(255,59,59,0.8)', fontWeight:600, textAlign:'center' }}>
+              A staff member will unlock your game once payment is confirmed.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Progress */}
       <div style={{ height:3, background:'var(--bg-card-2)', flexShrink:0, position:'relative', zIndex:1 }}>
         <div style={{ height:'100%', width:`${(holeNum/totalHoles)*100}%`, background:'var(--yellow)', transition:'width 0.5s cubic-bezier(0.16,1,0.3,1)', borderRadius:'0 2px 2px 0', boxShadow:'0 0 8px rgba(255,214,0,0.4)' }}/>
@@ -643,11 +667,43 @@ export default function HoleScreen() {
       {showModeChange && (
         <ModeChangeModal
           current={playStyle}
-          onSelect={changePlayStyle}
+          onSelect={(style) => {
+            if (style === 'silly') {
+              changePlayStyle(style)
+              setShowModeChange(false)
+              setShowSpinnerChoice(true)
+            } else {
+              changePlayStyle(style)
+              setShowModeChange(false)
+            }
+          }}
           onClose={() => setShowModeChange(false)}
           onRestart={() => { setShowModeChange(false); playAgain() }}
           t={t}
         />
+      )}
+
+      {/* Spinner choice when switching to silly mid-game */}
+      {showSpinnerChoice && (
+        <div className="modal-center">
+          <div className="modal-box" style={{ textAlign:'center' }}>
+            <div style={{ width:60, height:60, borderRadius:16, background:'rgba(167,139,250,0.10)', border:'1.5px solid rgba(167,139,250,0.25)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 16px' }}>
+              <Shuffle size={28} color="#a78bfa" strokeWidth={1.75}/>
+            </div>
+            <h3 style={{ fontSize:20, fontWeight:900, letterSpacing:'-0.02em', marginBottom:8 }}>{t.howToSpin}</h3>
+            <p style={{ fontSize:14, color:'var(--text-2)', lineHeight:1.65, marginBottom:24 }}>{t.spinChoiceDesc}</p>
+            <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+              <button className="btn btn-full" onClick={() => { setSpinnerPreference('digital'); setShowSpinnerChoice(false) }}
+                style={{ background:'rgba(167,139,250,0.10)', border:'1.5px solid rgba(167,139,250,0.30)', color:'#a78bfa', fontWeight:800, fontSize:15, padding:'16px', gap:10, display:'flex', alignItems:'center', justifyContent:'center', borderRadius:'var(--radius)', cursor:'pointer', fontFamily:'inherit' }}>
+                <Smartphone size={20}/> {t.spinOnPhone}
+              </button>
+              <button className="btn btn-full" onClick={() => { setSpinnerPreference('physical'); setShowSpinnerChoice(false) }}
+                style={{ background:'var(--bg-card-2)', border:'1px solid var(--border)', color:'var(--text-2)', fontWeight:700, fontSize:15, padding:'16px', gap:10, display:'flex', alignItems:'center', justifyContent:'center', borderRadius:'var(--radius)', cursor:'pointer', fontFamily:'inherit' }}>
+                <Disc size={20}/> {t.spinPhysical}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       <style>{`

@@ -312,8 +312,14 @@ export default function EndScreen() {
           ))}
         </div>
 
-        {/* Score table */}
-        <div className="card" style={{ marginBottom: 14, overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+        {/* Score table — collapsible */}
+        <button onClick={() => setShowFullScorecard(v => !v)}
+          style={{ width:'100%', display:'flex', alignItems:'center', justifyContent:'space-between', background:'var(--bg-card-2)', border:'1px solid var(--border)', borderRadius:'var(--radius)', padding:'12px 16px', cursor:'pointer', fontFamily:'inherit', marginBottom: showFullScorecard ? 0 : 14 }}>
+          <span style={{ fontSize:13, fontWeight:800, color:'var(--text-2)', textTransform:'uppercase', letterSpacing:'0.06em' }}>Full Scorecard</span>
+          <span style={{ fontSize:18, color:'var(--text-3)', transform: showFullScorecard ? 'rotate(180deg)' : 'none', transition:'transform 0.2s' }}>▾</span>
+        </button>
+        {showFullScorecard && (
+        <div className="card" style={{ marginBottom: 14, overflowX: 'auto', WebkitOverflowScrolling: 'touch', borderRadius:'0 0 var(--radius) var(--radius)' }}>
           <p style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-3)', marginBottom: 12 }}>Full Scorecard</p>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, minWidth: 260 }}>
             <thead>
@@ -347,6 +353,7 @@ export default function EndScreen() {
             </tbody>
           </table>
         </div>
+        )}
 
         {/* Email */}
         {!sent ? (

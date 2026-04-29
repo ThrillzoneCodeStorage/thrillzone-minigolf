@@ -3,7 +3,8 @@ import { ChevronLeft, ChevronRight, Plus, X } from 'lucide-react'
 import { useGame } from '../../context/GameContext'
 import { useTranslation } from '../../lib/TranslationContext'
 import PlayingCardsRules from '../Rules/PlayingCardsRules'
-import { checkAllNames } from '../../lib/filter'
+import { checkAllNames, loadCustomBannedWords } from '../../lib/filter'
+import { supabase } from '../../lib/supabase'
 
 const PLAYER_COLORS = [
   '#FFD600',
@@ -35,6 +36,7 @@ export default function PlayerSetup() {
   const t = useTranslation()
   const [names,     setNames]     = useState([''])
   const [showRules, setShowRules]   = useState(false)
+  useEffect(() => { loadCustomBannedWords(supabase) }, [])
   const [filterWarning, setFilterWarning] = useState(null) // names that triggered filter
 
   const add    = () => names.length < 16 && setNames(n => [...n, ''])
