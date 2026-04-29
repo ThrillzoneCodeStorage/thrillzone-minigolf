@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, Plus, X } from 'lucide-react'
 import { useGame } from '../../context/GameContext'
 import { useTranslation } from '../../lib/TranslationContext'

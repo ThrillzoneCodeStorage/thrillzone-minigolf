@@ -761,7 +761,7 @@ function DataTab() {
   async function load() {
     const { data } = await supabase
       .from('sessions')
-      .select('id, play_style, players, started_at, completed_at, opt_out_leaderboard, locked, scores(hole_id, player_name, strokes, created_at)')
+      .select('id, play_style, players, started_at, completed_at, opt_out_leaderboard, locked, email, scores(hole_id, player_name, strokes)')
       .order('started_at', { ascending: false })
       .limit(60)
     setSessions(data || [])
