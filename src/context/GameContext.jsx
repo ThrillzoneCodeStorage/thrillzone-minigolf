@@ -81,11 +81,13 @@ export function GameProvider({ children }) {
           const existingPhotos = await getSessionPhotos(existing.id)
           setPhotos(existingPhotos.map(p => p.storage_path))
           setSessionLocked(existing.locked || false)
-          // Subscribe to lock changes for this session
-          supabase.channel('session-lock-'+existing.id)
-            .on('postgres_changes', { event:'UPDATE', schema:'public', table:'sessions', filter:'id=eq.'+existing.id },
-              p => setSessionLocked(p.new.locked || false))
-            .subscribe()
+          // Subscribe to lock changes (graceful if locked column doesn't exist yet)
+          try {
+            supabase.channel('session-lock-'+existing.id)
+              .on('postgres_changes', { event:'UPDATE', schema:'public', table:'sessions', filter:'id=eq.'+existing.id },
+                p => setSessionLocked(p.new?.locked || false))
+              .subscribe()
+          } catch(e) {}
           setPhase('playing'); return
         }
       }

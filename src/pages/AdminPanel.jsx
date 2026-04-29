@@ -822,18 +822,34 @@ function DataTab() {
               holes:scoresArr.filter(sc=>sc.player_name===p.name).length,
             })).sort((a,b)=>a.total-b.total)
             return (
-              <div key={s.id} style={{ background:'#161616', border:`1px solid ${A.border}`, borderRadius:12, padding:14, marginBottom:8 }}>
+              <div key={s.id} style={{ background: s.locked ? 'rgba(255,149,0,0.04)' : '#161616', border:`1px solid ${s.locked ? '#ff950055' : A.border}`, borderRadius:12, padding:14, marginBottom:8 }}>
                 <div style={{ display:'flex', justifyContent:'space-between', marginBottom:8 }}>
                   <div style={{ display:'flex', gap:7, alignItems:'center', flexWrap:'wrap' }}>
                     <span style={{ fontSize:11, fontWeight:800, textTransform:'uppercase', color:A.yellow }}>{s.play_style}</span>
+                    {s.locked && <span style={{ fontSize:11, fontWeight:800, background:'rgba(255,149,0,0.15)', color:'#ff9500', padding:'1px 7px', borderRadius:8 }}>🔒 LOCKED</span>}
                     <span style={{ fontSize:11, color:A.text3 }}>Hole {(s.current_hole_index||0)+1}/17</span>
                     <span style={{ fontSize:11, color:A.text3 }}>{duration(s.started_at)} played</span>
                     {s.opt_out_leaderboard && <span style={{ fontSize:11, color:A.text3 }}>Private</span>}
                   </div>
-                  <button onClick={()=>handleDeleteSession(s.id)} disabled={deleting===s.id}
-                    style={{ ...iconBtn, color:A.red, fontSize:12, opacity:deleting===s.id?0.5:1 }}>
-                    <Trash2 size={13}/>{deleting===s.id?'Deleting…':'Delete session'}
-                  </button>
+                  <div style={{ display:'flex', gap:6 }}>
+                    <button
+                      onClick={async () => {
+                        setLocking(s.id)
+                        try {
+                          s.locked ? await unlockSession(s.id) : await lockSession(s.id)
+                          load()
+                        } finally { setLocking(null) }
+                      }}
+                      disabled={locking===s.id}
+                      title={s.locked ? 'Unlock group' : 'Lock group — payment required'}
+                      style={{ ...iconBtn, color: s.locked ? A.green : '#ff9500', fontSize:12, opacity:locking===s.id?0.5:1, border:`1px solid ${s.locked ? A.green+'44' : '#ff950044'}`, background: s.locked ? 'rgba(34,197,94,0.08)' : 'rgba(255,149,0,0.08)' }}>
+                      {locking===s.id ? '…' : s.locked ? '🔓 Unlock' : '🔒 Lock'}
+                    </button>
+                    <button onClick={()=>handleDeleteSession(s.id)} disabled={deleting===s.id}
+                      style={{ ...iconBtn, color:A.red, fontSize:12, opacity:deleting===s.id?0.5:1 }}>
+                      <Trash2 size={13}/>{deleting===s.id?'…':'Delete'}
+                    </button>
+                  </div>
                 </div>
                 <div style={{ display:'flex', gap:7, flexWrap:'wrap' }}>
                   {totals.map(p=>(
