@@ -9,6 +9,7 @@ import { composePolaroid } from '../PhotoSystem/PhotoSystem'
 
 // ── Leaderboard selfie button ─────────────────────────────────
 function LbSelfieButton({ sessionId, player, onDone }) {
+  const t = useTranslation()
   const videoRef = useRef(null)
   const streamRef = useRef(null)
   const [open, setOpen] = useState(false)
@@ -46,7 +47,7 @@ function LbSelfieButton({ sessionId, player, onDone }) {
 
   if (!open) return (
     <button className="btn btn-primary btn-full btn-lg" onClick={openCam} style={{ gap:8 }}>
-      <Camera size={20}/> Take my leaderboard selfie!
+      <Camera size={20}/> {t.takeSelfie}
     </button>
   )
 
@@ -57,7 +58,7 @@ function LbSelfieButton({ sessionId, player, onDone }) {
         <div style={{ textAlign:'center', marginTop:8 }}><img src="/logo.png" alt="" style={{ height:24, objectFit:'contain' }}/></div>
       </div>
       <div style={{ display:'flex', gap:9 }}>
-        <button className="btn btn-ghost" style={{ flex:1 }} onClick={() => { setBlob(null); setPreviewUrl(null); openCam() }}>Retake</button>
+        <button className="btn btn-ghost" style={{ flex:1 }} onClick={() => { setBlob(null); setPreviewUrl(null); openCam() }}>{t.retake}</button>
         <button className="btn btn-primary" style={{ flex:2 }} onClick={confirm} disabled={uploading}>
           {uploading?t.uploading:t.saveToLeaderboard}
         </button>
@@ -363,7 +364,7 @@ export default function EndScreen() {
               <p style={{ fontSize: 15, fontWeight: 800, letterSpacing: '-0.01em' }}>Get your scorecard + photos</p>
             </div>
             <p style={{ fontSize: 14, color: 'var(--text-2)', marginBottom: 14, lineHeight: 1.55 }}>
-              {t.emailScorecard} {photos.length} Polaroid{photos.length !== 1 ? 's' : ''} straight to your inbox.
+              {t.emailScorecard}
             </p>
             <div style={{ display: 'flex', gap: 10 }}>
               <input className="input" type="email" placeholder="your@email.com" value={email}
