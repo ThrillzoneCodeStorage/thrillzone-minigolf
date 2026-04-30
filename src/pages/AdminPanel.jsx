@@ -759,11 +759,20 @@ function DataTab() {
   const [locking, setLocking] = useState(null)
 
   async function load() {
-    const { data } = await supabase
+    let { data, error } = await supabase
       .from('sessions')
       .select('id, play_style, players, started_at, completed_at, opt_out_leaderboard, locked, email, scores(hole_id, player_name, strokes)')
       .order('started_at', { ascending: false })
       .limit(60)
+    if (error) {
+      // Fallback without locked column if it doesn't exist yet
+      const res = await supabase
+        .from('sessions')
+        .select('id, play_style, players, started_at, completed_at, opt_out_leaderboard, email, scores(hole_id, player_name, strokes)')
+        .order('started_at', { ascending: false })
+        .limit(60)
+      data = res.data
+    }
     setSessions(data || [])
   }
   useEffect(() => { load(); const t=setInterval(load,20000); return()=>clearInterval(t) }, [])

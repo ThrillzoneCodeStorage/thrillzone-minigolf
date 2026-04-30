@@ -99,6 +99,7 @@ export default function EndScreen() {
 
   const t = useTranslation()
   const winner = leaderboard[0]
+  const [showFullScorecard, setShowFullScorecard] = useState(false)
 
   // Detect qualifying players for leaderboard selfie
   useEffect(() => {
