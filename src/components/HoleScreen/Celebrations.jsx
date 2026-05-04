@@ -133,57 +133,86 @@ function StarWarsCanvas({ active }) {
 
 function StarWarsCrawl({ active }) {
   if (!active) return null
+  // Use a fixed overlay for the crawl so it's never clipped by the popup
   return (
-    <div style={{ position:'absolute', inset:0, pointerEvents:'none', overflow:'hidden', perspective:'300px' }}>
-      {/* Crawl container — 3D perspective tilt */}
+    <div style={{
+      position:'fixed', inset:0, zIndex:9999, pointerEvents:'none',
+      overflow:'hidden', perspective:'500px', perspectiveOrigin:'50% 40%',
+      background:'transparent',
+    }}>
+      {/* "A long time ago…" fades in first */}
       <div style={{
-        position:'absolute', bottom:'-10%', left:'5%', right:'5%',
-        transformOrigin:'50% 100%',
-        transform:'rotateX(28deg)',
-        animation:'swCrawl 6s linear forwards',
+        position:'absolute', top:'12%', left:0, right:0, textAlign:'center',
+        animation:'swIntro 1.8s ease forwards',
       }}>
-        {/* "A long time ago..." line */}
-        <p style={{
-          color:'#4fc3f7', fontSize:14, textAlign:'center', letterSpacing:'0.08em',
-          marginBottom:40, fontFamily:'Georgia, serif', fontStyle:'italic', opacity:0.9,
-        }}>
-          A long time ago on a mini golf course far, far away…
-        </p>
-        {/* Main title */}
-        <div style={{ textAlign:'center', marginBottom:32 }}>
-          <div style={{ fontSize:11, fontWeight:700, letterSpacing:'0.4em', color:'#FFD600',
-            textTransform:'uppercase', marginBottom:8, fontFamily:'Georgia, serif' }}>
-            EPISODE I
+        <span style={{ color:'#4fc3f7', fontSize:16, fontFamily:'Georgia,serif',
+          fontStyle:'italic', letterSpacing:'0.08em' }}>
+          A long time ago on a mini golf course far, far away….
+        </span>
+      </div>
+
+      {/* The crawl — 3D perspective, starts below screen, rolls up */}
+      <div style={{
+        position:'absolute', bottom:0, left:'8%', right:'8%',
+        transformOrigin:'50% 100%',
+        animation:'swCrawl 7s 1.2s linear both',
+      }}>
+        {/* EPISODE title */}
+        <div style={{ textAlign:'center', marginBottom:28, paddingBottom:16,
+          borderBottom:'1px solid rgba(255,214,0,0.2)' }}>
+          <div style={{ fontSize:13, fontWeight:700, letterSpacing:'0.5em', color:'#FFD600',
+            textTransform:'uppercase', marginBottom:10, fontFamily:'Georgia,serif', opacity:0.8 }}>
+            Episode I
           </div>
-          <div style={{ fontSize:38, fontWeight:900, color:'#FFD600', letterSpacing:'0.05em',
-            lineHeight:1.1, fontFamily:'Georgia, serif', textShadow:'0 0 30px rgba(255,214,0,0.5)' }}>
+          <div style={{ fontSize:42, fontWeight:900, color:'#FFD600', letterSpacing:'0.04em',
+            lineHeight:1.05, fontFamily:'Georgia,serif',
+            textShadow:'0 0 40px rgba(255,214,0,0.7), 0 0 80px rgba(255,214,0,0.3)' }}>
             HOLE IN ONE
           </div>
         </div>
-        {/* Crawl body text */}
+        {/* Body text */}
         {[
-          'A single stroke of genius has struck.',
-          'In a move that defied the laws of',
-          'mini golf physics, the ball rolled',
-          'with perfect precision directly into',
-          'the hole with just ONE stroke.',
+          'A single stroke of genius',
+          'has echoed across the galaxy.',
           '',
-          'The crowd went wild. The galaxy',
-          'trembled. A new legend was born.',
+          'In a move that defied the',
+          'laws of mini golf physics,',
+          'the ball rolled with perfect',
+          'precision into the hole with',
+          'just ONE stroke.',
+          '',
+          'The crowd went wild.',
+          'A new legend was born.',
+          '',
+          '✦  ✦  ✦',
           '',
           'May the golf be with you.',
         ].map((line, i) => (
-          <p key={i} style={{ color:'#FFD600', fontSize:18, textAlign:'center',
-            lineHeight:1.9, margin:0, letterSpacing:'0.04em',
-            fontFamily:'Georgia, serif', opacity:line ? 1 : 0.3 }}>
-            {line || '✦'}
+          <p key={i} style={{
+            color: line === '✦  ✦  ✦' ? 'rgba(255,214,0,0.6)' : '#FFD600',
+            fontSize: line === '✦  ✦  ✦' ? 20 : 17,
+            textAlign:'center', lineHeight:1.85, margin:0,
+            letterSpacing:'0.04em', fontFamily:'Georgia,serif',
+            opacity: line ? 1 : 0,
+          }}>
+            {line || ' '}
           </p>
         ))}
+        {/* Extra space at bottom so text fully scrolls off */}
+        <div style={{ height:300 }}/>
       </div>
+
+      {/* Fade edges top/bottom */}
+      <div style={{ position:'absolute', top:0, left:0, right:0, height:'22%',
+        background:'linear-gradient(to bottom, #000 0%, transparent 100%)', pointerEvents:'none' }}/>
+      <div style={{ position:'absolute', bottom:0, left:0, right:0, height:'15%',
+        background:'linear-gradient(to top, #000 0%, transparent 100%)', pointerEvents:'none' }}/>
+
       <style>{`
-        @keyframes swCrawl {
-          0%   { transform: rotateX(28deg) translateY(0); opacity:1 }
-          100% { transform: rotateX(28deg) translateY(-160%); opacity:0.6 }
+        @keyframes swIntro{0%{opacity:1}60%{opacity:1}100%{opacity:0}}
+        @keyframes swCrawl{
+          0%  {transform:rotateX(22deg) translateY(0%);opacity:1}
+          100%{transform:rotateX(22deg) translateY(-82%);opacity:0.5}
         }
       `}</style>
     </div>
@@ -386,127 +415,324 @@ function KiwiAnimation({ active }) {
 // ─────────────────────────────────────────────────────────────
 //  6. GOLF SWING
 // ─────────────────────────────────────────────────────────────
-function GolfSwingAnimation({ active }) {
+// ─────────────────────────────────────────────────────────────
+//  6. VOLCANO ERUPTION
+// ─────────────────────────────────────────────────────────────
+function VolcanoAnimation({ active }) {
+  const [phase, setPhase] = useState(0)
+  // 0=rumble, 1=eruption, 2=ball in air, 3=landed
+  useEffect(() => {
+    if (!active) return
+    const t1 = setTimeout(() => setPhase(1), 600)
+    const t2 = setTimeout(() => setPhase(2), 1200)
+    const t3 = setTimeout(() => setPhase(3), 2800)
+    return () => [t1,t2,t3].forEach(clearTimeout)
+  }, [active])
   if (!active) return null
+
   return (
     <div style={{ position:'absolute', inset:0, overflow:'hidden', pointerEvents:'none' }}>
 
-      {/* Ball trail */}
-      {Array.from({length:10},(_,i)=>(
-        <div key={i} style={{ position:'absolute',
-          left:`${20+i*5.5}%`, top:`${65-i*4.5}%`,
-          width:i===9?18:3+i*1.2, height:i===9?18:3+i*1.2,
-          borderRadius:'50%', background:i===9?'#fff':'#FFD600',
-          opacity:i===9?1:0.07+i*0.09,
-          animation:`trailPop 0.35s ${0.7+i*0.04}s ease-out both` }}/>
-      ))}
+      {/* Lava glow — grows with eruption */}
+      {phase >= 1 && (
+        <div style={{
+          position:'absolute', bottom:0, left:'15%', right:'40%', height:'45%',
+          background:'radial-gradient(ellipse at 50% 100%, rgba(255,80,0,0.35) 0%, transparent 70%)',
+          animation:'lavaGlow 0.4s ease-out both',
+        }}/>
+      )}
 
-      {/* Golfer — simple clean cartoon follow-through */}
-      <div style={{ position:'absolute', left:'3%', bottom:'10%', animation:'swingIn 1.8s ease-out forwards' }}>
-        <svg width="115" height="200" viewBox="0 0 115 200" fill="none">
-          {/* Ground */}
-          <ellipse cx="60" cy="196" rx="40" ry="6" fill="rgba(0,0,0,0.2)"/>
+      {/* ── VOLCANO SVG ── */}
+      <div style={{
+        position:'absolute', bottom:0, left:'-2%',
+        animation: phase===0 ? 'rumble 0.15s ease-in-out infinite' : 'none',
+      }}>
+        <svg width="320" height="280" viewBox="0 0 320 280" fill="none">
+          {/* Volcano body — dark layered mountain */}
+          <path d="M0 280 L80 120 L160 60 L240 120 L320 280 Z" fill="#3a2810"/>
+          <path d="M20 280 L90 130 L160 72 L230 130 L300 280 Z" fill="#4a3418"/>
+          <path d="M40 280 L100 140 L160 84 L220 140 L280 280 Z" fill="#5a3e20"/>
+          {/* Rock layers */}
+          <path d="M0 280 Q80 260 160 270 Q240 260 320 280" fill="#2a1c0a" opacity="0.4"/>
+          <path d="M30 280 Q100 255 160 262 Q220 255 290 280" fill="#6a4a28" opacity="0.3"/>
+          {/* Crater rim */}
+          <ellipse cx="160" cy="68" rx="42" ry="16" fill="#2a1c0a" stroke="#1a0e04" strokeWidth="2"/>
+          <ellipse cx="160" cy="66" rx="38" ry="12" fill="#3a2810"/>
+          {/* Crater inside */}
+          <ellipse cx="160" cy="64" rx="30" ry="9" fill="#8a0000"/>
+          <ellipse cx="160" cy="62" rx="22" ry="7" fill="#cc2200"/>
+          <ellipse cx="160" cy="61" rx="14" ry="5" fill="#ff4400"/>
+          <ellipse cx="160" cy="60" rx="8" ry="3" fill="#ff8800" opacity="0.9"/>
 
-          {/* ─ SHOES ─ */}
-          <ellipse cx="42" cy="188" rx="16" ry="8" fill="#e8e8e0" stroke="#aaa" strokeWidth="1.5"/>
-          <ellipse cx="72" cy="190" rx="13" ry="7" fill="#e8e8e0" stroke="#aaa" strokeWidth="1.5" transform="rotate(8 72 190)"/>
+          {/* Snow cap — classic volcano look */}
+          <path d="M140 68 Q160 48 180 68 Q170 58 160 56 Q150 58 140 68 Z" fill="#f0f0f0" opacity="0.8"/>
 
-          {/* ─ PANTS — khaki, front leg planted, back leg up on toe ─ */}
-          {/* Back leg */}
-          <path d="M50 128 Q44 150 42 170 Q40 180 44 188"
-            stroke="#c8b480" strokeWidth="22" strokeLinecap="round" fill="none"/>
-          <path d="M50 128 Q44 150 42 170 Q40 180 44 188"
-            stroke="#d8c490" strokeWidth="16" strokeLinecap="round" fill="none"/>
-          {/* Front leg */}
-          <path d="M66 128 Q72 150 76 170 Q80 182 72 190"
-            stroke="#c8b480" strokeWidth="22" strokeLinecap="round" fill="none"/>
-          <path d="M66 128 Q72 150 76 170 Q80 182 72 190"
-            stroke="#d8c490" strokeWidth="16" strokeLinecap="round" fill="none"/>
-
-          {/* ─ SHIRT — bright green polo ─ */}
-          <path d="M36 86 Q44 74 60 72 Q76 70 84 82 Q92 96 88 116 Q82 128 66 130 Q48 132 40 120 Q30 106 36 86 Z"
-            fill="#5cb84a" stroke="#3a8a28" strokeWidth="2.5"/>
-          {/* Shirt crease/highlight */}
-          <path d="M44 82 Q56 78 70 82 Q80 86 84 98" stroke="#7ad860" strokeWidth="2" fill="none" opacity="0.5"/>
-          <path d="M42 106 Q52 102 62 102 Q72 102 80 108" stroke="#3a8a28" strokeWidth="1.5" fill="none" opacity="0.45"/>
-          {/* V-collar */}
-          <path d="M52 74 L58 84 L64 74" stroke="#3a8a28" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-          {/* Belt */}
-          <path d="M38 122 Q60 126 86 118" stroke="#5a4a20" strokeWidth="3.5" strokeLinecap="round" fill="none"/>
-
-          {/* ─ ARMS UP — follow-through, club over left shoulder ─ */}
-          {/* Right arm */}
-          <path d="M72 88 L58 64 L42 40"
-            stroke="#e8b870" strokeWidth="14" strokeLinecap="round" strokeLinejoin="round"/>
-          <path d="M72 88 L58 64 L42 40"
-            stroke="#f8cc84" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round"/>
-          {/* Left arm */}
-          <path d="M60 90 L50 66 L36 42"
-            stroke="#e8b870" strokeWidth="14" strokeLinecap="round" strokeLinejoin="round"/>
-          <path d="M60 90 L50 66 L36 42"
-            stroke="#f8cc84" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round"/>
-          {/* Hands/gloves */}
-          <ellipse cx="38" cy="39" rx="9" ry="8" fill="#fff" stroke="#ddd" strokeWidth="2"/>
-          <ellipse cx="44" cy="36" rx="9" ry="8" fill="#fff" stroke="#ddd" strokeWidth="2"/>
-
-          {/* ─ CLUB ─ */}
-          <path d="M40 36 L24 10" stroke="#aaa" strokeWidth="4" strokeLinecap="round"/>
-          {/* Club head */}
-          <path d="M22 8 L14 4 Q8 6 10 12 Q12 16 20 14 L24 10 Z"
-            fill="#999" stroke="#777" strokeWidth="1.5"/>
-
-          {/* ─ NECK ─ */}
-          <path d="M54 70 Q58 64 62 70" stroke="#e8b870" strokeWidth="10" strokeLinecap="round" fill="none"/>
-
-          {/* ─ HEAD ─ */}
-          <circle cx="60" cy="50" r="24" fill="#f0c080" stroke="#e0a060" strokeWidth="2"/>
-          {/* Ear */}
-          <ellipse cx="37" cy="52" rx="6" ry="8" fill="#e8b870" stroke="#e0a060" strokeWidth="1.5"/>
-          {/* Cheek blush */}
-          <ellipse cx="50" cy="58" rx="6" ry="4" fill="#ffaa88" opacity="0.4"/>
-          {/* Eyebrow */}
-          <path d="M46 40 Q52 37 58 40" stroke="#8a5020" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
-          {/* Eye */}
-          <ellipse cx="52" cy="46" rx="4" ry="4.5" fill="#2a1808"/>
-          <circle cx="53.5" cy="44.5" r="1.8" fill="#fff"/>
-          {/* Nose */}
-          <path d="M56 52 Q60 55 64 53" stroke="#d8a050" strokeWidth="1.8" strokeLinecap="round" fill="none"/>
-          {/* Big grin */}
-          <path d="M48 60 Q58 68 68 60" stroke="#c07030" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
-          <path d="M50 61 Q58 67 66 61" fill="#e87050" opacity="0.3"/>
-
-          {/* ─ WHITE CAP ─ */}
-          {/* Dome */}
-          <path d="M38 44 Q40 22 60 20 Q80 18 82 40"
-            fill="#f4f4ee" stroke="#d8d8d0" strokeWidth="2"/>
-          {/* Brim — sticks out front-left */}
-          <path d="M36 44 Q34 52 46 54 Q58 56 68 50 Q78 44 82 40"
-            fill="#f4f4ee" stroke="#d8d8d0" strokeWidth="2"/>
-          {/* Cap button */}
-          <circle cx="62" cy="22" r="3.5" fill="#d0d0c8" stroke="#bbb" strokeWidth="1"/>
-          {/* Brim shadow line */}
-          <path d="M38 46 Q56 50 78 44" stroke="#c8c8c0" strokeWidth="1" fill="none" opacity="0.5"/>
+          {/* Rock texture */}
+          {[[70,180],[90,160],[110,200],[140,175],[180,170],[200,195],[220,165],[240,185]].map(([x,y],i)=>(
+            <ellipse key={i} cx={x} cy={y} rx="12" ry="7" fill="#2a1c0a" opacity="0.3" transform={`rotate(${i*15} ${x} ${y})`}/>
+          ))}
         </svg>
       </div>
 
-      {/* FORE! */}
-      <div style={{ position:'absolute', left:'28%', top:'14%',
-        animation:'foreIn 0.6s 0.25s cubic-bezier(0.34,1.56,0.64,1) both' }}>
-        <span style={{ fontSize:60, fontWeight:900, color:'#FFD600', fontStyle:'italic',
-          letterSpacing:'-0.03em',
-          textShadow:'0 0 40px rgba(255,214,0,0.9), 4px 4px 0 rgba(0,0,0,0.7)' }}>FORE!</span>
+      {/* ── ERUPTION — lava blobs shoot up ── */}
+      {phase >= 1 && (
+        <>
+          {/* Smoke puffs */}
+          {[[-30,0],[0,-20],[30,0],[-15,-35],[15,-30]].map(([dx,dy],i)=>(
+            <div key={i} style={{
+              position:'absolute', bottom:'52%', left:`calc(30% + ${dx}px)`,
+              width:50+i*12, height:50+i*12, borderRadius:'50%',
+              background:`rgba(${80+i*10},${80+i*10},${80+i*10},0.5)`,
+              filter:'blur(8px)',
+              animation:`smokePuff 2s ${i*0.12}s ease-out both`,
+              '--dy': `${-120+dy}px`,
+            }}/>
+          ))}
+          {/* Lava blobs */}
+          {[0,1,2,3,4,5].map(i=>(
+            <div key={i} style={{
+              position:'absolute', bottom:'50%', left:`calc(30% + ${(i-2.5)*22}px)`,
+              width:14+i%3*8, height:14+i%3*8, borderRadius:'50%',
+              background:['#ff4400','#ff8800','#ffaa00','#ff6600','#ff3300','#ffd700'][i],
+              animation:`lavaBlob${i%3} 1.4s ${i*0.08}s cubic-bezier(0.25,0.46,0.45,0.94) both`,
+              '--vx': `${(i-2.5)*18}px`,
+            }}/>
+          ))}
+        </>
+      )}
+
+      {/* ── GOLF BALL launching from crater ── */}
+      {phase >= 1 && (
+        <div style={{
+          position:'absolute', bottom:'50%', left:'30%',
+          animation:'ballLaunchV 1.8s cubic-bezier(0.2,0.8,0.4,1) forwards',
+        }}>
+          <svg width="34" height="34" viewBox="0 0 34 34"
+            style={{ animation:'ballSpinV 1.8s linear forwards', filter:'drop-shadow(0 0 10px rgba(255,150,0,0.8))' }}>
+            <circle cx="17" cy="17" r="16" fill="#fff" stroke="#eee" strokeWidth="0.5"/>
+            {[[11,10],[19,9],[9,17],[22,19],[16,16]].map(([x,y],i)=>(
+              <circle key={i} cx={x} cy={y} r="2" fill="#d0d0d0"/>
+            ))}
+          </svg>
+        </div>
+      )}
+
+      {/* ── HOLE on right ── */}
+      <div style={{ position:'absolute', bottom:'12%', right:'10%' }}>
+        <div style={{ width:52, height:20, borderRadius:'50%', background:'#0a0a0a',
+          border:'2px solid #333', position:'relative' }}/>
+        <svg width="30" height="66" viewBox="0 0 30 66" style={{ position:'absolute', top:-56, left:16 }}>
+          <rect x="12" y="0" width="3" height="62" rx="1.5" fill="#888"/>
+          <polygon points="15,2 30,12 15,22" fill="#e74c3c"/>
+        </svg>
       </div>
 
+      {/* ── IT'S GONNA BLOW! text ── */}
+      {phase === 0 && (
+        <div style={{ position:'absolute', top:'8%', left:'50%', transform:'translateX(-50%)',
+          animation:'rumbleText 0.12s ease-in-out infinite alternate', whiteSpace:'nowrap' }}>
+          <span style={{ fontSize:28, fontWeight:900, color:'#ff6600',
+            textShadow:'0 0 20px rgba(255,100,0,0.8)', letterSpacing:'0.04em' }}>
+            IT'S GONNA BLOW! 🌋
+          </span>
+        </div>
+      )}
+
+      {/* ── BOOM! after eruption ── */}
+      {phase >= 2 && (
+        <div style={{ position:'absolute', top:'6%', left:'50%', transform:'translateX(-50%)',
+          animation:'boomIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both', whiteSpace:'nowrap' }}>
+          <span style={{ fontSize:48, fontWeight:900, color:'#ff4400', fontStyle:'italic',
+            textShadow:'0 0 30px rgba(255,80,0,0.9), 3px 3px 0 rgba(0,0,0,0.6)',
+            letterSpacing:'-0.02em' }}>BOOM! 💥</span>
+        </div>
+      )}
+
+      {/* Landing spark */}
+      {phase >= 3 && (
+        <div style={{ position:'absolute', bottom:'18%', right:'8%',
+          animation:'burst 0.5s ease-out both' }}>
+          <svg width="70" height="70" viewBox="0 0 70 70">
+            {[0,45,90,135,180,225,270,315].map((a,i)=>(
+              <line key={i} x1="35" y1="35"
+                x2={35+Math.cos(a*Math.PI/180)*30} y2={35+Math.sin(a*Math.PI/180)*30}
+                stroke="#ff8800" strokeWidth="2.5" strokeLinecap="round"/>
+            ))}
+            <circle cx="35" cy="35" r="7" fill="#ff8800"/>
+            <circle cx="35" cy="35" r="3" fill="#fff"/>
+          </svg>
+        </div>
+      )}
+
       <style>{`
-        @keyframes trailPop{from{opacity:0;transform:scale(0)}to{opacity:1;transform:scale(1)}}
-        @keyframes swingIn{0%{transform:rotate(-42deg) translate(-40px,16px);opacity:0}22%{opacity:1}62%{transform:rotate(0deg)}100%{transform:rotate(16deg) translate(10px,-4px)}}
-        @keyframes foreIn{from{opacity:0;transform:scale(0.1) rotate(-25deg)}to{opacity:1;transform:none}}
+        @keyframes rumble{0%{transform:translate(-1px,-1px)}50%{transform:translate(2px,1px)}100%{transform:translate(-1px,0)}}
+        @keyframes rumbleText{0%{transform:translateX(-50%) translate(-2px,0)}100%{transform:translateX(-50%) translate(2px,-1px)}}
+        @keyframes lavaGlow{from{opacity:0}to{opacity:1}}
+        @keyframes smokePuff{0%{opacity:0;transform:translateY(0) scale(0.3)}40%{opacity:0.7;transform:translateY(var(--dy)) scale(1)}100%{opacity:0;transform:translateY(calc(var(--dy) - 60px)) scale(1.5)}}
+        @keyframes lavaBlob0{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--vx),-180px) scale(0.4)}}
+        @keyframes lavaBlob1{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--vx),-220px) scale(0.3)}}
+        @keyframes lavaBlob2{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--vx),-150px) scale(0.5)}}
+        @keyframes ballLaunchV{0%{transform:translate(0,0)}50%{transform:translate(160px,-380px)}100%{transform:translate(320px,-80px)}}
+        @keyframes ballSpinV{0%{transform:rotate(0)}100%{transform:rotate(1080deg)}}
+        @keyframes boomIn{from{opacity:0;transform:translateX(-50%) scale(0.2)}to{opacity:1;transform:translateX(-50%) scale(1)}}
       `}</style>
     </div>
   )
 }
 
 // ─────────────────────────────────────────────────────────────
+//  6b. PINBALL MACHINE
+// ─────────────────────────────────────────────────────────────
+function PinballAnimation({ active }) {
+  const [phase, setPhase] = useState(0)
+  // 0=launch, 1=bouncing, 2=letters lighting, 3=jackpot
+  useEffect(() => {
+    if (!active) return
+    const t1 = setTimeout(() => setPhase(1), 400)
+    const t2 = setTimeout(() => setPhase(2), 1200)
+    const t3 = setTimeout(() => setPhase(3), 2600)
+    return () => [t1,t2,t3].forEach(clearTimeout)
+  }, [active])
+  if (!active) return null
+
+  const letters = ['H','O','L','E',' ','I','N',' ','O','N','E','!']
+  const litCount = phase >= 2 ? Math.min(letters.length, Math.floor((Date.now() % 1400) / 116) + 1) : 0
+
+  return (
+    <div style={{ position:'absolute', inset:0, overflow:'hidden', pointerEvents:'none' }}>
+
+      {/* Pinball machine frame */}
+      <div style={{ position:'absolute', inset:'4% 4% 4% 4%',
+        border:'4px solid #FFD600', borderRadius:16,
+        background:'rgba(0,0,20,0.7)',
+        boxShadow:'0 0 30px rgba(255,214,0,0.3), inset 0 0 60px rgba(0,0,40,0.8)' }}/>
+
+      {/* Machine title */}
+      <div style={{ position:'absolute', top:'7%', left:'50%', transform:'translateX(-50%)',
+        whiteSpace:'nowrap' }}>
+        <span style={{ fontSize:15, fontWeight:900, letterSpacing:'0.3em', color:'#FFD600',
+          textShadow:'0 0 15px rgba(255,214,0,0.8)', textTransform:'uppercase' }}>
+          ★ MINI GOLF MANIA ★
+        </span>
+      </div>
+
+      {/* HOLE IN ONE letters — light up one by one */}
+      <div style={{ position:'absolute', top:'16%', left:'50%', transform:'translateX(-50%)',
+        display:'flex', gap:4, whiteSpace:'nowrap' }}>
+        {letters.map((l, i) => (
+          <div key={i} style={{
+            width: l===' ' ? 10 : 28, height:36, borderRadius:6,
+            background: (phase>=2 && i < litCount)
+              ? (i<4?'#ff2222':i>4&&i<7?'#22aaff':'#FFD600')
+              : 'rgba(255,255,255,0.06)',
+            border: l===' ' ? 'none' : `2px solid ${(phase>=2&&i<litCount)?'rgba(255,255,255,0.5)':'rgba(255,255,255,0.1)'}`,
+            display:'flex', alignItems:'center', justifyContent:'center',
+            fontSize:15, fontWeight:900, color:'#fff',
+            textShadow: (phase>=2&&i<litCount) ? '0 0 12px #fff' : 'none',
+            boxShadow: (phase>=2&&i<litCount) ? '0 0 16px currentColor, inset 0 0 8px rgba(255,255,255,0.3)' : 'none',
+            transition:'all 0.12s',
+          }}>
+            {l!==' '?l:''}
+          </div>
+        ))}
+      </div>
+
+      {/* Bumpers */}
+      {[[28,38],[50,32],[72,38],[38,55],[62,52],[85,44]].map(([x,y],i)=>(
+        <div key={i} style={{
+          position:'absolute', left:`${x}%`, top:`${y}%`,
+          width:44, height:44, borderRadius:'50%',
+          background: phase>=1 && i<phase+1 ? '#ff2244' : '#1a1a3a',
+          border:'3px solid',
+          borderColor: phase>=1&&i<phase+1 ? '#ff6688' : '#333366',
+          boxShadow: phase>=1&&i<phase+1 ? '0 0 20px #ff2244, inset 0 0 10px rgba(255,100,120,0.4)' : 'none',
+          display:'flex', alignItems:'center', justifyContent:'center',
+          fontSize:18, transition:'all 0.1s',
+        }}>
+          <span style={{ fontSize:16 }}>★</span>
+        </div>
+      ))}
+
+      {/* Flippers */}
+      <div style={{ position:'absolute', bottom:'12%', left:'14%', width:'28%', height:12,
+        background:'linear-gradient(90deg, #FFD600, #cc9900)',
+        borderRadius:'0 6px 6px 0', transformOrigin:'0% 50%',
+        transform: phase>=1 ? 'rotate(-30deg)' : 'rotate(30deg)',
+        transition:'transform 0.15s', boxShadow:'0 0 12px rgba(255,214,0,0.6)' }}/>
+      <div style={{ position:'absolute', bottom:'12%', right:'14%', width:'28%', height:12,
+        background:'linear-gradient(90deg, #cc9900, #FFD600)',
+        borderRadius:'6px 0 0 6px', transformOrigin:'100% 50%',
+        transform: phase>=1 ? 'rotate(30deg)' : 'rotate(-30deg)',
+        transition:'transform 0.15s', boxShadow:'0 0 12px rgba(255,214,0,0.6)' }}/>
+
+      {/* Launch lane on right */}
+      <div style={{ position:'absolute', right:'6%', top:'20%', bottom:'14%', width:28,
+        background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.1)',
+        borderRadius:8 }}/>
+
+      {/* Ball */}
+      <div style={{
+        position:'absolute',
+        animation: phase===0 ? 'pinLaunch 0.4s ease-out forwards'
+          : phase===1 ? 'pinBounce 0.8s ease-in-out infinite alternate'
+          : phase===2 ? 'pinScatter 1.4s ease-in-out forwards'
+          : 'pinDrain 0.8s ease-in forwards',
+        right:'7.5%', bottom:'18%',
+      }}>
+        <div style={{ width:22, height:22, borderRadius:'50%',
+          background:'radial-gradient(circle at 35% 32%, #fff, #e0e0e0)',
+          boxShadow:'0 0 10px rgba(255,255,255,0.8)', border:'1px solid #ccc' }}/>
+      </div>
+
+      {/* Score display */}
+      <div style={{ position:'absolute', bottom:'7%', left:'50%', transform:'translateX(-50%)',
+        display:'flex', gap:16, alignItems:'center' }}>
+        {['1','0','0','0','0','0'].map((d,i)=>(
+          <div key={i} style={{
+            fontSize:22, fontWeight:900, fontFamily:'monospace',
+            color: phase>=3 ? '#FFD600' : '#ff4444',
+            textShadow: phase>=3 ? '0 0 16px rgba(255,214,0,0.8)' : '0 0 8px rgba(255,80,80,0.6)',
+            transition:'color 0.3s, text-shadow 0.3s',
+          }}>{d}</div>
+        ))}
+      </div>
+
+      {/* JACKPOT! */}
+      {phase >= 3 && (
+        <div style={{ position:'absolute', top:'60%', left:'50%', transform:'translate(-50%,-50%)',
+          animation:'jackpotPop 0.5s cubic-bezier(0.34,1.56,0.64,1) both',
+          whiteSpace:'nowrap' }}>
+          <span style={{ fontSize:44, fontWeight:900, color:'#FFD600',
+            textShadow:'0 0 30px rgba(255,214,0,1), 3px 3px 0 rgba(0,0,0,0.7)',
+            letterSpacing:'-0.02em' }}>JACKPOT! 🎰</span>
+        </div>
+      )}
+
+      {/* Flashing lights at corners */}
+      {[['8%','8%'],['88%','8%'],['8%','88%'],['88%','88%']].map(([l,t],i)=>(
+        <div key={i} style={{
+          position:'absolute', left:l, top:t, width:18, height:18, borderRadius:'50%',
+          background:['#ff2244','#22aaff','#FFD600','#22ff88'][i],
+          boxShadow:`0 0 14px ${['#ff2244','#22aaff','#FFD600','#22ff88'][i]}`,
+          animation:`cornerBlink 0.4s ${i*0.1}s ease-in-out infinite alternate`,
+        }}/>
+      ))}
+
+      <style>{`
+        @keyframes pinLaunch{from{bottom:18%}to{bottom:70%}}
+        @keyframes pinBounce{0%{transform:translate(0,0)}25%{transform:translate(-180px,-40px)}50%{transform:translate(-80px,-120px)}75%{transform:translate(-260px,-80px)}100%{transform:translate(-140px,-160px)}}
+        @keyframes pinScatter{0%{transform:translate(-140px,-160px)}50%{transform:translate(-220px,-60px)}100%{transform:translate(-50px,80px)}}
+        @keyframes pinDrain{from{transform:translate(-50px,80px);opacity:1}to{transform:translate(-50px,200px);opacity:0}}
+        @keyframes jackpotPop{from{opacity:0;transform:translate(-50%,-50%) scale(0.2) rotate(-10deg)}to{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(0deg)}}
+        @keyframes cornerBlink{0%{opacity:0.3;transform:scale(0.8)}100%{opacity:1;transform:scale(1.2)}}
+      `}</style>
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────
+//  7. GECKO / KEA
+// // ─────────────────────────────────────────────────────────────
 //  7. GECKO — detailed SVG
 // ─────────────────────────────────────────────────────────────
 function KeaSVG() {
@@ -599,51 +825,100 @@ function KeaSVG() {
 }
 
 function GeckoAnimation({ active }) {
-  // Now features a NZ Kea parrot!
   if (!active) return null
   return (
     <div style={{ position:'absolute', inset:0, overflow:'hidden', pointerEvents:'none' }}>
-      {/* Kea flying/running in from left */}
-      <div style={{ position:'absolute', bottom:'12%', animation:'geckoRun 2.5s cubic-bezier(0.25,0.46,0.45,0.94) forwards' }}>
-        <div style={{ animation:'keaWing 0.3s ease-in-out infinite alternate' }}>
+
+      {/* Hop 1 — enters from left */}
+      <div style={{ position:'absolute', bottom:'12%', left:'8%',
+        animation:'keaHop1 0.5s 0.1s ease-in-out forwards' }}>
+        <div style={{ animation:'keaWiggle 0.25s ease-in-out infinite alternate' }}>
           <KeaSVG/>
         </div>
       </div>
-      {/* Golf ball waiting */}
-      <div style={{ position:'absolute', bottom:'17%', right:'11%' }}>
-        <svg width="42" height="42" viewBox="0 0 42 42">
+
+      {/* Hop 2 — middle */}
+      <div style={{ position:'absolute', bottom:'12%', left:'30%',
+        opacity:0, animation:'keaHop2 0.5s 0.8s ease-in-out forwards' }}>
+        <div style={{ animation:'keaWiggle 0.25s ease-in-out infinite alternate' }}>
+          <KeaSVG/>
+        </div>
+      </div>
+
+      {/* Hop 3 — reaches ball */}
+      <div style={{ position:'absolute', bottom:'12%', left:'54%',
+        opacity:0, animation:'keaHop3 0.5s 1.5s ease-in-out forwards' }}>
+        <div style={{ animation:'keaWiggle 0.25s ease-in-out infinite alternate' }}>
+          <KeaSVG/>
+        </div>
+      </div>
+
+      {/* Arc shadows — show the hop paths */}
+      <svg style={{ position:'absolute', bottom:'14%', left:0, right:0, width:'100%', height:80, overflow:'visible' }}
+        viewBox="0 0 400 80" preserveAspectRatio="none">
+        <path d="M60 70 Q100 10 140 70" stroke="rgba(255,255,255,0.08)" strokeWidth="2" fill="none" strokeDasharray="4 4"/>
+        <path d="M140 70 Q200 10 240 70" stroke="rgba(255,255,255,0.08)" strokeWidth="2" fill="none" strokeDasharray="4 4"/>
+      </svg>
+
+      {/* Golf ball */}
+      <div style={{ position:'absolute', bottom:'17%', right:'14%' }}>
+        <svg width="44" height="44" viewBox="0 0 44 44">
           <defs><radialGradient id="bg3" cx="35%" cy="32%"><stop offset="0%" stopColor="#fff"/><stop offset="100%" stopColor="#e8e8e8"/></radialGradient></defs>
-          <circle cx="21" cy="21" r="20" fill="url(#bg3)" stroke="#ccc" strokeWidth="0.5"/>
-          {[[14,13],[22,11],[11,20],[26,23],[20,20],[13,27]].map(([x,y],i)=>(
+          <circle cx="22" cy="22" r="21" fill="url(#bg3)" stroke="#ccc" strokeWidth="0.5"/>
+          {[[14,13],[23,11],[11,20],[27,23],[20,20],[14,28]].map(([x,y],i)=>(
             <circle key={i} cx={x} cy={y} r="2.2" fill="#d0d0d0"/>
           ))}
         </svg>
       </div>
+
       {/* Speech bubble */}
       <div style={{ position:'absolute', top:'6%', left:'50%', transform:'translateX(-50%)',
-        animation:'churBubble 0.5s 2.1s cubic-bezier(0.34,1.56,0.64,1) both', whiteSpace:'nowrap', zIndex:2 }}>
+        animation:'churBubble 0.5s 1.8s cubic-bezier(0.34,1.56,0.64,1) both', whiteSpace:'nowrap', zIndex:2 }}>
         <div style={{ background:'#fff', borderRadius:16, padding:'10px 22px',
           boxShadow:'0 8px 32px rgba(0,0,0,0.6)', border:'2.5px solid #e8780a', position:'relative' }}>
-          <span style={{ fontSize:22, fontWeight:900, color:'#c05808' }}>Ka-kaa! Hole in One! 🦜</span>
+          <span style={{ fontSize:22, fontWeight:900, color:'#c05808' }}>Ka-kaa! 🦜 Hole in One!</span>
           <div style={{ position:'absolute', bottom:-14, left:'50%', transform:'translateX(-50%)',
             width:0, height:0, borderLeft:'12px solid transparent', borderRight:'12px solid transparent',
             borderTop:'14px solid #fff' }}/>
         </div>
       </div>
+
       {/* Impact burst */}
-      <div style={{ position:'absolute', bottom:'21%', right:'9%', animation:'burst 0.6s 2.2s ease-out both' }}>
+      <div style={{ position:'absolute', bottom:'20%', right:'12%', animation:'burst 0.6s 2.0s ease-out both' }}>
         <svg width="80" height="80" viewBox="0 0 80 80">
           {[0,30,60,90,120,150,180,210,240,270,300,330].map((a,i)=>(
             <line key={i} x1="40" y1="40"
-              x2={40+Math.cos(a*Math.PI/180)*(i%3===0?38:26)} y2={40+Math.sin(a*Math.PI/180)*(i%3===0?38:26)}
+              x2={40+Math.cos(a*Math.PI/180)*(i%3===0?38:26)}
+              y2={40+Math.sin(a*Math.PI/180)*(i%3===0?38:26)}
               stroke="#e8780a" strokeWidth={i%3===0?3:1.5} strokeLinecap="round"/>
           ))}
           <circle cx="40" cy="40" r="8" fill="#e8780a"/>
           <circle cx="40" cy="40" r="4" fill="#fff"/>
         </svg>
       </div>
+
       <style>{`
-        @keyframes keaWing{0%{transform:rotate(-8deg) translateY(0)}100%{transform:rotate(8deg) translateY(-8px)}}
+        @keyframes keaWiggle{0%{transform:rotate(-10deg) scaleX(1)}100%{transform:rotate(10deg) scaleX(1)}}
+        @keyframes keaHop1{
+          0%  {opacity:1;transform:translateY(0)}
+          30% {opacity:1;transform:translateY(-50px)}
+          60% {opacity:1;transform:translateY(0)}
+          80% {opacity:0;transform:translateY(0)}
+          100%{opacity:0}
+        }
+        @keyframes keaHop2{
+          0%  {opacity:1;transform:translateY(0)}
+          30% {opacity:1;transform:translateY(-55px)}
+          60% {opacity:1;transform:translateY(0)}
+          80% {opacity:0}
+          100%{opacity:0}
+        }
+        @keyframes keaHop3{
+          0%  {opacity:1;transform:translateY(0)}
+          40% {opacity:1;transform:translateY(-45px)}
+          70% {opacity:1;transform:translateY(0)}
+          100%{opacity:1}
+        }
       `}</style>
     </div>
   )
@@ -907,7 +1182,7 @@ export function HoleInOnePopup({ players, onDismiss, enabledAnimations }) {
   const [visible, setVisible]       = useState(true)
   const [canDismiss, setCanDismiss] = useState(false)
 
-  const ALL = ['confetti','fireworks','kiwi','golfswing','galaxy','streamer','gecko','lightning','pixel']
+  const ALL = ['confetti','fireworks','kiwi','galaxy','streamer','gecko','lightning','pixel','volcano','pinball']
   const pool = (enabledAnimations && enabledAnimations.length > 0)
     ? ALL.filter(a => enabledAnimations.includes(a))
     : ALL
@@ -930,6 +1205,8 @@ export function HoleInOnePopup({ players, onDismiss, enabledAnimations }) {
     : animType === 'gecko'   ? (multi ? 'Ka-kaa! Hole in Ones!' : 'Ka-kaa! Hole in One! 🦜')
     : animType === 'lightning'? (multi ? '⚡ HOLE IN ONES! ⚡' : '⚡ HOLE IN ONE! ⚡')
     : animType === 'golfswing'? (multi ? 'FORE! Hole in Ones!' : 'FORE! Hole in One!')
+    : animType === 'volcano' ? (multi ? '🌋 HOLE IN ONES!' : '🌋 HOLE IN ONE!')
+    : animType === 'pinball' ? (multi ? 'JACKPOT! HOLE IN ONES!' : 'JACKPOT! HOLE IN ONE! 🎰')
     : (multi ? 'HOLE IN ONES!' : 'HOLE IN ONE!')
 
   return (
@@ -939,6 +1216,7 @@ export function HoleInOnePopup({ players, onDismiss, enabledAnimations }) {
       {animType === 'fireworks' && <FireworksCanvas active={visible} />}
       {animType === 'galaxy'    && <StarWarsCanvas active={visible} />}
       {animType === 'streamer'  && <StreamerCanvas active={visible} />}
+      {animType === 'volcano'   && <ConfettiCanvas active={visible} />}
 
       {/* Main popup */}
       <div onClick={handleTap} style={{
@@ -952,11 +1230,12 @@ export function HoleInOnePopup({ players, onDismiss, enabledAnimations }) {
       }}>
         {/* In-popup animations */}
         {animType === 'kiwi'      && <KiwiAnimation active={visible} />}
-        {animType === 'golfswing' && <GolfSwingAnimation active={visible} />}
         {animType === 'gecko'     && <GeckoAnimation active={visible} />}
         {animType === 'lightning' && <LightningAnimation active={visible} />}
         {animType === 'pixel'     && <PixelAnimation active={visible} />}
         {animType === 'galaxy'    && <StarWarsCrawl active={visible} />}
+        {animType === 'volcano'   && <VolcanoAnimation active={visible} />}
+        {animType === 'pinball'   && <PinballAnimation active={visible} />}
 
         {/* Content — sits above animation layers */}
         <div style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
@@ -1096,10 +1375,11 @@ export const ALL_ANIMATION_NAMES = {
   confetti:  'Confetti',
   fireworks: 'Fireworks',
   kiwi:      'Kiwi Bird',
-  golfswing: 'Golf Swing',
-  galaxy:    'Galaxy Burst',
+  galaxy:    'Star Wars',
   streamer:  'Streamer Cannon',
-  gecko:     'Gecko Lizard',
-  lightning: 'Lightning Strike',
+  gecko:     'Kea Parrot',
+  lightning: 'Ball in Hole',
   pixel:     '8-bit Pixel',
+  volcano:   'Volcano Eruption',
+  pinball:   'Pinball Machine',
 }
