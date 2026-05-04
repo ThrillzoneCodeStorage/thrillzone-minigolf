@@ -96,43 +96,98 @@ function FireworksCanvas({ active }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-//  3. GALAXY BURST
+//  3. STAR WARS CRAWL
 // ─────────────────────────────────────────────────────────────
-function GalaxyCanvas({ active }) {
+function StarWarsCanvas({ active }) {
   const canvasRef = useRef(null); const rafRef = useRef(null)
   useEffect(() => {
     if (!active) return
     const canvas = canvasRef.current; if (!canvas) return
     const { ctx, W, H } = setupCanvas(canvas)
-    const cx = W / 2, cy = H / 2
-    const stars = Array.from({ length: 400 }, () => {
-      const a = Math.random() * Math.PI * 2, s = 0.3 + Math.random() * 5.5
-      return { x: cx, y: cy, vx: Math.cos(a) * s, vy: Math.sin(a) * s, alpha: 1,
-        size: 0.8 + Math.random() * 2.8, trail: [],
-        color: ['#FFD600','#fff','#ffe066','#FFD600','#a78bfa','#60a5fa'][Math.floor(Math.random() * 6)] }
-    })
+    // Stars
+    const stars = Array.from({ length: 300 }, () => ({
+      x: Math.random() * W, y: Math.random() * H,
+      r: Math.random() * 1.8, twinkle: Math.random() * Math.PI * 2,
+      speed: 0.03 + Math.random() * 0.05,
+    }))
+    let t = 0
     function draw() {
-      ctx.fillStyle = 'rgba(0,0,0,0.05)'; ctx.fillRect(0, 0, W, H)
+      ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H)
+      // Twinkling stars
       for (const s of stars) {
-        s.trail.push({ x: s.x, y: s.y, a: s.alpha })
-        if (s.trail.length > 5) s.trail.shift()
-        s.x += s.vx; s.y += s.vy; s.vx *= 1.022; s.vy *= 1.022; s.alpha -= 0.007
-        if (s.alpha <= 0) continue
-        // Trail
-        s.trail.forEach((pt, i) => {
-          ctx.globalAlpha = pt.a * (i / s.trail.length) * 0.4
-          ctx.fillStyle = s.color; ctx.beginPath(); ctx.arc(pt.x, pt.y, s.size * 0.5, 0, Math.PI * 2); ctx.fill()
-        })
-        ctx.globalAlpha = Math.max(0, s.alpha); ctx.fillStyle = s.color
-        ctx.beginPath(); ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2); ctx.fill()
+        s.twinkle += s.speed
+        const alpha = 0.4 + 0.6 * Math.abs(Math.sin(s.twinkle))
+        ctx.globalAlpha = alpha; ctx.fillStyle = '#fff'
+        ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2); ctx.fill()
       }
-      ctx.globalAlpha = 1; rafRef.current = requestAnimationFrame(draw)
+      ctx.globalAlpha = 1
+      t++
+      rafRef.current = requestAnimationFrame(draw)
     }
     rafRef.current = requestAnimationFrame(draw)
     return () => cancelAnimationFrame(rafRef.current)
   }, [active])
   if (!active) return null
-  return <canvas ref={canvasRef} style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 9998 }} />
+  return <canvas ref={canvasRef} style={{ position:'fixed', inset:0, pointerEvents:'none', zIndex:9998 }}/>
+}
+
+function StarWarsCrawl({ active }) {
+  if (!active) return null
+  return (
+    <div style={{ position:'absolute', inset:0, pointerEvents:'none', overflow:'hidden', perspective:'300px' }}>
+      {/* Crawl container — 3D perspective tilt */}
+      <div style={{
+        position:'absolute', bottom:'-10%', left:'5%', right:'5%',
+        transformOrigin:'50% 100%',
+        transform:'rotateX(28deg)',
+        animation:'swCrawl 6s linear forwards',
+      }}>
+        {/* "A long time ago..." line */}
+        <p style={{
+          color:'#4fc3f7', fontSize:14, textAlign:'center', letterSpacing:'0.08em',
+          marginBottom:40, fontFamily:'Georgia, serif', fontStyle:'italic', opacity:0.9,
+        }}>
+          A long time ago on a mini golf course far, far away…
+        </p>
+        {/* Main title */}
+        <div style={{ textAlign:'center', marginBottom:32 }}>
+          <div style={{ fontSize:11, fontWeight:700, letterSpacing:'0.4em', color:'#FFD600',
+            textTransform:'uppercase', marginBottom:8, fontFamily:'Georgia, serif' }}>
+            EPISODE I
+          </div>
+          <div style={{ fontSize:38, fontWeight:900, color:'#FFD600', letterSpacing:'0.05em',
+            lineHeight:1.1, fontFamily:'Georgia, serif', textShadow:'0 0 30px rgba(255,214,0,0.5)' }}>
+            HOLE IN ONE
+          </div>
+        </div>
+        {/* Crawl body text */}
+        {[
+          'A single stroke of genius has struck.',
+          'In a move that defied the laws of',
+          'mini golf physics, the ball rolled',
+          'with perfect precision directly into',
+          'the hole with just ONE stroke.',
+          '',
+          'The crowd went wild. The galaxy',
+          'trembled. A new legend was born.',
+          '',
+          'May the golf be with you.',
+        ].map((line, i) => (
+          <p key={i} style={{ color:'#FFD600', fontSize:18, textAlign:'center',
+            lineHeight:1.9, margin:0, letterSpacing:'0.04em',
+            fontFamily:'Georgia, serif', opacity:line ? 1 : 0.3 }}>
+            {line || '✦'}
+          </p>
+        ))}
+      </div>
+      <style>{`
+        @keyframes swCrawl {
+          0%   { transform: rotateX(28deg) translateY(0); opacity:1 }
+          100% { transform: rotateX(28deg) translateY(-160%); opacity:0.6 }
+        }
+      `}</style>
+    </div>
+  )
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -335,99 +390,117 @@ function GolfSwingAnimation({ active }) {
   if (!active) return null
   return (
     <div style={{ position:'absolute', inset:0, overflow:'hidden', pointerEvents:'none' }}>
-      {/* Ball trail dots */}
-      {Array.from({length:12},(_,i)=>(
+
+      {/* Ball trail */}
+      {Array.from({length:10},(_,i)=>(
         <div key={i} style={{ position:'absolute',
-          left:`${18+i*5.2}%`, top:`${62-i*4}%`,
-          width:i===11?20:3+i, height:i===11?20:3+i, borderRadius:'50%',
-          background:i===11?'#fff':'#FFD600',
-          opacity:i===11?1:0.06+i*0.08,
-          animation:`trailPop 0.35s ${0.6+i*0.04}s ease-out both` }}/>
+          left:`${20+i*5.5}%`, top:`${65-i*4.5}%`,
+          width:i===9?18:3+i*1.2, height:i===9?18:3+i*1.2,
+          borderRadius:'50%', background:i===9?'#fff':'#FFD600',
+          opacity:i===9?1:0.07+i*0.09,
+          animation:`trailPop 0.35s ${0.7+i*0.04}s ease-out both` }}/>
       ))}
 
-      {/* Golfer silhouette — clean follow-through */}
-      <div style={{ position:'absolute', left:'4%', top:'20%', animation:'golferSwing 2.2s ease-in-out forwards' }}>
-        <svg width="120" height="185" viewBox="0 0 120 185" fill="none">
-          {/* Ground shadow */}
-          <ellipse cx="62" cy="180" rx="32" ry="6" fill="rgba(0,0,0,0.22)"/>
+      {/* Golfer — simple clean cartoon follow-through */}
+      <div style={{ position:'absolute', left:'3%', bottom:'10%', animation:'swingIn 1.8s ease-out forwards' }}>
+        <svg width="115" height="200" viewBox="0 0 115 200" fill="none">
+          {/* Ground */}
+          <ellipse cx="60" cy="196" rx="40" ry="6" fill="rgba(0,0,0,0.2)"/>
 
-          {/* === BACK LEG (left, toe raised) === */}
-          <path d="M48 120 Q42 140 40 158 Q38 168 44 174" stroke="#c8b48a" strokeWidth="16" strokeLinecap="round" fill="none"/>
-          <path d="M48 120 Q42 140 40 158 Q38 168 44 174" stroke="#d4c09a" strokeWidth="11" strokeLinecap="round" fill="none"/>
-          {/* Back shoe */}
-          <ellipse cx="46" cy="175" rx="11" ry="6" fill="#f0ece0" stroke="#c8b48a" strokeWidth="1.5" transform="rotate(20 46 175)"/>
+          {/* ─ SHOES ─ */}
+          <ellipse cx="42" cy="188" rx="16" ry="8" fill="#e8e8e0" stroke="#aaa" strokeWidth="1.5"/>
+          <ellipse cx="72" cy="190" rx="13" ry="7" fill="#e8e8e0" stroke="#aaa" strokeWidth="1.5" transform="rotate(8 72 190)"/>
 
-          {/* === FRONT LEG (right, planted) === */}
-          <path d="M68 120 Q74 140 78 158 Q82 170 78 176" stroke="#c8b48a" strokeWidth="16" strokeLinecap="round" fill="none"/>
-          <path d="M68 120 Q74 140 78 158 Q82 170 78 176" stroke="#d4c09a" strokeWidth="11" strokeLinecap="round" fill="none"/>
-          {/* Front shoe */}
-          <ellipse cx="72" cy="177" rx="13" ry="6" fill="#f0ece0" stroke="#c8b48a" strokeWidth="1.5" transform="rotate(-10 72 177)"/>
+          {/* ─ PANTS — khaki, front leg planted, back leg up on toe ─ */}
+          {/* Back leg */}
+          <path d="M50 128 Q44 150 42 170 Q40 180 44 188"
+            stroke="#c8b480" strokeWidth="22" strokeLinecap="round" fill="none"/>
+          <path d="M50 128 Q44 150 42 170 Q40 180 44 188"
+            stroke="#d8c490" strokeWidth="16" strokeLinecap="round" fill="none"/>
+          {/* Front leg */}
+          <path d="M66 128 Q72 150 76 170 Q80 182 72 190"
+            stroke="#c8b480" strokeWidth="22" strokeLinecap="round" fill="none"/>
+          <path d="M66 128 Q72 150 76 170 Q80 182 72 190"
+            stroke="#d8c490" strokeWidth="16" strokeLinecap="round" fill="none"/>
 
-          {/* === BODY — green polo ===  */}
-          <path d="M38 80 Q44 70 58 68 Q72 66 82 76 Q90 88 86 106 Q80 118 66 120 Q50 122 42 112 Q34 100 38 80 Z"
-            fill="#7ab520" stroke="#5a8a10" strokeWidth="2"/>
-          {/* Shirt highlight */}
-          <path d="M46 76 Q58 72 72 76 Q80 80 82 90" stroke="#8acc28" strokeWidth="2" strokeLinecap="round" fill="none" opacity="0.45"/>
+          {/* ─ SHIRT — bright green polo ─ */}
+          <path d="M36 86 Q44 74 60 72 Q76 70 84 82 Q92 96 88 116 Q82 128 66 130 Q48 132 40 120 Q30 106 36 86 Z"
+            fill="#5cb84a" stroke="#3a8a28" strokeWidth="2.5"/>
+          {/* Shirt crease/highlight */}
+          <path d="M44 82 Q56 78 70 82 Q80 86 84 98" stroke="#7ad860" strokeWidth="2" fill="none" opacity="0.5"/>
+          <path d="M42 106 Q52 102 62 102 Q72 102 80 108" stroke="#3a8a28" strokeWidth="1.5" fill="none" opacity="0.45"/>
+          {/* V-collar */}
+          <path d="M52 74 L58 84 L64 74" stroke="#3a8a28" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
           {/* Belt */}
-          <path d="M40 114 Q60 118 84 112" stroke="#6a5a30" strokeWidth="3" strokeLinecap="round" fill="none"/>
-          {/* Collar V */}
-          <path d="M54 70 L60 78 L66 70" stroke="#5a8a10" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+          <path d="M38 122 Q60 126 86 118" stroke="#5a4a20" strokeWidth="3.5" strokeLinecap="round" fill="none"/>
 
-          {/* === ARMS — raised in follow-through === */}
-          {/* Both arms up, holding club above left shoulder */}
-          <path d="M58 80 L46 58 L32 36" stroke="#e0b888" strokeWidth="11" strokeLinecap="round" strokeLinejoin="round"/>
-          <path d="M58 80 L46 58 L32 36" stroke="#f0cc9a" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round"/>
-          <path d="M66 78 L56 52 L42 30" stroke="#e0b888" strokeWidth="11" strokeLinecap="round" strokeLinejoin="round"/>
-          <path d="M66 78 L56 52 L42 30" stroke="#f0cc9a" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round"/>
-          {/* Hands (gloves) */}
-          <ellipse cx="30" cy="33" rx="8" ry="7" fill="#fff" stroke="#ddd" strokeWidth="1.5"/>
-          <ellipse cx="40" cy="27" rx="8" ry="7" fill="#fff" stroke="#ddd" strokeWidth="1.5"/>
+          {/* ─ ARMS UP — follow-through, club over left shoulder ─ */}
+          {/* Right arm */}
+          <path d="M72 88 L58 64 L42 40"
+            stroke="#e8b870" strokeWidth="14" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M72 88 L58 64 L42 40"
+            stroke="#f8cc84" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round"/>
+          {/* Left arm */}
+          <path d="M60 90 L50 66 L36 42"
+            stroke="#e8b870" strokeWidth="14" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M60 90 L50 66 L36 42"
+            stroke="#f8cc84" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round"/>
+          {/* Hands/gloves */}
+          <ellipse cx="38" cy="39" rx="9" ry="8" fill="#fff" stroke="#ddd" strokeWidth="2"/>
+          <ellipse cx="44" cy="36" rx="9" ry="8" fill="#fff" stroke="#ddd" strokeWidth="2"/>
 
-          {/* === CLUB — above head === */}
-          <path d="M34 28 L22 6" stroke="#999" strokeWidth="3.5" strokeLinecap="round"/>
+          {/* ─ CLUB ─ */}
+          <path d="M40 36 L24 10" stroke="#aaa" strokeWidth="4" strokeLinecap="round"/>
           {/* Club head */}
-          <path d="M20 4 L14 2 Q10 4 12 8 Q14 12 20 10 Z" fill="#888" stroke="#666" strokeWidth="1"/>
+          <path d="M22 8 L14 4 Q8 6 10 12 Q12 16 20 14 L24 10 Z"
+            fill="#999" stroke="#777" strokeWidth="1.5"/>
 
-          {/* === HEAD === */}
-          {/* Neck */}
-          <path d="M56 66 Q60 60 64 66" stroke="#e0b888" strokeWidth="8" strokeLinecap="round" fill="none"/>
-          {/* Head */}
-          <circle cx="62" cy="46" r="22" fill="#e8c08a" stroke="#d4a870" strokeWidth="2"/>
+          {/* ─ NECK ─ */}
+          <path d="M54 70 Q58 64 62 70" stroke="#e8b870" strokeWidth="10" strokeLinecap="round" fill="none"/>
+
+          {/* ─ HEAD ─ */}
+          <circle cx="60" cy="50" r="24" fill="#f0c080" stroke="#e0a060" strokeWidth="2"/>
           {/* Ear */}
-          <ellipse cx="41" cy="48" rx="5" ry="7" fill="#e0b888" stroke="#d4a870" strokeWidth="1.5"/>
-          {/* Eye */}
-          <ellipse cx="52" cy="44" rx="3.5" ry="4" fill="#2a1808"/>
-          <circle cx="53" cy="43" r="1.5" fill="#fff"/>
+          <ellipse cx="37" cy="52" rx="6" ry="8" fill="#e8b870" stroke="#e0a060" strokeWidth="1.5"/>
+          {/* Cheek blush */}
+          <ellipse cx="50" cy="58" rx="6" ry="4" fill="#ffaa88" opacity="0.4"/>
           {/* Eyebrow */}
-          <path d="M48 38 Q52 36 57 38" stroke="#8a5a20" strokeWidth="2" strokeLinecap="round" fill="none"/>
+          <path d="M46 40 Q52 37 58 40" stroke="#8a5020" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
+          {/* Eye */}
+          <ellipse cx="52" cy="46" rx="4" ry="4.5" fill="#2a1808"/>
+          <circle cx="53.5" cy="44.5" r="1.8" fill="#fff"/>
           {/* Nose */}
-          <path d="M58 48 Q62 51 66 49" stroke="#d4a070" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
-          {/* Smile — happy! */}
-          <path d="M52 56 Q60 62 69 57" stroke="#c07840" strokeWidth="2" strokeLinecap="round" fill="none"/>
+          <path d="M56 52 Q60 55 64 53" stroke="#d8a050" strokeWidth="1.8" strokeLinecap="round" fill="none"/>
+          {/* Big grin */}
+          <path d="M48 60 Q58 68 68 60" stroke="#c07030" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
+          <path d="M50 61 Q58 67 66 61" fill="#e87050" opacity="0.3"/>
 
-          {/* === WHITE CAP === */}
-          {/* Cap dome */}
-          <path d="M40 40 Q42 18 62 16 Q82 14 84 36 L78 38 Q72 20 62 20 Q50 22 46 38 Z"
-            fill="#f5f5f0" stroke="#d8d8d0" strokeWidth="1.5"/>
-          {/* Cap brim — sticks out left */}
-          <path d="M38 40 Q36 46 44 48 Q54 50 64 46 Q74 42 78 38"
-            fill="#f5f5f0" stroke="#d8d8d0" strokeWidth="1.5"/>
-          {/* Cap seam */}
-          <path d="M42 42 Q60 38 80 40" stroke="#d0d0c8" strokeWidth="1" fill="none" opacity="0.5"/>
+          {/* ─ WHITE CAP ─ */}
+          {/* Dome */}
+          <path d="M38 44 Q40 22 60 20 Q80 18 82 40"
+            fill="#f4f4ee" stroke="#d8d8d0" strokeWidth="2"/>
+          {/* Brim — sticks out front-left */}
+          <path d="M36 44 Q34 52 46 54 Q58 56 68 50 Q78 44 82 40"
+            fill="#f4f4ee" stroke="#d8d8d0" strokeWidth="2"/>
+          {/* Cap button */}
+          <circle cx="62" cy="22" r="3.5" fill="#d0d0c8" stroke="#bbb" strokeWidth="1"/>
+          {/* Brim shadow line */}
+          <path d="M38 46 Q56 50 78 44" stroke="#c8c8c0" strokeWidth="1" fill="none" opacity="0.5"/>
         </svg>
       </div>
 
-      {/* FORE! text */}
-      <div style={{ position:'absolute', left:'24%', top:'16%', animation:'foreIn 0.65s 0.3s cubic-bezier(0.34,1.56,0.64,1) both' }}>
-        <span style={{ fontSize:56, fontWeight:900, color:'#FFD600', fontStyle:'italic',
+      {/* FORE! */}
+      <div style={{ position:'absolute', left:'28%', top:'14%',
+        animation:'foreIn 0.6s 0.25s cubic-bezier(0.34,1.56,0.64,1) both' }}>
+        <span style={{ fontSize:60, fontWeight:900, color:'#FFD600', fontStyle:'italic',
           letterSpacing:'-0.03em',
-          textShadow:'0 0 40px rgba(255,214,0,0.8), 3px 3px 0 rgba(0,0,0,0.6)' }}>FORE!</span>
+          textShadow:'0 0 40px rgba(255,214,0,0.9), 4px 4px 0 rgba(0,0,0,0.7)' }}>FORE!</span>
       </div>
 
       <style>{`
         @keyframes trailPop{from{opacity:0;transform:scale(0)}to{opacity:1;transform:scale(1)}}
-        @keyframes golferSwing{0%{transform:rotate(-38deg) translate(-35px,12px);opacity:0}20%{opacity:1}60%{transform:rotate(0deg)}100%{transform:rotate(14deg) translate(8px,-2px)}}
-        @keyframes foreIn{from{opacity:0;transform:scale(0.15) rotate(-22deg)}to{opacity:1;transform:none}}
+        @keyframes swingIn{0%{transform:rotate(-42deg) translate(-40px,16px);opacity:0}22%{opacity:1}62%{transform:rotate(0deg)}100%{transform:rotate(16deg) translate(10px,-4px)}}
+        @keyframes foreIn{from{opacity:0;transform:scale(0.1) rotate(-25deg)}to{opacity:1;transform:none}}
       `}</style>
     </div>
   )
@@ -436,246 +509,301 @@ function GolfSwingAnimation({ active }) {
 // ─────────────────────────────────────────────────────────────
 //  7. GECKO — detailed SVG
 // ─────────────────────────────────────────────────────────────
-function GeckoSVG() {
+function KeaSVG() {
+  // Kea: NZ alpine parrot — olive green, hooked orange beak, red under-wings, cheeky
   return (
-    <svg width="210" height="88" viewBox="0 0 210 88" fill="none">
-      <ellipse cx="105" cy="84" rx="80" ry="6" fill="rgba(0,0,0,0.25)"/>
+    <svg width="180" height="120" viewBox="0 0 180 120" fill="none">
+      <ellipse cx="90" cy="114" rx="62" ry="7" fill="rgba(0,0,0,0.28)"/>
 
-      {/* ── TAIL — long curved, tapering ── */}
-      <path d="M24 50 Q14 44 8 34 Q3 24 6 16 Q9 10 8 4"
-        stroke="#3d6b08" strokeWidth="20" strokeLinecap="round" fill="none"/>
-      <path d="M24 50 Q14 44 8 34 Q3 24 6 16 Q9 10 8 4"
-        stroke="#4f8a0c" strokeWidth="13" strokeLinecap="round" fill="none"/>
-      <path d="M24 50 Q14 44 8 34 Q3 24 7 17 Q9 11 8 5"
-        stroke="#66aa14" strokeWidth="6" strokeLinecap="round" fill="none"/>
-
-      {/* ── DORSAL SPIKES — triangles along spine, yellow-tipped ── */}
-      {[[28,38],[38,30],[48,25],[58,21],[68,18],[78,17],[88,17],[98,18],[108,19],[118,21],[128,23],[138,27],[148,31],[156,36]].map(([x,y],i)=>(
-        <g key={i}>
-          <polygon points={`${x-4},${y+10} ${x},${y-4} ${x+4},${y+10}`} fill="#e8b800" stroke="#a07800" strokeWidth="0.8"/>
-        </g>
+      {/* ── TAIL feathers fanning out ── */}
+      {[-30,-15,0,15,30].map((a,i)=>(
+        <path key={i}
+          d={`M70 78 L${70+Math.sin(a*Math.PI/180)*40} ${78+Math.cos(a*Math.PI/180)*44}`}
+          stroke={i===2?'#4a6b08':'#3a5a06'} strokeWidth={i===2?12:8} strokeLinecap="round"/>
+      ))}
+      {/* Tail tip blue-purple shimmer */}
+      {[-30,-15,0,15,30].map((a,i)=>(
+        <path key={i}
+          d={`M${70+Math.sin(a*Math.PI/180)*28} ${78+Math.cos(a*Math.PI/180)*28} L${70+Math.sin(a*Math.PI/180)*40} ${78+Math.cos(a*Math.PI/180)*44}`}
+          stroke="#6a4fb8" strokeWidth="3" strokeLinecap="round" opacity="0.5"/>
       ))}
 
-      {/* ── BODY ── */}
-      <ellipse cx="94" cy="54" rx="72" ry="22" fill="#3d6b08" stroke="#2a4a06" strokeWidth="2.5"/>
-      <ellipse cx="94" cy="51" rx="69" ry="18" fill="#4f8a0c"/>
-      <ellipse cx="90" cy="49" rx="62" ry="14" fill="#66aa14"/>
-      {/* Belly lighter */}
-      <ellipse cx="94" cy="60" rx="55" ry="10" fill="#88cc28" opacity="0.35"/>
-      {/* Scale dots */}
-      {[[42,44],[56,40],[70,38],[84,37],[98,38],[112,40],[126,43],[138,46],[150,50],
-        [44,54],[58,51],[72,50],[86,49],[100,50],[114,52],[128,55],[140,58],
-        [50,63],[64,61],[78,60],[92,59],[106,60],[118,62],[130,65]].map(([x,y],i)=>(
-        <ellipse key={i} cx={x} cy={y} rx="4.5" ry="3.5" fill="#3d6b08" opacity="0.55"/>
+      {/* ── WINGS — red-orange underneath, olive on top ── */}
+      {/* Left wing */}
+      <path d="M62 60 Q40 50 22 58 Q10 64 14 76 Q20 84 36 80 Q52 76 62 68 Z"
+        fill="#5a8208" stroke="#3a5808" strokeWidth="2"/>
+      <path d="M62 62 Q44 55 28 62 Q18 68 22 76 Q28 80 42 76 Q56 72 62 66 Z"
+        fill="#e85c18" opacity="0.85"/>
+      {/* Wing feather detail */}
+      {[[30,64],[38,62],[46,62],[54,64]].map(([x,y],i)=>(
+        <line key={i} x1={x} y1={y} x2={x+6} y2={y+12} stroke="#c04010" strokeWidth="2" strokeLinecap="round" opacity="0.6"/>
       ))}
-      {/* Side stripe */}
-      <path d="M24 45 Q70 38 100 42 Q130 46 162 52" stroke="#88cc28" strokeWidth="2" strokeLinecap="round" fill="none" opacity="0.4"/>
-      <path d="M24 58 Q70 64 100 62 Q130 60 162 56" stroke="#88cc28" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.35"/>
+      {/* Right wing hint */}
+      <path d="M100 62 Q118 55 130 60 Q138 68 132 76 Q124 80 112 76 Q104 72 100 66 Z"
+        fill="#5a8208" stroke="#3a5808" strokeWidth="1.5" opacity="0.7"/>
 
-      {/* ── HEAD ── */}
-      <path d="M158 34 Q174 26 192 28 Q204 30 208 40 Q210 50 202 56 Q192 62 175 60 Q162 58 156 50 Z"
-        fill="#3d6b08" stroke="#2a4a06" strokeWidth="2.5"/>
-      <path d="M160 36 Q174 29 190 31 Q200 33 204 42 Q204 51 196 55 Q186 59 172 57 Q162 54 160 47 Z"
-        fill="#66aa14"/>
-      {/* Head scales */}
-      {[[168,36],[180,32],[190,36],[176,44],[188,44],[196,40]].map(([x,y],i)=>(
-        <ellipse key={i} cx={x} cy={y} rx="4.5" ry="3.5" fill="#3d6b08" opacity="0.55"/>
+      {/* ── BODY — stocky parrot ── */}
+      <ellipse cx="84" cy="72" rx="34" ry="30" fill="#4a6b08" stroke="#2e4606" strokeWidth="2.5"/>
+      <ellipse cx="84" cy="68" rx="30" ry="26" fill="#5a8a0c"/>
+      <ellipse cx="80" cy="64" rx="26" ry="22" fill="#6aaa14"/>
+      {/* Feather scale texture */}
+      {[[66,56],[76,52],[88,52],[98,56],[62,66],[74,63],[86,62],[96,64],[106,68],
+        [64,76],[76,74],[88,73],[98,75],[108,78]].map(([x,y],i)=>(
+        <path key={i} d={`M${x} ${y} Q${x+5} ${y-4} ${x+10} ${y}`}
+          stroke="#3a5a08" strokeWidth="1.3" strokeLinecap="round" fill="none" opacity="0.6"/>
       ))}
+      {/* Red-orange breast/belly hint */}
+      <ellipse cx="82" cy="82" rx="18" ry="12" fill="#e85c18" opacity="0.25"/>
 
-      {/* ── EYE ── */}
-      <circle cx="198" cy="36" r="9" fill="#fff" stroke="#2a4a06" strokeWidth="2"/>
-      <circle cx="198" cy="36" r="7" fill="#3a5a0a"/>
-      <circle cx="198" cy="36" r="5" fill="#111"/>
-      <ellipse cx="198" cy="36" rx="1.5" ry="4" fill="#050505"/>
-      <circle cx="200" cy="33.5" r="2.2" fill="#fff"/>
-      <circle cx="196.5" cy="38.5" r="1" fill="#fff" opacity="0.4"/>
+      {/* ── HEAD — round parrot head ── */}
+      <circle cx="124" cy="46" r="28" fill="#4a6b08" stroke="#2e4606" strokeWidth="2.5"/>
+      <circle cx="124" cy="44" r="25" fill="#5a8a0c"/>
+      <circle cx="122" cy="42" r="21" fill="#6aaa14"/>
+      {/* Head feather detail */}
+      {[[108,30],[120,26],[132,28],[140,36],[140,50],[132,58],[120,60],[108,55],[104,44]].map(([x,y],i)=>{
+        const a = Math.atan2(y-46, x-124)
+        return <line key={i} x1={x} y1={y} x2={x+Math.cos(a)*8} y2={y+Math.sin(a)*8}
+          stroke="#3a5a08" strokeWidth="1.4" strokeLinecap="round" opacity="0.6"/>
+      })}
+      {/* Orange eye-ring (kea characteristic) */}
+      <circle cx="136" cy="36" r="10" fill="#e8780a" opacity="0.8"/>
+      <circle cx="136" cy="36" r="9" fill="#1a1a1a"/>
+      <circle cx="136" cy="36" r="7" fill="#0a0a0a"/>
+      <circle cx="138" cy="33.5" r="3" fill="#fff"/>
+      <circle cx="135" cy="38" r="1.2" fill="#fff" opacity="0.4"/>
 
+      {/* ── HOOKED ORANGE BEAK — kea's signature ── */}
+      {/* Upper mandible */}
+      <path d="M148 42 Q162 38 170 34 Q175 30 172 26 Q168 24 164 28 Q158 34 148 40"
+        fill="#e8780a" stroke="#c05808" strokeWidth="1.5"/>
+      {/* Hook at tip */}
+      <path d="M172 26 Q178 22 176 18 Q174 16 170 20 Q168 24 170 28"
+        fill="#e8780a" stroke="#c05808" strokeWidth="1"/>
+      {/* Lower mandible */}
+      <path d="M148 44 Q160 42 165 40 Q168 42 166 46 Q162 50 152 48 Q148 46 148 44 Z"
+        fill="#d06808" stroke="#c05808" strokeWidth="1"/>
+      {/* Beak line */}
+      <path d="M148 43 Q162 40 172 36" stroke="#c05808" strokeWidth="1" fill="none" opacity="0.6"/>
       {/* Nostril */}
-      <circle cx="206" cy="42" r="2" fill="#2d5006"/>
-      {/* Mouth line */}
-      <path d="M204 48 Q196 56 188 55" stroke="#2a4a06" strokeWidth="2" strokeLinecap="round" fill="none"/>
+      <ellipse cx="154" cy="40" rx="2.5" ry="1.5" fill="#c05808" transform="rotate(-20 154 40)"/>
 
-      {/* ── TONGUE — forked ── */}
-      <path d="M204 47 L212 40 M212 40 L216 35 M212 40 L216 45"
-        stroke="#f87171" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-
-      {/* ── LEGS ── */}
-      {/* Front left */}
-      <path d="M56 70 L44 82 M44 82 L34 85 M44 82 L38 88 M44 82 L46 88"
-        stroke="#3d6b08" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-      <path d="M56 70 L44 82" stroke="#66aa14" strokeWidth="4" strokeLinecap="round"/>
-      {/* Front right */}
-      <path d="M88 72 L92 84 M92 84 L84 88 M92 84 L98 88 M92 84 L94 88"
-        stroke="#3d6b08" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-      <path d="M88 72 L92 84" stroke="#66aa14" strokeWidth="4" strokeLinecap="round"/>
-      {/* Back left */}
-      <path d="M56 36 L44 24 M44 24 L34 21 M44 24 L38 18 M44 24 L46 18"
-        stroke="#3d6b08" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-      <path d="M56 36 L44 24" stroke="#66aa14" strokeWidth="4" strokeLinecap="round"/>
-      {/* Back right */}
-      <path d="M88 34 L90 20 M90 20 L82 16 M90 20 L96 16 M90 20 L92 14"
-        stroke="#3d6b08" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-      <path d="M88 34 L90 20" stroke="#66aa14" strokeWidth="4" strokeLinecap="round"/>
+      {/* ── FEET — parrot claws (2 forward, 2 back = zygodactyl) ── */}
+      {/* Left foot */}
+      <path d="M74 96 L68 108" stroke="#8B6008" strokeWidth="5" strokeLinecap="round"/>
+      <path d="M68 108 L58 114 M68 108 L64 116 M68 108 L74 116 M68 108 L76 110" stroke="#8B6008" strokeWidth="3.5" strokeLinecap="round"/>
+      {/* Right foot */}
+      <path d="M94 98 L100 110" stroke="#8B6008" strokeWidth="5" strokeLinecap="round"/>
+      <path d="M100 110 L90 116 M100 110 L98 118 M100 110 L108 115 M100 110 L108 108" stroke="#8B6008" strokeWidth="3.5" strokeLinecap="round"/>
     </svg>
   )
 }
 
 function GeckoAnimation({ active }) {
+  // Now features a NZ Kea parrot!
   if (!active) return null
   return (
-    <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
-      {/* Gecko running in */}
-      <div style={{ position: 'absolute', bottom: '14%', animation: 'geckoRun 2.7s cubic-bezier(0.25,0.46,0.45,0.94) forwards' }}>
-        <div style={{ animation: 'geckoWiggle 0.17s ease-in-out infinite alternate' }}>
-          <GeckoSVG />
+    <div style={{ position:'absolute', inset:0, overflow:'hidden', pointerEvents:'none' }}>
+      {/* Kea flying/running in from left */}
+      <div style={{ position:'absolute', bottom:'12%', animation:'geckoRun 2.5s cubic-bezier(0.25,0.46,0.45,0.94) forwards' }}>
+        <div style={{ animation:'keaWing 0.3s ease-in-out infinite alternate' }}>
+          <KeaSVG/>
         </div>
       </div>
-      {/* Golf ball */}
-      <div style={{ position: 'absolute', bottom: '16%', left: '78%', animation: 'geckoBall 2.7s ease-in forwards' }}>
-        <svg width="30" height="30" viewBox="0 0 30 30">
-          <defs><radialGradient id="bg2" cx="35%" cy="32%"><stop offset="0%" stopColor="#fff"/><stop offset="100%" stopColor="#e8e8e8"/></radialGradient></defs>
-          <circle cx="15" cy="15" r="14" fill="url(#bg2)" stroke="#ccc" strokeWidth="0.5"/>
-          {[[10,9],[17,8],[8,16],[19,17],[14,13],[11,20]].map(([x,y],i)=>(
-            <circle key={i} cx={x} cy={y} r="1.8" fill="#d0d0d0"/>
+      {/* Golf ball waiting */}
+      <div style={{ position:'absolute', bottom:'17%', right:'11%' }}>
+        <svg width="42" height="42" viewBox="0 0 42 42">
+          <defs><radialGradient id="bg3" cx="35%" cy="32%"><stop offset="0%" stopColor="#fff"/><stop offset="100%" stopColor="#e8e8e8"/></radialGradient></defs>
+          <circle cx="21" cy="21" r="20" fill="url(#bg3)" stroke="#ccc" strokeWidth="0.5"/>
+          {[[14,13],[22,11],[11,20],[26,23],[20,20],[13,27]].map(([x,y],i)=>(
+            <circle key={i} cx={x} cy={y} r="2.2" fill="#d0d0d0"/>
           ))}
         </svg>
       </div>
-      {/* Speech bubble — top of screen, never overlaps content */}
-      <div style={{ position: 'absolute', top: '6%', left: '50%', transform: 'translateX(-50%)',
-        animation: 'churBubble 0.5s 2.1s cubic-bezier(0.34,1.56,0.64,1) both', whiteSpace: 'nowrap', zIndex: 2 }}>
-        <div style={{ background: '#fff', borderRadius: 16, padding: '12px 24px',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.6)', border: '2.5px solid #4ade80', position: 'relative' }}>
-          <span style={{ fontSize: 24, fontWeight: 900, color: '#16a34a', letterSpacing: '-0.01em' }}>Chur bro! 🤙</span>
-          <div style={{ position: 'absolute', bottom: -14, left: '50%', transform: 'translateX(-50%)',
-            width: 0, height: 0, borderLeft: '12px solid transparent', borderRight: '12px solid transparent',
-            borderTop: '14px solid #fff' }}/>
+      {/* Speech bubble */}
+      <div style={{ position:'absolute', top:'6%', left:'50%', transform:'translateX(-50%)',
+        animation:'churBubble 0.5s 2.1s cubic-bezier(0.34,1.56,0.64,1) both', whiteSpace:'nowrap', zIndex:2 }}>
+        <div style={{ background:'#fff', borderRadius:16, padding:'10px 22px',
+          boxShadow:'0 8px 32px rgba(0,0,0,0.6)', border:'2.5px solid #e8780a', position:'relative' }}>
+          <span style={{ fontSize:22, fontWeight:900, color:'#c05808' }}>Ka-kaa! Hole in One! 🦜</span>
+          <div style={{ position:'absolute', bottom:-14, left:'50%', transform:'translateX(-50%)',
+            width:0, height:0, borderLeft:'12px solid transparent', borderRight:'12px solid transparent',
+            borderTop:'14px solid #fff' }}/>
         </div>
       </div>
-      {/* Impact */}
-      <div style={{ position: 'absolute', bottom: '22%', left: '72%', animation: 'burst 0.5s 2.2s ease-out both' }}>
-        <svg width="70" height="70" viewBox="0 0 70 70">
-          {[0,45,90,135,180,225,270,315].map((a,i)=>(
-            <line key={i} x1="35" y1="35" x2={35+Math.cos(a*Math.PI/180)*30} y2={35+Math.sin(a*Math.PI/180)*30}
-              stroke="#4ade80" strokeWidth="2.5" strokeLinecap="round"/>
+      {/* Impact burst */}
+      <div style={{ position:'absolute', bottom:'21%', right:'9%', animation:'burst 0.6s 2.2s ease-out both' }}>
+        <svg width="80" height="80" viewBox="0 0 80 80">
+          {[0,30,60,90,120,150,180,210,240,270,300,330].map((a,i)=>(
+            <line key={i} x1="40" y1="40"
+              x2={40+Math.cos(a*Math.PI/180)*(i%3===0?38:26)} y2={40+Math.sin(a*Math.PI/180)*(i%3===0?38:26)}
+              stroke="#e8780a" strokeWidth={i%3===0?3:1.5} strokeLinecap="round"/>
           ))}
-          <circle cx="35" cy="35" r="7" fill="#4ade80"/>
+          <circle cx="40" cy="40" r="8" fill="#e8780a"/>
+          <circle cx="40" cy="40" r="4" fill="#fff"/>
         </svg>
       </div>
       <style>{`
-        @keyframes geckoRun{0%{left:-190px}72%{left:64%}75%{left:62%}100%{left:64%}}
-        @keyframes geckoWiggle{0%{transform:rotate(-7deg) translateY(0)}100%{transform:rotate(7deg) translateY(-5px)}}
-        @keyframes geckoBall{0%,73%{transform:translate(0,0);opacity:1}78%{transform:translate(-10px,2px)}100%{transform:translate(-150px,-290px) rotate(660deg);opacity:0}}
-        @keyframes churBubble{from{opacity:0;transform:translateX(-50%) scale(0.3)}to{opacity:1;transform:translateX(-50%) scale(1)}}
+        @keyframes keaWing{0%{transform:rotate(-8deg) translateY(0)}100%{transform:rotate(8deg) translateY(-8px)}}
       `}</style>
     </div>
   )
 }
 
 // ─────────────────────────────────────────────────────────────
-//  8. LIGHTNING STRIKE — multi-phase
+//  8. LIGHTNING → BALL INTO HOLE
 // ─────────────────────────────────────────────────────────────
 function LightningAnimation({ active }) {
   const [phase, setPhase] = useState(0)
+  // 0: flash, 1: bolt+ball, 2: ball rolling, 3: hole, 4: celebrate
   useEffect(() => {
     if (!active) return
-    const t1 = setTimeout(() => setPhase(1), 120)
-    const t2 = setTimeout(() => setPhase(2), 650)
-    const t3 = setTimeout(() => setPhase(3), 1200)
-    const t4 = setTimeout(() => setPhase(4), 2000)
-    return () => { [t1,t2,t3,t4].forEach(clearTimeout) }
+    const t1 = setTimeout(() => setPhase(1), 100)
+    const t2 = setTimeout(() => setPhase(2), 700)
+    const t3 = setTimeout(() => setPhase(3), 2000)
+    const t4 = setTimeout(() => setPhase(4), 2800)
+    return () => [t1,t2,t3,t4].forEach(clearTimeout)
   }, [active])
   if (!active) return null
+
   return (
-    <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
-      {/* Phase 0: white flash */}
-      <div style={{ position: 'absolute', inset: 0, background: 'rgba(255,255,255,0.9)',
-        opacity: phase === 0 ? 1 : 0, transition: 'opacity 0.3s', pointerEvents: 'none' }}/>
-      {/* Phase 1+: bolt */}
-      {phase >= 1 && (
-        <div style={{ position: 'absolute', left: '46%', top: 0, transform: 'translateX(-50%)',
-          animation: 'boltDrop 0.35s ease-out both' }}>
-          <svg width="160" height="520" viewBox="0 0 160 520" fill="none">
+    <div style={{ position:'absolute', inset:0, overflow:'hidden', pointerEvents:'none' }}>
+
+      {/* Sky flash */}
+      {phase === 0 && (
+        <div style={{ position:'absolute', inset:0, background:'rgba(255,255,255,0.85)',
+          animation:'flashOut 0.25s ease-out forwards' }}/>
+      )}
+
+      {/* Lightning bolt from top striking the ball */}
+      {phase >= 1 && phase < 3 && (
+        <div style={{ position:'absolute', left:'40%', top:0, transform:'translateX(-50%)',
+          animation:'boltDrop 0.35s ease-out both' }}>
+          <svg width="100" height="420" viewBox="0 0 100 420" fill="none">
             <defs>
-              <filter id="lglow"><feGaussianBlur stdDeviation="10" result="b"/>
+              <filter id="lb1"><feGaussianBlur stdDeviation="10" result="b"/>
                 <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-              <filter id="lglow2"><feGaussianBlur stdDeviation="3" result="b"/>
+              <filter id="lb2"><feGaussianBlur stdDeviation="3" result="b"/>
                 <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
             </defs>
-            {/* Outer glow */}
-            <polyline points="80,0 52,190 88,190 24,520" stroke="rgba(255,214,0,0.25)" strokeWidth="28" strokeLinejoin="round" filter="url(#lglow)"/>
-            {/* White core bolt */}
-            <polyline points="80,0 52,190 88,190 24,520" stroke="rgba(255,255,255,0.9)" strokeWidth="8" strokeLinejoin="round" filter="url(#lglow2)"/>
-            {/* Gold core */}
-            <polyline points="80,0 52,190 88,190 24,520" stroke="#FFD600" strokeWidth="4" strokeLinejoin="round"/>
+            {/* Glow */}
+            <polyline points="50,0 32,160 62,160 18,420" stroke="rgba(200,230,255,0.3)" strokeWidth="30" strokeLinejoin="round" filter="url(#lb1)"/>
+            {/* White bolt */}
+            <polyline points="50,0 32,160 62,160 18,420" stroke="#fff" strokeWidth="8" strokeLinejoin="round" filter="url(#lb2)"/>
+            {/* Blue-white core */}
+            <polyline points="50,0 32,160 62,160 18,420" stroke="#c8e8ff" strokeWidth="4" strokeLinejoin="round"/>
             {/* Branches */}
-            <polyline points="68,110 90,155 108,140" stroke="#ffe066" strokeWidth="2.5" strokeLinejoin="round" opacity="0.8"/>
-            <polyline points="58,230 32,265 18,255" stroke="#FFD600" strokeWidth="2" strokeLinejoin="round" opacity="0.6"/>
-            <polyline points="70,340 95,380 110,365" stroke="#ffe066" strokeWidth="2" strokeLinejoin="round" opacity="0.6"/>
-            <polyline points="45,420 20,450 10,440" stroke="#FFD600" strokeWidth="1.5" strokeLinejoin="round" opacity="0.5"/>
+            <polyline points="40,100 60,135 74,122" stroke="#c8e8ff" strokeWidth="2" strokeLinejoin="round" opacity="0.7"/>
+            <polyline points="36,200 16,228 6,218" stroke="#c8e8ff" strokeWidth="1.5" strokeLinejoin="round" opacity="0.5"/>
+            <polyline points="40,310 62,342 78,328" stroke="#c8e8ff" strokeWidth="1.5" strokeLinejoin="round" opacity="0.5"/>
           </svg>
         </div>
       )}
-      {/* Phase 2: ground sparks */}
-      {phase >= 2 && (
-        <div style={{ position: 'absolute', bottom: '16%', left: '34%',
-          animation: 'sparksIn 0.4s ease-out both' }}>
-          <svg width="140" height="140" viewBox="0 0 140 140">
-            <defs><filter id="sg"><feGaussianBlur stdDeviation="5"/></filter></defs>
-            <circle cx="70" cy="70" r="40" fill="rgba(255,214,0,0.12)" filter="url(#sg)"/>
-            {[0,24,48,72,96,120,144,168,192,216,240,264,288,312,336].map((a,i)=>(
-              <line key={i} x1="70" y1="70"
-                x2={70+Math.cos(a*Math.PI/180)*(i%3===0?58:42)}
-                y2={70+Math.sin(a*Math.PI/180)*(i%3===0?58:42)}
-                stroke="#FFD600" strokeWidth={i%3===0?3.5:1.8} strokeLinecap="round" opacity={i%2===0?1:0.6}/>
-            ))}
-            <circle cx="70" cy="70" r="13" fill="#FFD600"/>
-            <circle cx="70" cy="70" r="7" fill="#fff"/>
-            <circle cx="70" cy="70" r="3" fill="#FFD600"/>
-          </svg>
-        </div>
-      )}
-      {/* Phase 2: glowing ball */}
-      {phase >= 2 && (
-        <div style={{ position: 'absolute', bottom: '18%', left: '41%',
-          animation: 'ballGlow 0.5s ease-out both' }}>
-          <svg width="52" height="52" viewBox="0 0 52 52">
-            <circle cx="26" cy="26" r="24" fill="rgba(255,214,0,0.2)"/>
-            <circle cx="26" cy="26" r="18" fill="rgba(255,214,0,0.35)"/>
-            <circle cx="26" cy="26" r="13" fill="#fff" stroke="#FFD600" strokeWidth="3"/>
-            <circle cx="26" cy="26" r="13" fill="none" stroke="#FFD600" strokeWidth="10" opacity="0.25"/>
-            {[[19,17],[26,15],[20,23]].map(([x,y],i)=>(
+
+      {/* Golf ball being struck — phase 1 (glowing) */}
+      {phase === 1 && (
+        <div style={{ position:'absolute', bottom:'25%', left:'32%',
+          animation:'ballGlow 0.5s ease-out both' }}>
+          <svg width="56" height="56" viewBox="0 0 56 56">
+            <circle cx="28" cy="28" r="26" fill="rgba(200,230,255,0.3)"/>
+            <circle cx="28" cy="28" r="20" fill="rgba(200,230,255,0.5)"/>
+            <circle cx="28" cy="28" r="14" fill="#fff" stroke="#c8e8ff" strokeWidth="3"/>
+            {[[20,18],[28,16],[22,24]].map(([x,y],i)=>(
               <circle key={i} cx={x} cy={y} r="2" fill="#e0e0e0"/>
             ))}
           </svg>
         </div>
       )}
-      {/* Phase 3: ZAP text */}
-      {phase >= 3 && (
-        <div style={{ position: 'absolute', bottom: '38%', left: '52%',
-          animation: 'zapIn 0.45s cubic-bezier(0.34,1.56,0.64,1) both' }}>
-          <span style={{ fontSize: 54, fontWeight: 900, color: '#FFD600', fontStyle: 'italic',
-            textShadow: '0 0 30px rgba(255,214,0,0.9), 0 0 60px rgba(255,214,0,0.4), 3px 3px 0 rgba(0,0,0,0.5)',
-            letterSpacing: '-0.02em' }}>ZAP!</span>
-        </div>
+
+      {/* Ball rolling across the green — phase 2 */}
+      {phase === 2 && (
+        <>
+          {/* Green grass strip */}
+          <div style={{ position:'absolute', bottom:'20%', left:0, right:0, height:40,
+            background:'linear-gradient(180deg, #2d7a1e, #1e5a14)',
+            borderTop:'3px solid #4aaa28' }}/>
+          {/* Ball rolling */}
+          <div style={{ position:'absolute', bottom:'21.5%', left:0,
+            animation:'ballRoll 1.3s cubic-bezier(0.45,0,0.55,1) forwards' }}>
+            <svg width="40" height="40" viewBox="0 0 40 40" style={{ animation:'ballSpin 1.3s linear forwards' }}>
+              <circle cx="20" cy="20" r="19" fill="#fff" stroke="#ddd" strokeWidth="1"/>
+              {[[13,12],[22,10],[10,20],[26,22],[18,18],[14,26]].map(([x,y],i)=>(
+                <circle key={i} cx={x} cy={y} r="2.5" fill="#d0d0d0"/>
+              ))}
+            </svg>
+          </div>
+          {/* Rolling trail shadow */}
+          <div style={{ position:'absolute', bottom:'20%', left:0, right:'38%', height:6,
+            background:'linear-gradient(90deg, transparent, rgba(0,0,0,0.15))',
+            animation:'trailFade 1.3s ease forwards' }}/>
+        </>
       )}
-      {/* Phase 4: electricity arc across */}
-      {phase >= 4 && (
-        <div style={{ position: 'absolute', bottom: '25%', left: '10%', right: '10%',
-          animation: 'arcIn 0.3s ease-out both' }}>
-          <svg width="100%" height="40" viewBox="0 0 400 40" preserveAspectRatio="none">
-            <path d="M0 20 Q50 5 100 20 Q150 35 200 20 Q250 5 300 20 Q350 35 400 20"
-              stroke="#FFD600" strokeWidth="2" fill="none" opacity="0.5"/>
-            <path d="M0 20 Q50 5 100 20 Q150 35 200 20 Q250 5 300 20 Q350 35 400 20"
-              stroke="#fff" strokeWidth="1" fill="none" opacity="0.3"/>
+
+      {/* Mini golf hole — phase 2+ */}
+      {phase >= 2 && (
+        <div style={{ position:'absolute', bottom:'17%', right:'14%' }}>
+          {/* Hole shadow */}
+          <div style={{ width:54, height:22, borderRadius:'50%', background:'#111',
+            position:'absolute', top:8, left:0 }}/>
+          {/* Hole opening */}
+          <div style={{ width:54, height:22, borderRadius:'50%', background:'#0a0a0a',
+            border:'3px solid #333', position:'relative', zIndex:1 }}/>
+          {/* Flag */}
+          <svg width="32" height="70" viewBox="0 0 32 70" style={{ position:'absolute', top:-60, left:18 }}>
+            <rect x="13" y="0" width="3" height="65" rx="1.5" fill="#888"/>
+            <polygon points="16,2 32,12 16,22" fill="#e74c3c"/>
           </svg>
         </div>
       )}
+
+      {/* Ball dropping in — phase 3 */}
+      {phase === 3 && (
+        <div style={{ position:'absolute', bottom:'20%', right:'16.5%',
+          animation:'ballDrop 0.8s cubic-bezier(0.5,0,0.5,1) forwards' }}>
+          <svg width="34" height="34" viewBox="0 0 34 34">
+            <circle cx="17" cy="17" r="16" fill="#fff" stroke="#ddd" strokeWidth="1"/>
+            {[[11,10],[18,9],[9,17],[22,19],[16,16]].map(([x,y],i)=>(
+              <circle key={i} cx={x} cy={y} r="2" fill="#d0d0d0"/>
+            ))}
+          </svg>
+        </div>
+      )}
+
+      {/* Celebration pop — phase 4 */}
+      {phase >= 4 && (
+        <>
+          {/* Stars burst from hole */}
+          {[0,45,90,135,180,225,270,315].map((a,i)=>(
+            <div key={i} style={{
+              position:'absolute', bottom:'22%', right:'17%',
+              width:8, height:8, borderRadius:'50%', background:'#FFD600',
+              animation:`starPop${i%4} 0.6s ease-out both`,
+              '--dx': `${Math.cos(a*Math.PI/180)*60}px`,
+              '--dy': `${Math.sin(a*Math.PI/180)*60}px`,
+            }}/>
+          ))}
+          {/* IN THE HOLE! */}
+          <div style={{ position:'absolute', bottom:'30%', right:'5%',
+            animation:'holeText 0.5s cubic-bezier(0.34,1.56,0.64,1) both' }}>
+            <span style={{ fontSize:28, fontWeight:900, color:'#FFD600',
+              textShadow:'0 0 20px rgba(255,214,0,0.8), 2px 2px 0 rgba(0,0,0,0.6)',
+              letterSpacing:'-0.02em', whiteSpace:'nowrap' }}>IN THE HOLE! ⚡</span>
+          </div>
+        </>
+      )}
+
       <style>{`
-        @keyframes boltDrop{0%{opacity:0;transform:translateX(-50%) scaleY(0);transform-origin:top}70%{opacity:1;transform:translateX(-50%) scaleY(1)}100%{opacity:0.9}}
-        @keyframes sparksIn{0%{opacity:0;transform:scale(0)}60%{opacity:1;transform:scale(1.15)}100%{opacity:1;transform:scale(1)}}
-        @keyframes ballGlow{0%{opacity:0;transform:scale(0.4)}100%{opacity:1;transform:scale(1)}}
-        @keyframes zapIn{0%{opacity:0;transform:scale(0.3) rotate(-18deg)}100%{opacity:1;transform:none}}
-        @keyframes arcIn{from{opacity:0}to{opacity:1}}
+        @keyframes flashOut{0%{opacity:0.85}100%{opacity:0}}
+        @keyframes boltDrop{0%{opacity:0;transform:translateX(-50%) scaleY(0);transform-origin:top}70%{opacity:1;transform:translateX(-50%) scaleY(1)}100%{opacity:0.85}}
+        @keyframes ballGlow{0%{opacity:0;transform:scale(0.5)}100%{opacity:1;transform:scale(1)}}
+        @keyframes ballRoll{0%{left:0}100%{left:calc(86% - 40px)}}
+        @keyframes ballSpin{0%{transform:rotate(0)}100%{transform:rotate(720deg)}}
+        @keyframes trailFade{0%{right:99%}100%{right:14%}}
+        @keyframes ballDrop{0%{transform:translateY(0) scale(1)}80%{transform:translateY(18px) scale(0.7)}100%{transform:translateY(24px) scale(0);opacity:0}}
+        @keyframes starPop0{0%{transform:translate(0,0) scale(0);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(1.5);opacity:0}}
+        @keyframes starPop1{0%{transform:translate(0,0) scale(0);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(1.5);opacity:0}}
+        @keyframes starPop2{0%{transform:translate(0,0) scale(0);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(1.5);opacity:0}}
+        @keyframes starPop3{0%{transform:translate(0,0) scale(0);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(1.5);opacity:0}}
+        @keyframes holeText{0%{opacity:0;transform:scale(0.3) rotate(-10deg)}100%{opacity:1;transform:none}}
       `}</style>
     </div>
   )
@@ -799,7 +927,7 @@ export function HoleInOnePopup({ players, onDismiss, enabledAnimations }) {
   const multi = players.length > 1
   const headline =
     animType === 'kiwi'      ? (multi ? 'Sweet as! Hole in Ones!' : 'Sweet as! Hole in One!')
-    : animType === 'gecko'   ? (multi ? 'Chur! Hole in Ones!' : 'Chur bro! Hole in One!')
+    : animType === 'gecko'   ? (multi ? 'Ka-kaa! Hole in Ones!' : 'Ka-kaa! Hole in One! 🦜')
     : animType === 'lightning'? (multi ? '⚡ HOLE IN ONES! ⚡' : '⚡ HOLE IN ONE! ⚡')
     : animType === 'golfswing'? (multi ? 'FORE! Hole in Ones!' : 'FORE! Hole in One!')
     : (multi ? 'HOLE IN ONES!' : 'HOLE IN ONE!')
@@ -809,7 +937,7 @@ export function HoleInOnePopup({ players, onDismiss, enabledAnimations }) {
       {/* Canvas overlays — behind popup */}
       {animType === 'confetti'  && <ConfettiCanvas active={visible} />}
       {animType === 'fireworks' && <FireworksCanvas active={visible} />}
-      {animType === 'galaxy'    && <GalaxyCanvas active={visible} />}
+      {animType === 'galaxy'    && <StarWarsCanvas active={visible} />}
       {animType === 'streamer'  && <StreamerCanvas active={visible} />}
 
       {/* Main popup */}
@@ -828,6 +956,7 @@ export function HoleInOnePopup({ players, onDismiss, enabledAnimations }) {
         {animType === 'gecko'     && <GeckoAnimation active={visible} />}
         {animType === 'lightning' && <LightningAnimation active={visible} />}
         {animType === 'pixel'     && <PixelAnimation active={visible} />}
+        {animType === 'galaxy'    && <StarWarsCrawl active={visible} />}
 
         {/* Content — sits above animation layers */}
         <div style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
