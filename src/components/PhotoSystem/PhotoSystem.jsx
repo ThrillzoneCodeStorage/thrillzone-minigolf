@@ -3,7 +3,7 @@ import { Camera, X, RotateCcw, Check, SwitchCamera, Zap, ZapOff } from 'lucide-r
 import { useGame } from '../../context/GameContext'
 import { useTranslation } from '../../lib/TranslationContext'
 
-// ── Polaroid composer — adapts to actual image dimensions ──────
+// ── Polaroid composer — always 4:5 (1080×1350) ───────────────
 export function composePolaroid(photoBlob, isFrontCamera = false) {
   return new Promise(resolve => {
     const url = URL.createObjectURL(photoBlob)
@@ -12,81 +12,119 @@ export function composePolaroid(photoBlob, isFrontCamera = false) {
     img.onload = () => {
       URL.revokeObjectURL(url)
 
-      const imgW = img.naturalWidth  || img.width
-      const imgH = img.naturalHeight || img.height
+      // Fixed 4:5 dimensions — best for social sharing
+      const CANVAS_W = 1080
+      const CANVAS_H = 1350
 
-      // Polaroid frame constants
-      const SIDE_PAD  = 28   // equal left/right/top padding
-      const BOT_PAD   = 140  // bottom label area height
-      const FRAME_W   = 800  // fixed canvas width
+      const SIDE_PAD = 40   // white border on sides and top
+      const BOT_PAD  = 200  // bottom label zone
 
-      // Scale image to fit within frame width
-      const photoW  = FRAME_W - SIDE_PAD * 2
-      const photoH  = Math.round(photoW * (imgH / imgW))
-      const totalH  = SIDE_PAD + photoH + BOT_PAD
+      const photoW = CANVAS_W - SIDE_PAD * 2
+      const photoH = CANVAS_H - SIDE_PAD - BOT_PAD
 
       const canvas = document.createElement('canvas')
-      canvas.width  = FRAME_W
-      canvas.height = totalH
+      canvas.width  = CANVAS_W
+      canvas.height = CANVAS_H
       const ctx = canvas.getContext('2d')
 
-      // White background
+      // White polaroid background
       ctx.fillStyle = '#ffffff'
-      ctx.fillRect(0, 0, FRAME_W, totalH)
+      ctx.fillRect(0, 0, CANVAS_W, CANVAS_H)
 
-      // Draw image — mirror front camera only
+      // Subtle warm tint on edges
+      const vignette = ctx.createRadialGradient(CANVAS_W/2, CANVAS_H/2, photoH*0.3, CANVAS_W/2, CANVAS_H/2, CANVAS_W*0.8)
+      vignette.addColorStop(0, 'rgba(0,0,0,0)')
+      vignette.addColorStop(1, 'rgba(0,0,0,0.04)')
+
+      // Clip to photo area and draw image (crop to fill, centred)
       ctx.save()
+      ctx.beginPath()
+      ctx.rect(SIDE_PAD, SIDE_PAD, photoW, photoH)
+      ctx.clip()
+
       if (isFrontCamera) {
-        ctx.translate(FRAME_W, 0)
+        ctx.translate(CANVAS_W, 0)
         ctx.scale(-1, 1)
       }
-      ctx.drawImage(img, isFrontCamera ? -(FRAME_W - SIDE_PAD * 2 + SIDE_PAD) : SIDE_PAD, SIDE_PAD, photoW, photoH)
+
+      // Cover crop: scale to fill photoW×photoH, centred
+      const imgW = img.naturalWidth || img.width
+      const imgH = img.naturalHeight || img.height
+      const scaleX = photoW / imgW
+      const scaleY = photoH / imgH
+      const scale  = Math.max(scaleX, scaleY)
+      const drawW  = imgW * scale
+      const drawH  = imgH * scale
+      const offsetX = SIDE_PAD + (photoW - drawW) / 2
+      const offsetY = SIDE_PAD + (photoH - drawH) / 2
+
+      if (isFrontCamera) {
+        ctx.drawImage(img, -(CANVAS_W - offsetX - drawW), offsetY, drawW, drawH)
+      } else {
+        ctx.drawImage(img, offsetX, offsetY, drawW, drawH)
+      }
       ctx.restore()
 
-      // Subtle border around photo
-      ctx.strokeStyle = '#e8e8e8'
+      // Vignette over photo
+      ctx.fillStyle = vignette
+      ctx.fillRect(SIDE_PAD, SIDE_PAD, photoW, photoH)
+
+      // Thin photo border
+      ctx.strokeStyle = '#ddd'
       ctx.lineWidth = 1
       ctx.strokeRect(SIDE_PAD, SIDE_PAD, photoW, photoH)
 
-      // ── Label area ──────────────────────────────────────────
+      // ── Label area ─────────────────────────────────────────
       const labelY   = SIDE_PAD + photoH
-      const labelMid = FRAME_W / 2
-      const labelH   = BOT_PAD
+      const labelMid = CANVAS_W / 2
 
-      // Date — top of label
+      // Date
       const dateStr = new Date().toLocaleDateString('en-NZ', { day:'numeric', month:'long', year:'numeric' })
-      ctx.fillStyle   = '#aaaaaa'
-      ctx.font        = '18px Georgia, "Times New Roman", serif'
-      ctx.textAlign   = 'center'
+      ctx.fillStyle    = '#999'
+      ctx.font         = '22px Georgia, "Times New Roman", serif'
+      ctx.textAlign    = 'center'
       ctx.textBaseline = 'top'
-      ctx.fillText(dateStr, labelMid, labelY + 14)
+      ctx.fillText(dateStr, labelMid, labelY + 20)
 
-      // Logo — centred, fills remaining label space nicely
+      // Divider line
+      ctx.strokeStyle = '#eee'
+      ctx.lineWidth = 1
+      ctx.beginPath()
+      ctx.moveTo(SIDE_PAD + 40, labelY + 52)
+      ctx.lineTo(CANVAS_W - SIDE_PAD - 40, labelY + 52)
+      ctx.stroke()
+
+      // Logo
       const logo = new Image()
       logo.crossOrigin = 'anonymous'
 
       logo.onload = () => {
-        // Logo gets ~60% of label height, centred vertically in remaining space
-        const logoMaxH = Math.round(labelH * 0.55)
-        const logoMaxW = FRAME_W - SIDE_PAD * 4
-        const ratio    = logo.width / logo.height
-        let lw = logoMaxH * ratio
-        let lh = logoMaxH
-        if (lw > logoMaxW) { lw = logoMaxW; lh = lw / ratio }
-        const lx = (FRAME_W - lw) / 2
-        const ly = labelY + 38 + ((labelH - 38 - lh) / 2)
-        ctx.drawImage(logo, lx, Math.max(labelY + 38, ly), lw, lh)
-        canvas.toBlob(b => resolve(b), 'image/jpeg', 0.94)
+        const maxLH = 90
+        const maxLW = CANVAS_W - SIDE_PAD * 4
+        const ratio = logo.width / logo.height
+        let lw = maxLH * ratio, lh = maxLH
+        if (lw > maxLW) { lw = maxLW; lh = lw / ratio }
+        const lx = (CANVAS_W - lw) / 2
+        const ly = labelY + 65 + (BOT_PAD - 65 - lh) / 2
+        ctx.drawImage(logo, lx, ly, lw, lh)
+
+        // Putt N Glow text below logo
+        ctx.fillStyle    = '#ccc'
+        ctx.font         = '20px Inter, Arial, sans-serif'
+        ctx.letterSpacing = '0.08em'
+        ctx.textBaseline = 'bottom'
+        ctx.fillText('Queenstown · putt-n-glow.co.nz', labelMid, CANVAS_H - 20)
+
+        canvas.toBlob(b => resolve(b), 'image/jpeg', 0.93)
       }
 
       logo.onerror = () => {
-        // Fallback text
-        ctx.fillStyle    = '#222'
-        ctx.font         = 'bold 28px Inter, Arial, sans-serif'
+        ctx.fillStyle    = '#333'
+        ctx.font         = 'bold 40px Inter, Arial, sans-serif'
         ctx.textAlign    = 'center'
         ctx.textBaseline = 'middle'
-        ctx.fillText('PUTT N GLOW', labelMid, labelY + labelH / 2)
-        canvas.toBlob(b => resolve(b), 'image/jpeg', 0.94)
+        ctx.fillText('PUTT N GLOW', labelMid, labelY + BOT_PAD / 2)
+        canvas.toBlob(b => resolve(b), 'image/jpeg', 0.93)
       }
 
       logo.src = '/logo.png'

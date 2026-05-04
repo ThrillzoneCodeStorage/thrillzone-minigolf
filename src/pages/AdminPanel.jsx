@@ -1025,10 +1025,69 @@ function SettingsTab({ onLogout }) {
           <Save size={14}/> Update Password
         </button>
       </div>
+      {/* Animation toggle */}
+      <AnimationSettings/>
+
       {/* Custom banned words */}
       <BannedWordsSection/>
 
       <button onClick={onLogout} style={{ ...cancelBtn, width:'100%', textAlign:'center' }}>Log Out</button>
+    </div>
+  )
+}
+
+// ── Animation Settings ────────────────────────────────────────
+const ANIM_NAMES = {
+  confetti:'Confetti', fireworks:'Fireworks', kiwi:'Kiwi Bird',
+  golfswing:'Golf Swing', galaxy:'Galaxy Burst', streamer:'Streamer Cannon',
+  gecko:'Gecko Lizard', lightning:'Lightning Strike', pixel:'8-bit Pixel',
+}
+
+function AnimationSettings() {
+  const [enabled, setEnabled] = useState(Object.keys(ANIM_NAMES))
+  const [saved,   setSaved]   = useState(false)
+
+  useEffect(() => {
+    supabase.from('admin_settings').select('value').eq('key','enabled_animations').single()
+      .then(({ data }) => {
+        if (data?.value) {
+          try { setEnabled(JSON.parse(data.value)) } catch {}
+        }
+      })
+  }, [])
+
+  async function toggle(key) {
+    const next = enabled.includes(key) ? enabled.filter(k=>k!==key) : [...enabled, key]
+    if (next.length === 0) return // keep at least one
+    setEnabled(next)
+    await supabase.from('admin_settings').upsert({ key:'enabled_animations', value:JSON.stringify(next) })
+    setSaved(true); setTimeout(()=>setSaved(false), 1500)
+  }
+
+  return (
+    <div style={{ background:'#161616', border:`1px solid ${A.border}`, borderRadius:12, padding:18, marginBottom:14 }}>
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
+        <div>
+          <p style={{ color:A.text, fontSize:14, fontWeight:700, margin:0 }}>Hole-in-One Animations</p>
+          <p style={{ color:A.text3, fontSize:12, margin:'2px 0 0' }}>Toggle which animations can appear. At least one must stay on.</p>
+        </div>
+        {saved && <span style={{ fontSize:12, color:A.green, fontWeight:700 }}>Saved ✓</span>}
+      </div>
+      <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
+        {Object.entries(ANIM_NAMES).map(([key, label]) => {
+          const on = enabled.includes(key)
+          return (
+            <button key={key} onClick={()=>toggle(key)}
+              style={{ padding:'6px 12px', borderRadius:8, border:`1px solid ${on?A.yellow:A.border}`,
+                background: on?'rgba(255,214,0,0.10)':'transparent',
+                color: on?A.yellow:A.text3, fontSize:13, fontWeight:700,
+                cursor:'pointer', fontFamily:'inherit', transition:'all 0.15s',
+                opacity: !on && enabled.length===1 ? 0.4 : 1 }}>
+              {on ? '✓ ' : ''}{label}
+            </button>
+          )
+        })}
+      </div>
     </div>
   )
 }

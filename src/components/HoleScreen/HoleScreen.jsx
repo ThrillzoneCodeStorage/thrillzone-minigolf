@@ -134,7 +134,8 @@ export default function HoleScreen() {
   const [showZeroWarn, setShowZeroWarn]         = useState(false)
   const [showSkipConfirm, setShowSkipConfirm]   = useState(false)
   const [showHoleList, setShowHoleList]         = useState(false)
-  const [timerHoleIndex, setTimerHoleIndex]     = useState(7) // 0-indexed, default hole 8
+  const [timerHoleIndex, setTimerHoleIndex]     = useState(7)
+  const [enabledAnimations, setEnabledAnimations] = useState([]) // 0-indexed, default hole 8
   const [timerSeconds,   setTimerSeconds]       = useState(30)
   const [timerEnabled,   setTimerEnabled]       = useState(true)
   const [showPhysicalSpin, setShowPhysicalSpin] = useState(false)
@@ -152,14 +153,16 @@ export default function HoleScreen() {
   useEffect(() => {
     async function loadTimerSettings() {
       try {
-        const [en, hole, secs] = await Promise.all([
+        const [en, hole, secs, anims] = await Promise.all([
           supabaseClient.from('admin_settings').select('value').eq('key','timer_enabled').single(),
           supabaseClient.from('admin_settings').select('value').eq('key','timer_hole').single(),
           supabaseClient.from('admin_settings').select('value').eq('key','timer_seconds').single(),
+          supabaseClient.from('admin_settings').select('value').eq('key','enabled_animations').single(),
         ])
-        if (en.data)   setTimerEnabled(en.data.value !== 'false')
-        if (hole.data) setTimerHoleIndex((parseInt(hole.data.value) || 8) - 1)
-        if (secs.data) setTimerSeconds(parseInt(secs.data.value) || 30)
+        if (en.data)    setTimerEnabled(en.data.value !== 'false')
+        if (hole.data)  setTimerHoleIndex((parseInt(hole.data.value) || 8) - 1)
+        if (secs.data)  setTimerSeconds(parseInt(secs.data.value) || 30)
+        if (anims.data) { try { setEnabledAnimations(JSON.parse(anims.data.value)) } catch {} }
       } catch {}
     }
     loadTimerSettings()
@@ -205,6 +208,7 @@ export default function HoleScreen() {
   const isLast     = currentHoleIndex === totalHoles - 1
   const isHole8    = timerEnabled && currentHoleIndex === timerHoleIndex
   const allUnset   = players.every(p => localScores[p.name] === null || localScores[p.name] === undefined)
+  const anyUnset   = players.some(p => localScores[p.name] === null || localScores[p.name] === undefined)
 
   function increment(playerName) {
     const par = currentHole?.par || 3
@@ -219,9 +223,12 @@ export default function HoleScreen() {
   }
 
   function decrement(playerName) {
+    const par = currentHole?.par || 3
     setLocalScores(prev => {
       const cur = prev[playerName]
-      if (cur === null || cur === undefined || cur <= 1) return { ...prev, [playerName]: null }
+      // First press when unscored: go straight to par-1
+      if (cur === null || cur === undefined) return { ...prev, [playerName]: Math.max(1, par - 1) }
+      if (cur <= 1) return prev
       return { ...prev, [playerName]: cur - 1 }
     })
     const el = document.getElementById(`score-minus-${playerName}`)
@@ -254,7 +261,7 @@ export default function HoleScreen() {
   }
 
   async function handleNext() {
-    if (allUnset && playStyle !== 'fun') { setShowZeroWarn(true); return }
+    if (anyUnset && playStyle !== 'fun') { setShowZeroWarn(true); return }
     const saved = {}
     for (const player of players) {
       const strokes = localScores[player.name]
@@ -525,6 +532,7 @@ export default function HoleScreen() {
 
       {holeInOnePlayers.length > 0 && (
         <HoleInOnePopup players={holeInOnePlayers}
+          enabledAnimations={enabledAnimations}
           onDismiss={async () => { setHoleInOnePlayers([]); if (pendingNav) { await pendingNav(); setPendingNav(null) } }}/>
       )}
 

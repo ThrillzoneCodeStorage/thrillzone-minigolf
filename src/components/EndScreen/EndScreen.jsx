@@ -158,40 +158,47 @@ export default function EndScreen() {
 
       const html = `<!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Your Putt N Glow Scorecard</title></head>
-<body style="margin:0;padding:0;background:#f4f4f4;font-family:'Helvetica Neue',Arial,sans-serif;">
-<table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:32px 0;">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Your Putt N Glow Scorecard</title></head>
+<body style="margin:0;padding:0;background:#f0ede8;font-family:'Helvetica Neue',Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f0ede8;padding:32px 0;">
 <tr><td align="center">
-<table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;background:#0a0a0a;border-radius:16px;overflow:hidden;">
+<table width="620" cellpadding="0" cellspacing="0" style="max-width:620px;background:#0a0a0a;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+
+  <!-- Gold top bar -->
+  <tr><td style="background:linear-gradient(90deg,#cc9900,#FFD600,#cc9900);height:5px;"></td></tr>
 
   <!-- Header -->
-  <tr><td style="background:linear-gradient(135deg,#1a1400,#0a0a0a);padding:36px 40px 28px;text-align:center;border-bottom:3px solid #FFD600;">
-    <div style="font-size:32px;font-weight:900;color:#FFD600;letter-spacing:-0.03em;margin-bottom:4px;">Putt N Glow</div>
-    <div style="font-size:14px;color:#555;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:20px;">Queenstown</div>
-    <div style="font-size:13px;color:#333;">${date}</div>
+  <tr><td style="background:linear-gradient(160deg,#141200,#0a0a0a);padding:44px 48px 36px;text-align:center;">
+    <img src="https://gentle-frangipane-c4d096.netlify.app/logo.png" width="120" height="auto" alt="Putt N Glow" style="height:56px;width:auto;margin-bottom:20px;display:block;margin-left:auto;margin-right:auto;"/>
+    <div style="font-size:36px;font-weight:900;color:#FFD600;letter-spacing:-0.03em;margin-bottom:6px;line-height:1;">Putt N Glow</div>
+    <div style="font-size:13px;color:#555;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:20px;">Mini Golf · Queenstown</div>
+    <div style="display:inline-block;background:rgba(255,214,0,0.08);border:1px solid rgba(255,214,0,0.2);border-radius:8px;padding:6px 18px;font-size:13px;color:#666;">${date}</div>
   </td></tr>
 
   <!-- Winner banner -->
-  ${leaderboard.length > 0 ? `<tr><td style="background:#FFD600;padding:18px 40px;text-align:center;">
-    <div style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#7a6400;margin-bottom:4px;">🏆 Winner</div>
-    <div style="font-size:24px;font-weight:900;color:#000;letter-spacing:-0.02em;">${winnerName} — ${winnerTotal} strokes</div>
+  ${leaderboard.length > 0 ? `
+  <tr><td style="background:linear-gradient(135deg,#FFD600,#ffef80);padding:24px 48px;text-align:center;">
+    <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.14em;color:rgba(0,0,0,0.45);margin-bottom:8px;">🏆 Winner</div>
+    <div style="font-size:28px;font-weight:900;color:#000;letter-spacing:-0.03em;">${winnerName}</div>
+    <div style="font-size:15px;color:rgba(0,0,0,0.55);margin-top:4px;">${winnerTotal} strokes · Well played!</div>
   </td></tr>` : ''}
 
   <!-- Final standings -->
-  <tr><td style="padding:28px 40px 0;">
-    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#444;margin-bottom:14px;">Final Standings</div>
+  <tr><td style="padding:32px 48px 8px;">
+    <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.12em;color:#444;margin-bottom:16px;">Final Standings</div>
     ${leaderboard.map((p, i) => `
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:8px;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:10px;">
     <tr>
-      <td width="32" style="vertical-align:middle;">
-        <div style="width:28px;height:28px;border-radius:50%;background:${p.color};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;color:#000;text-align:center;line-height:28px;">${p.name.charAt(0).toUpperCase()}</div>
+      <td width="36" style="vertical-align:middle;">
+        <div style="width:32px;height:32px;border-radius:50%;background:${p.color};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;color:#000;text-align:center;line-height:32px;">${p.name.charAt(0).toUpperCase()}</div>
       </td>
-      <td style="vertical-align:middle;padding-left:10px;">
-        <span style="font-size:15px;font-weight:${i===0?900:600};color:${i===0?p.color:'#aaa'};">${p.name}</span>
-        ${p.holesPlayed > 0 ? `<span style="font-size:11px;color:#444;margin-left:6px;">${p.holesPlayed} holes</span>` : ''}
+      <td style="vertical-align:middle;padding-left:12px;">
+        <div style="font-size:16px;font-weight:${i===0?900:600};color:${i===0?p.color:'#aaa'};">${p.name}${i===0?' 🥇':i===1?' 🥈':i===2?' 🥉':''}</div>
+        ${p.holesPlayed>0?`<div style="font-size:11px;color:#444;margin-top:1px;">${p.holesPlayed} holes played</div>`:''}
       </td>
       <td align="right" style="vertical-align:middle;">
-        <span style="font-size:20px;font-weight:900;color:${i===0?p.color:'#fff'};">${p.total > 0 ? p.total : '—'}</span>
+        <span style="font-size:24px;font-weight:900;color:${i===0?p.color:'#fff'};">${p.total>0?p.total:'—'}</span>
         <span style="font-size:11px;color:#444;margin-left:4px;">strokes</span>
       </td>
     </tr>
@@ -199,18 +206,18 @@ export default function EndScreen() {
   </td></tr>
 
   <!-- Scorecard table -->
-  <tr><td style="padding:24px 40px 0;">
-    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#444;margin-bottom:14px;">Hole by Hole</div>
-    <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:12px;">
+  <tr><td style="padding:16px 48px 8px;">
+    <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.12em;color:#444;margin-bottom:12px;">Hole by Hole</div>
+    <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:12px;border-radius:10px;overflow:hidden;">
       <thead>
         <tr style="background:#1c1c1c;">
-          <th style="padding:9px 12px;text-align:left;color:#555;font-weight:700;border-radius:6px 0 0 0;">Hole</th>
+          <th style="padding:9px 12px;text-align:left;color:#555;font-weight:700;">Hole</th>
           ${playerHeaders}
         </tr>
       </thead>
       <tbody>${rows}</tbody>
       <tfoot>
-        <tr style="background:#1a1200;border-top:2px solid rgba(255,214,0,0.3);">
+        <tr style="background:#1a1200;border-top:2px solid rgba(255,214,0,0.25);">
           <td style="padding:10px 12px;font-weight:900;color:#FFD600;font-size:13px;">TOTAL</td>
           ${totals}
         </tr>
@@ -218,20 +225,31 @@ export default function EndScreen() {
     </table>
   </td></tr>
 
-  <!-- Photos note -->
-  ${photos.length > 0 ? `<tr><td style="padding:20px 40px 0;">
-    <div style="background:#141414;border:1px solid rgba(255,214,0,0.15);border-radius:10px;padding:14px 18px;display:flex;align-items:center;">
-      <span style="font-size:20px;margin-right:10px;">📸</span>
-      <span style="color:#888;font-size:13px;">Your ${photos.length} Polaroid memory${photos.length !== 1 ? 's are' : ' is'} attached to this email!</span>
+  ${photos.length > 0 ? `
+  <!-- Photos section -->
+  <tr><td style="padding:24px 48px 8px;">
+    <div style="font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:0.12em;color:#444;margin-bottom:16px;">📸 Your Polaroid Memories (${photos.length})</div>
+    <div style="font-size:13px;color:#666;margin-bottom:14px;">All your photos are attached to this email as individual files.</div>
+    <div style="background:#141414;border:1px solid rgba(255,214,0,0.15);border-radius:12px;padding:16px 20px;text-align:center;">
+      <div style="font-size:32px;margin-bottom:8px;">${photos.length === 1 ? '🖼️' : '🖼️🖼️'}</div>
+      <div style="color:#888;font-size:13px;line-height:1.6;">${photos.length} Polaroid photo${photos.length!==1?'s':''} attached<br/><span style="color:#555;">Print them out or share on Instagram!</span></div>
     </div>
   </td></tr>` : ''}
 
-  <!-- Footer -->
-  <tr><td style="padding:32px 40px 36px;text-align:center;border-top:1px solid #1c1c1c;margin-top:24px;">
-    <div style="font-size:13px;color:#FFD600;font-weight:700;margin-bottom:6px;">Putt N Glow · Queenstown</div>
-    <div style="font-size:12px;color:#333;">Thanks for playing — come back soon!</div>
-    <div style="font-size:11px;color:#222;margin-top:12px;">scores.thrillzone.co.nz</div>
+  <!-- CTA -->
+  <tr><td style="padding:28px 48px 36px;text-align:center;">
+    <a href="https://gentle-frangipane-c4d096.netlify.app" style="display:inline-block;background:linear-gradient(135deg,#FFD600,#ffef80);color:#000;font-weight:900;font-size:15px;padding:14px 36px;border-radius:10px;text-decoration:none;letter-spacing:-0.01em;">Play Again at Putt N Glow →</a>
   </td></tr>
+
+  <!-- Footer -->
+  <tr><td style="padding:24px 48px 32px;text-align:center;border-top:1px solid #1c1c1c;">
+    <div style="font-size:14px;color:#FFD600;font-weight:800;margin-bottom:6px;">Putt N Glow · Queenstown</div>
+    <div style="font-size:12px;color:#333;margin-bottom:10px;">The most fun you'll have with a tiny golf club.</div>
+    <div style="font-size:11px;color:#222;">scores.thrillzone.co.nz</div>
+  </td></tr>
+
+  <!-- Gold bottom bar -->
+  <tr><td style="background:linear-gradient(90deg,#cc9900,#FFD600,#cc9900);height:5px;"></td></tr>
 
 </table>
 </td></tr>
