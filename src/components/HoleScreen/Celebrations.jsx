@@ -185,89 +185,73 @@ function StreamerCanvas({ active }) {
 // ─────────────────────────────────────────────────────────────
 function KiwiSVG() {
   return (
-    <svg width="200" height="130" viewBox="0 0 200 130" fill="none" xmlns="http://www.w3.org/2000/svg">
-      {/* Shadow */}
-      <ellipse cx="85" cy="124" rx="60" ry="7" fill="rgba(0,0,0,0.3)" />
-
-      {/* ── KIWI FRUIT (replaces golf ball) ── */}
-      {/* Fruit half bottom */}
-      <ellipse cx="22" cy="105" rx="20" ry="12" fill="#8B6914" stroke="#5a4010" strokeWidth="2"/>
-      {/* Fruit half top — cut face showing green */}
-      <ellipse cx="22" cy="88" rx="20" ry="20" fill="#5a8a0a" stroke="#3a5a06" strokeWidth="2.5"/>
-      <ellipse cx="22" cy="88" rx="16" ry="16" fill="#6aaa10"/>
-      {/* White centre */}
-      <ellipse cx="22" cy="88" rx="5" ry="5" fill="#e8e8e0"/>
-      {/* Seeds radiating out */}
-      {[0,40,80,120,160,200,240,280,320].map((a,i)=>(
-        <ellipse key={i} cx={22+Math.cos(a*Math.PI/180)*9} cy={88+Math.sin(a*Math.PI/180)*9}
-          rx="2.5" ry="1.2" fill="#1a2a06"
-          transform={`rotate(${a} ${22+Math.cos(a*Math.PI/180)*9} ${88+Math.sin(a*Math.PI/180)*9})`}/>
-      ))}
-      {/* Fuzzy skin texture on bottom half */}
-      <ellipse cx="22" cy="105" rx="20" ry="12" fill="none" stroke="#7a5a08" strokeWidth="1" opacity="0.5"/>
-
-      {/* ── KIWI BIRD ── */}
-      {/* Body — large round fluffy */}
-      <ellipse cx="100" cy="82" rx="54" ry="46" fill="#3D2408" stroke="#2a1804" strokeWidth="2.5"/>
-      <ellipse cx="100" cy="78" rx="50" ry="42" fill="#5C3910"/>
-      <ellipse cx="96" cy="74" rx="46" ry="38" fill="#7a5220"/>
-      {/* Fluffy feather strokes — radiating from center outward */}
+    <svg width="190" height="140" viewBox="0 0 190 140" fill="none">
+      <ellipse cx="90" cy="134" rx="62" ry="7" fill="rgba(0,0,0,0.28)"/>
+      {/* Body layers — dark to light brown */}
+      <ellipse cx="88" cy="82" rx="56" ry="48" fill="#2E1A06" stroke="#1a0e04" strokeWidth="2.5"/>
+      <ellipse cx="88" cy="78" rx="52" ry="44" fill="#4A2A0A"/>
+      <ellipse cx="84" cy="74" rx="47" ry="39" fill="#6B3E12"/>
+      <ellipse cx="80" cy="70" rx="42" ry="34" fill="#8B5420"/>
+      {/* Hair/feather strokes — radiating outward like reference */}
       {[
-        [70,52],[82,46],[96,44],[110,47],[122,54],[132,64],
-        [64,66],[76,60],[92,57],[108,58],[120,64],[130,74],
-        [66,80],[78,76],[94,73],[110,74],[122,80],[130,90],
-        [70,94],[84,92],[98,90],[112,91],[124,96],
-        [76,106],[92,104],[106,106],[118,108],
+        [44,50],[56,42],[70,38],[84,36],[98,38],[112,44],[122,54],[126,66],
+        [38,66],[50,58],[66,52],[82,50],[98,52],[114,58],[124,70],
+        [40,82],[54,76],[70,70],[86,68],[102,70],[116,76],[124,86],
+        [44,98],[60,94],[76,90],[92,88],[108,90],[120,96],
+        [52,112],[68,108],[84,106],[100,108],[114,112],
+        [64,124],[80,122],[96,124],
       ].map(([x,y],i)=>{
-        const angle = Math.atan2(y-82, x-100)
-        const len = 10 + Math.random()*4
-        return <line key={i} x1={x} y1={y}
-          x2={x+Math.cos(angle)*len} y2={y+Math.sin(angle)*len}
-          stroke="#2a1804" strokeWidth="1.5" strokeLinecap="round" opacity="0.7"/>
+        const angle = Math.atan2(y-82,x-88)
+        const len = 12+Math.random()*5
+        return <line key={i} x1={x} y1={y} x2={x+Math.cos(angle)*len} y2={y+Math.sin(angle)*len}
+          stroke="#1a0e04" strokeWidth="1.8" strokeLinecap="round" opacity="0.65"/>
       })}
-      {/* Extra fine feather texture */}
+      {/* Finer hair layer */}
       {[
-        [88,50],[104,47],[118,52],[128,60],[58,70],[128,82],
-        [60,88],[130,98],[72,112],[108,114],
+        [58,46],[78,40],[100,42],[118,50],[36,74],[128,78],
+        [42,92],[128,94],[56,118],[102,120],
       ].map(([x,y],i)=>{
-        const angle = Math.atan2(y-82, x-100)
-        return <line key={i} x1={x} y1={y}
-          x2={x+Math.cos(angle)*7} y2={y+Math.sin(angle)*7}
-          stroke="#2a1804" strokeWidth="1" strokeLinecap="round" opacity="0.5"/>
+        const angle = Math.atan2(y-82,x-88)
+        return <line key={i} x1={x} y1={y} x2={x+Math.cos(angle)*8} y2={y+Math.sin(angle)*8}
+          stroke="#1a0e04" strokeWidth="1" strokeLinecap="round" opacity="0.4"/>
       })}
-
-      {/* Head — separate round fluffy ball */}
-      <ellipse cx="154" cy="52" rx="26" ry="24" fill="#3D2408" stroke="#2a1804" strokeWidth="2.5"/>
-      <ellipse cx="154" cy="50" rx="23" ry="21" fill="#5C3910"/>
-      {/* Head feather strokes */}
-      {[[140,36],[152,32],[164,36],[170,46],[168,58],[156,64],[144,60],[136,50]].map(([x,y],i)=>{
-        const angle = Math.atan2(y-52, x-154)
-        return <line key={i} x1={x} y1={y}
-          x2={x+Math.cos(angle)*8} y2={y+Math.sin(angle)*8}
-          stroke="#2a1804" strokeWidth="1.5" strokeLinecap="round" opacity="0.7"/>
+      {/* Head */}
+      <ellipse cx="148" cy="54" rx="28" ry="26" fill="#2E1A06" stroke="#1a0e04" strokeWidth="2.5"/>
+      <ellipse cx="148" cy="52" rx="25" ry="23" fill="#4A2A0A"/>
+      <ellipse cx="146" cy="50" rx="21" ry="19" fill="#6B3E12"/>
+      {/* Head feathers */}
+      {[[132,36],[144,30],[158,34],[166,44],[164,58],[152,66],[138,62],[130,52]].map(([x,y],i)=>{
+        const angle = Math.atan2(y-54,x-148)
+        return <line key={i} x1={x} y1={y} x2={x+Math.cos(angle)*9} y2={y+Math.sin(angle)*9}
+          stroke="#1a0e04" strokeWidth="1.6" strokeLinecap="round" opacity="0.6"/>
       })}
-
-      {/* ── BIG CARTOON EYES ── */}
-      {/* Eye white */}
-      <circle cx="162" cy="44" r="11" fill="#fff" stroke="#2a1804" strokeWidth="2"/>
-      {/* Iris */}
-      <circle cx="163" cy="44" r="7" fill="#3D2408"/>
-      {/* Pupil */}
-      <circle cx="163" cy="44" r="5" fill="#000"/>
-      {/* Catchlight */}
-      <circle cx="165" cy="41" r="2.5" fill="#fff"/>
-      <circle cx="161" cy="46" r="1" fill="#fff" opacity="0.5"/>
-
-      {/* Beak — long, curved, pointy */}
-      <path d="M174 52 Q186 48 193 42 Q198 37 198 32" stroke="#C8A040" strokeWidth="6" strokeLinecap="round" fill="none"/>
-      <path d="M174 54 Q186 51 193 46" stroke="#a07820" strokeWidth="3" strokeLinecap="round" fill="none" opacity="0.5"/>
-      <path d="M182 46 Q188 43 193 40" stroke="#e8c870" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.6"/>
-      {/* Nostril */}
-      <circle cx="180" cy="49" r="2" fill="#a07820"/>
-
-      {/* Legs */}
-      <path d="M84 122 L76 130 M76 130 L66 130 M76 130 L72 132 M76 130 L80 132" stroke="#C8A040" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-      <path d="M106 124 L112 132 M112 132 L102 132 M112 132 L116 130 M112 132 L118 134" stroke="#C8A040" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      {/* BIG CARTOON EYES — like reference */}
+      <circle cx="158" cy="46" r="12" fill="#fff" stroke="#1a0e04" strokeWidth="2.5"/>
+      <circle cx="159" cy="46" r="8" fill="#1a0e04"/>
+      <circle cx="159" cy="46" r="6" fill="#0a0a0a"/>
+      <circle cx="161.5" cy="43" r="3" fill="#fff"/>
+      <circle cx="158" cy="49" r="1.2" fill="#fff" opacity="0.5"/>
+      {/* BEAK — long, slender, gently curved downward */}
+      <path d="M174 52 Q186 54 194 58 Q200 62 202 66" stroke="#B8860B" strokeWidth="7" strokeLinecap="round" fill="none"/>
+      <path d="M174 50 Q186 52 194 56 Q200 60 202 64" stroke="#DAA520" strokeWidth="4" strokeLinecap="round" fill="none"/>
+      <path d="M180 51 Q190 54 198 58" stroke="#FFD700" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.5"/>
+      {/* Nostril hole */}
+      <ellipse cx="182" cy="52" rx="2.5" ry="1.5" fill="#8B6008" transform="rotate(-15 182 52)"/>
+      {/* FEET — proper kiwi feet with 3 forward toes + 1 back toe */}
+      {/* Left foot */}
+      <path d="M72 126 L66 135" stroke="#B8860B" strokeWidth="5" strokeLinecap="round"/>
+      {/* 3 forward toes */}
+      <path d="M66 135 L56 140" stroke="#B8860B" strokeWidth="4" strokeLinecap="round"/>
+      <path d="M66 135 L64 142" stroke="#B8860B" strokeWidth="4" strokeLinecap="round"/>
+      <path d="M66 135 L72 141" stroke="#B8860B" strokeWidth="4" strokeLinecap="round"/>
+      {/* 1 back toe */}
+      <path d="M66 135 L74 133" stroke="#B8860B" strokeWidth="3" strokeLinecap="round"/>
+      {/* Right foot */}
+      <path d="M94 128 L100 137" stroke="#B8860B" strokeWidth="5" strokeLinecap="round"/>
+      <path d="M100 137 L90 142" stroke="#B8860B" strokeWidth="4" strokeLinecap="round"/>
+      <path d="M100 137 L100 144" stroke="#B8860B" strokeWidth="4" strokeLinecap="round"/>
+      <path d="M100 137 L108 141" stroke="#B8860B" strokeWidth="4" strokeLinecap="round"/>
+      <path d="M100 137 L108 134" stroke="#B8860B" strokeWidth="3" strokeLinecap="round"/>
     </svg>
   )
 }
@@ -275,50 +259,70 @@ function KiwiSVG() {
 function KiwiAnimation({ active }) {
   if (!active) return null
   return (
-    <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
-      {/* Kiwi running in */}
-      <div style={{ position: 'absolute', bottom: '14%', animation: 'kiwiRun 2.6s cubic-bezier(0.25,0.46,0.45,0.94) forwards' }}>
-        <div style={{ animation: 'kiwiWaddle 0.18s ease-in-out infinite alternate' }}>
-          <KiwiSVG />
+    <div style={{ position:'absolute', inset:0, overflow:'hidden', pointerEvents:'none' }}>
+
+      {/* Kiwi fruit — sitting still on the right, waiting */}
+      <div style={{ position:'absolute', bottom:'17%', right:'12%' }}>
+        <svg width="70" height="70" viewBox="0 0 70 70">
+          {/* Fuzzy brown skin */}
+          <ellipse cx="35" cy="35" rx="32" ry="30" fill="#8B6914" stroke="#6a4e0e" strokeWidth="2"/>
+          {/* Fuzzy texture */}
+          {[20,40,60,80,100,120,140,160,180,200,220,240,260,280,300,320,340,360].map((a,i)=>(
+            <line key={i} x1={35+Math.cos(a*Math.PI/180)*22} y1={35+Math.sin(a*Math.PI/180)*22}
+              x2={35+Math.cos(a*Math.PI/180)*30} y2={35+Math.sin(a*Math.PI/180)*30}
+              stroke="#6a4e0e" strokeWidth="1.5" strokeLinecap="round" opacity="0.6"/>
+          ))}
+          {/* Cut face — top half green */}
+          <ellipse cx="35" cy="28" rx="26" ry="18" fill="#5a8a0a" stroke="#3a5a06" strokeWidth="1.5"/>
+          <ellipse cx="35" cy="28" rx="22" ry="14" fill="#6aaa10"/>
+          {/* White centre core */}
+          <ellipse cx="35" cy="28" rx="6" ry="5" fill="#ece8dc"/>
+          {/* Seeds */}
+          {[0,36,72,108,144,180,216,252,288,324].map((a,i)=>(
+            <ellipse key={i}
+              cx={35+Math.cos(a*Math.PI/180)*12} cy={28+Math.sin(a*Math.PI/180)*9}
+              rx="2.8" ry="1.4" fill="#1a2a04" opacity="0.9"
+              transform={`rotate(${a} ${35+Math.cos(a*Math.PI/180)*12} ${28+Math.sin(a*Math.PI/180)*9})`}/>
+          ))}
+          {/* Shadow under fruit */}
+          <ellipse cx="35" cy="66" rx="24" ry="5" fill="rgba(0,0,0,0.2)"/>
+        </svg>
+      </div>
+
+      {/* Kiwi bird — runs from left toward fruit */}
+      <div style={{ position:'absolute', bottom:'13%', animation:'kiwiRun 2.4s cubic-bezier(0.25,0.46,0.45,0.94) forwards' }}>
+        <div style={{ animation:'kiwiWaddle 0.2s ease-in-out infinite alternate' }}>
+          <KiwiSVG/>
         </div>
       </div>
-      {/* Kiwi fruit (gets hit!) */}
-      <div style={{ position: 'absolute', bottom: '16%', left: '74%', animation: 'kiwiball 2.6s ease-in forwards' }}>
-        <svg width="44" height="44" viewBox="0 0 44 44">
-          <ellipse cx="22" cy="22" rx="20" ry="20" fill="#6aaa10" stroke="#3a5a06" strokeWidth="2.5"/>
-          <ellipse cx="22" cy="22" rx="16" ry="16" fill="#7abf14"/>
-          <ellipse cx="22" cy="22" rx="5" ry="5" fill="#e8e8e0"/>
-          {[0,40,80,120,160,200,240,280,320].map((a,i)=>(
-            <ellipse key={i} cx={22+Math.cos(a*Math.PI/180)*9} cy={22+Math.sin(a*Math.PI/180)*9}
-              rx="2.5" ry="1.2" fill="#1a2a06"
-              transform={`rotate(${a} ${22+Math.cos(a*Math.PI/180)*9} ${22+Math.sin(a*Math.PI/180)*9})`}/>
+
+      {/* NZ flag pole */}
+      <div style={{ position:'absolute', top:'6%', right:'6%', animation:'flagIn 0.5s 2.0s cubic-bezier(0.34,1.56,0.64,1) both' }}>
+        <svg width="52" height="88" viewBox="0 0 52 88">
+          <rect x="23" y="3" width="4" height="76" rx="2" fill="#FFD600"/>
+          <polygon points="27,3 52,17 27,31" fill="#FFD600"/>
+          <ellipse cx="25" cy="81" rx="15" ry="5" fill="rgba(255,214,0,0.2)"/>
+        </svg>
+      </div>
+
+      {/* Impact burst when bird reaches fruit */}
+      <div style={{ position:'absolute', bottom:'20%', right:'10%', animation:'burst 0.6s 2.05s ease-out both' }}>
+        <svg width="90" height="90" viewBox="0 0 90 90">
+          {[0,30,60,90,120,150,180,210,240,270,300,330].map((a,i)=>(
+            <line key={i} x1="45" y1="45"
+              x2={45+Math.cos(a*Math.PI/180)*(i%3===0?42:30)}
+              y2={45+Math.sin(a*Math.PI/180)*(i%3===0?42:30)}
+              stroke="#FFD600" strokeWidth={i%3===0?3.5:1.8} strokeLinecap="round"/>
           ))}
+          <circle cx="45" cy="45" r="9" fill="#FFD600"/>
+          <circle cx="45" cy="45" r="4" fill="#fff"/>
         </svg>
       </div>
-      {/* NZ flag mini */}
-      <div style={{ position: 'absolute', top: '8%', right: '8%', animation: 'flagIn 0.5s 2.1s cubic-bezier(0.34,1.56,0.64,1) both' }}>
-        <svg width="54" height="90" viewBox="0 0 54 90">
-          <rect x="24" y="4" width="4" height="78" rx="2" fill="#FFD600"/>
-          <polygon points="28,4 54,18 28,32" fill="#FFD600"/>
-          <ellipse cx="26" cy="84" rx="16" ry="5" fill="rgba(255,214,0,0.18)"/>
-        </svg>
-      </div>
-      {/* Impact burst */}
-      <div style={{ position: 'absolute', bottom: '22%', left: '70%', animation: 'burst 0.5s 2.15s ease-out both' }}>
-        <svg width="80" height="80" viewBox="0 0 80 80">
-          {[0,36,72,108,144,180,216,252,288,324].map((a,i)=>(
-            <line key={i} x1="40" y1="40" x2={40+Math.cos(a*Math.PI/180)*35} y2={40+Math.sin(a*Math.PI/180)*35} stroke="#FFD600" strokeWidth={i%2===0?3:1.5} strokeLinecap="round"/>
-          ))}
-          <circle cx="40" cy="40" r="7" fill="#FFD600"/>
-          <circle cx="40" cy="40" r="3" fill="#fff"/>
-        </svg>
-      </div>
+
       <style>{`
-        @keyframes kiwiRun{0%{left:-180px}70%{left:58%}73%{left:56%}100%{left:58%}}
-        @keyframes kiwiWaddle{0%{transform:rotate(-6deg) translateY(0)}100%{transform:rotate(6deg) translateY(-5px)}}
-        @keyframes kiwiball{0%,71%{transform:translate(0,0) rotate(0deg);opacity:1}76%{transform:translate(-10px,2px)}100%{transform:translate(-160px,-320px) rotate(800deg);opacity:0}}
-        @keyframes flagIn{0%{opacity:0;transform:scale(0.3) rotate(-25deg)}100%{opacity:1;transform:none}}
-        @keyframes burst{0%{opacity:0;transform:scale(0)}55%{opacity:1;transform:scale(1.3)}100%{opacity:0;transform:scale(1)}}
+        @keyframes kiwiRun{0%{left:-220px}74%{left:56%}77%{left:54%}100%{left:56%}}
+        @keyframes kiwiWaddle{0%{transform:rotate(-7deg) translateY(0)}100%{transform:rotate(7deg) translateY(-6px)}}
+        @keyframes flagIn{from{opacity:0;transform:scale(0.3) rotate(-30deg)}to{opacity:1;transform:none}}
       `}</style>
     </div>
   )
@@ -330,108 +334,100 @@ function KiwiAnimation({ active }) {
 function GolfSwingAnimation({ active }) {
   if (!active) return null
   return (
-    <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
-      {/* Ball trail */}
-      {Array.from({length:14},(_,i)=>(
-        <div key={i} style={{ position:'absolute', left:`${14+i*5.5}%`, top:`${60-i*3.8}%`,
-          width:i===13?22:4+i, height:i===13?22:4+i, borderRadius:'50%',
-          background:i===13?'#fff':'#FFD600', opacity:i===13?1:0.08+i*0.07,
-          animation:`trailPop 0.4s ${0.55+i*0.04}s ease-out both` }}/>
+    <div style={{ position:'absolute', inset:0, overflow:'hidden', pointerEvents:'none' }}>
+      {/* Ball trail dots */}
+      {Array.from({length:12},(_,i)=>(
+        <div key={i} style={{ position:'absolute',
+          left:`${18+i*5.2}%`, top:`${62-i*4}%`,
+          width:i===11?20:3+i, height:i===11?20:3+i, borderRadius:'50%',
+          background:i===11?'#fff':'#FFD600',
+          opacity:i===11?1:0.06+i*0.08,
+          animation:`trailPop 0.35s ${0.6+i*0.04}s ease-out both` }}/>
       ))}
-      {/* Golfer — proper follow-through like reference image */}
-      <div style={{ position:'absolute', left:'3%', top:'18%', animation:'golferSwing 2s ease-in-out forwards' }}>
-        <svg width="130" height="190" viewBox="0 0 130 190" fill="none">
-          {/* Shadow */}
-          <ellipse cx="72" cy="184" rx="38" ry="7" fill="rgba(0,0,0,0.25)"/>
 
-          {/* ── CLUB — trailing behind in follow-through ── */}
-          <path d="M26 22 L42 58" stroke="#888" strokeWidth="3" strokeLinecap="round"/>
-          <path d="M24 20 L44 60" stroke="#aaa" strokeWidth="1.5" strokeLinecap="round" opacity="0.5"/>
-          {/* Club head */}
-          <path d="M22 18 Q18 12 24 10 Q32 8 36 16 Q38 22 32 24 Z" fill="#777" stroke="#555" strokeWidth="1"/>
+      {/* Golfer silhouette — clean follow-through */}
+      <div style={{ position:'absolute', left:'4%', top:'20%', animation:'golferSwing 2.2s ease-in-out forwards' }}>
+        <svg width="120" height="185" viewBox="0 0 120 185" fill="none">
+          {/* Ground shadow */}
+          <ellipse cx="62" cy="180" rx="32" ry="6" fill="rgba(0,0,0,0.22)"/>
 
-          {/* ── LEFT ARM (raised high — follow through) ── */}
-          <path d="M54 68 L38 44 L28 24" stroke="#d4a876" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round"/>
-          <path d="M54 68 L38 44 L28 24" stroke="#e8c090" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round"/>
-          {/* Left glove hand */}
-          <ellipse cx="25" cy="20" rx="7" ry="6" fill="#fff" stroke="#ddd" strokeWidth="1"/>
+          {/* === BACK LEG (left, toe raised) === */}
+          <path d="M48 120 Q42 140 40 158 Q38 168 44 174" stroke="#c8b48a" strokeWidth="16" strokeLinecap="round" fill="none"/>
+          <path d="M48 120 Q42 140 40 158 Q38 168 44 174" stroke="#d4c09a" strokeWidth="11" strokeLinecap="round" fill="none"/>
+          {/* Back shoe */}
+          <ellipse cx="46" cy="175" rx="11" ry="6" fill="#f0ece0" stroke="#c8b48a" strokeWidth="1.5" transform="rotate(20 46 175)"/>
 
-          {/* ── RIGHT ARM ── */}
-          <path d="M70 72 L60 52 L42 30" stroke="#d4a876" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round"/>
-          <path d="M70 72 L60 52 L42 30" stroke="#e8c090" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round"/>
-          <ellipse cx="40" cy="27" rx="7" ry="6" fill="#fff" stroke="#ddd" strokeWidth="1"/>
+          {/* === FRONT LEG (right, planted) === */}
+          <path d="M68 120 Q74 140 78 158 Q82 170 78 176" stroke="#c8b48a" strokeWidth="16" strokeLinecap="round" fill="none"/>
+          <path d="M68 120 Q74 140 78 158 Q82 170 78 176" stroke="#d4c09a" strokeWidth="11" strokeLinecap="round" fill="none"/>
+          {/* Front shoe */}
+          <ellipse cx="72" cy="177" rx="13" ry="6" fill="#f0ece0" stroke="#c8b48a" strokeWidth="1.5" transform="rotate(-10 72 177)"/>
 
-          {/* ── TORSO — green polo shirt, twisted in follow-through ── */}
-          {/* Shirt body */}
-          <path d="M44 74 Q52 65 68 68 Q80 70 86 82 Q90 92 82 106 Q72 116 58 114 Q44 112 40 98 Q36 86 44 74 Z"
+          {/* === BODY — green polo ===  */}
+          <path d="M38 80 Q44 70 58 68 Q72 66 82 76 Q90 88 86 106 Q80 118 66 120 Q50 122 42 112 Q34 100 38 80 Z"
             fill="#7ab520" stroke="#5a8a10" strokeWidth="2"/>
-          {/* Shirt shading */}
-          <path d="M50 74 Q58 68 70 72 Q78 75 82 84" stroke="#5a8a10" strokeWidth="2" fill="none" opacity="0.5"/>
-          <path d="M46 90 Q50 84 58 84 Q68 84 74 90" stroke="#5a8a10" strokeWidth="1.5" fill="none" opacity="0.4"/>
-          {/* Collar */}
-          <path d="M54 74 Q62 68 68 72" stroke="#5a8a10" strokeWidth="3" strokeLinecap="round" fill="none"/>
-          {/* Belt/waist line */}
-          <path d="M42 108 Q60 112 80 106" stroke="#4a4a2a" strokeWidth="3" strokeLinecap="round" fill="none"/>
-          <ellipse cx="62" cy="109" rx="4" ry="3" fill="#888" stroke="#666" strokeWidth="1"/>
+          {/* Shirt highlight */}
+          <path d="M46 76 Q58 72 72 76 Q80 80 82 90" stroke="#8acc28" strokeWidth="2" strokeLinecap="round" fill="none" opacity="0.45"/>
+          {/* Belt */}
+          <path d="M40 114 Q60 118 84 112" stroke="#6a5a30" strokeWidth="3" strokeLinecap="round" fill="none"/>
+          {/* Collar V */}
+          <path d="M54 70 L60 78 L66 70" stroke="#5a8a10" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
 
-          {/* ── PANTS — khaki/beige ── */}
-          {/* Right leg — planted/forward */}
-          <path d="M70 112 Q76 130 80 152 Q82 166 78 176 Q72 182 66 180"
-            stroke="#c8b898" strokeWidth="18" strokeLinecap="round" fill="none"/>
-          <path d="M70 112 Q76 130 80 152 Q82 166 78 176"
-            stroke="#d8c8a8" strokeWidth="14" strokeLinecap="round" fill="none"/>
-          {/* Right shoe */}
-          <path d="M66 180 Q58 184 52 182 Q46 180 48 176 Q54 174 62 176 Z"
-            fill="#f8f0e8" stroke="#c8b898" strokeWidth="1.5"/>
+          {/* === ARMS — raised in follow-through === */}
+          {/* Both arms up, holding club above left shoulder */}
+          <path d="M58 80 L46 58 L32 36" stroke="#e0b888" strokeWidth="11" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M58 80 L46 58 L32 36" stroke="#f0cc9a" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M66 78 L56 52 L42 30" stroke="#e0b888" strokeWidth="11" strokeLinecap="round" strokeLinejoin="round"/>
+          <path d="M66 78 L56 52 L42 30" stroke="#f0cc9a" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round"/>
+          {/* Hands (gloves) */}
+          <ellipse cx="30" cy="33" rx="8" ry="7" fill="#fff" stroke="#ddd" strokeWidth="1.5"/>
+          <ellipse cx="40" cy="27" rx="8" ry="7" fill="#fff" stroke="#ddd" strokeWidth="1.5"/>
 
-          {/* Left leg — back leg, raised on toe */}
-          <path d="M52 112 Q46 132 44 152 Q42 166 48 176 Q54 182 60 180"
-            stroke="#c8b898" strokeWidth="18" strokeLinecap="round" fill="none"/>
-          <path d="M52 112 Q46 132 44 152 Q42 166 48 176"
-            stroke="#d8c8a8" strokeWidth="14" strokeLinecap="round" fill="none"/>
-          {/* Left shoe */}
-          <path d="M60 180 Q68 184 74 182 Q78 180 76 175 Q70 173 64 175 Z"
-            fill="#f8f0e8" stroke="#c8b898" strokeWidth="1.5"/>
+          {/* === CLUB — above head === */}
+          <path d="M34 28 L22 6" stroke="#999" strokeWidth="3.5" strokeLinecap="round"/>
+          {/* Club head */}
+          <path d="M20 4 L14 2 Q10 4 12 8 Q14 12 20 10 Z" fill="#888" stroke="#666" strokeWidth="1"/>
 
-          {/* ── HEAD ── */}
+          {/* === HEAD === */}
           {/* Neck */}
-          <rect x="56" y="48" width="16" height="20" rx="8" fill="#e8c090"/>
-          {/* Face */}
-          <ellipse cx="62" cy="38" rx="22" ry="22" fill="#e8c090" stroke="#d4a876" strokeWidth="1.5"/>
+          <path d="M56 66 Q60 60 64 66" stroke="#e0b888" strokeWidth="8" strokeLinecap="round" fill="none"/>
+          {/* Head */}
+          <circle cx="62" cy="46" r="22" fill="#e8c08a" stroke="#d4a870" strokeWidth="2"/>
           {/* Ear */}
-          <ellipse cx="40" cy="40" rx="5" ry="7" fill="#e8c090" stroke="#d4a876" strokeWidth="1"/>
+          <ellipse cx="41" cy="48" rx="5" ry="7" fill="#e0b888" stroke="#d4a870" strokeWidth="1.5"/>
           {/* Eye */}
-          <ellipse cx="54" cy="36" rx="3" ry="3.5" fill="#2a1a0a"/>
-          <circle cx="55" cy="35" r="1.2" fill="#fff"/>
+          <ellipse cx="52" cy="44" rx="3.5" ry="4" fill="#2a1808"/>
+          <circle cx="53" cy="43" r="1.5" fill="#fff"/>
           {/* Eyebrow */}
-          <path d="M50 31 Q54 29 58 31" stroke="#8a5a30" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+          <path d="M48 38 Q52 36 57 38" stroke="#8a5a20" strokeWidth="2" strokeLinecap="round" fill="none"/>
           {/* Nose */}
-          <path d="M60 40 Q63 42 66 40" stroke="#d4a876" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
-          {/* Mouth — smile */}
-          <path d="M54 48 Q62 53 70 48" stroke="#c8904a" strokeWidth="2" strokeLinecap="round" fill="none"/>
+          <path d="M58 48 Q62 51 66 49" stroke="#d4a070" strokeWidth="1.5" strokeLinecap="round" fill="none"/>
+          {/* Smile — happy! */}
+          <path d="M52 56 Q60 62 69 57" stroke="#c07840" strokeWidth="2" strokeLinecap="round" fill="none"/>
 
-          {/* ── CAP — white with brim ── */}
-          {/* Cap body */}
-          <path d="M40 30 Q42 10 62 8 Q82 6 84 26 Q80 22 62 20 Q44 22 40 30 Z"
-            fill="#f0f0f0" stroke="#d0d0d0" strokeWidth="1.5"/>
-          {/* Cap brim */}
-          <path d="M38 30 Q40 38 50 38 Q60 38 70 36 Q80 34 84 28"
-            fill="#f0f0f0" stroke="#d0d0d0" strokeWidth="1.5"/>
-          {/* Cap button top */}
-          <circle cx="64" cy="10" r="3" fill="#d0d0d0"/>
-          {/* Cap strap/brim shadow */}
-          <path d="M40 32 Q55 35 70 32" stroke="#c0c0c0" strokeWidth="1" fill="none" opacity="0.6"/>
+          {/* === WHITE CAP === */}
+          {/* Cap dome */}
+          <path d="M40 40 Q42 18 62 16 Q82 14 84 36 L78 38 Q72 20 62 20 Q50 22 46 38 Z"
+            fill="#f5f5f0" stroke="#d8d8d0" strokeWidth="1.5"/>
+          {/* Cap brim — sticks out left */}
+          <path d="M38 40 Q36 46 44 48 Q54 50 64 46 Q74 42 78 38"
+            fill="#f5f5f0" stroke="#d8d8d0" strokeWidth="1.5"/>
+          {/* Cap seam */}
+          <path d="M42 42 Q60 38 80 40" stroke="#d0d0c8" strokeWidth="1" fill="none" opacity="0.5"/>
         </svg>
       </div>
-      {/* FORE! */}
-      <div style={{ position:'absolute', left:'22%', top:'18%', animation:'foreIn 0.6s 0.35s cubic-bezier(0.34,1.56,0.64,1) both' }}>
-        <span style={{ fontSize:58, fontWeight:900, color:'#FFD600', fontStyle:'italic', letterSpacing:'-0.03em',
-          textShadow:'0 0 40px rgba(255,214,0,0.7), 3px 3px 0 rgba(0,0,0,0.5)' }}>FORE!</span>
+
+      {/* FORE! text */}
+      <div style={{ position:'absolute', left:'24%', top:'16%', animation:'foreIn 0.65s 0.3s cubic-bezier(0.34,1.56,0.64,1) both' }}>
+        <span style={{ fontSize:56, fontWeight:900, color:'#FFD600', fontStyle:'italic',
+          letterSpacing:'-0.03em',
+          textShadow:'0 0 40px rgba(255,214,0,0.8), 3px 3px 0 rgba(0,0,0,0.6)' }}>FORE!</span>
       </div>
+
       <style>{`
         @keyframes trailPop{from{opacity:0;transform:scale(0)}to{opacity:1;transform:scale(1)}}
-        @keyframes golferSwing{0%{transform:rotate(-50deg) translate(-40px,15px);opacity:0}18%{opacity:1}58%{transform:rotate(0deg)}100%{transform:rotate(20deg) translate(10px,0)}}
-        @keyframes foreIn{from{opacity:0;transform:scale(0.2) rotate(-20deg)}to{opacity:1;transform:none}}
+        @keyframes golferSwing{0%{transform:rotate(-38deg) translate(-35px,12px);opacity:0}20%{opacity:1}60%{transform:rotate(0deg)}100%{transform:rotate(14deg) translate(8px,-2px)}}
+        @keyframes foreIn{from{opacity:0;transform:scale(0.15) rotate(-22deg)}to{opacity:1;transform:none}}
       `}</style>
     </div>
   )
@@ -442,87 +438,84 @@ function GolfSwingAnimation({ active }) {
 // ─────────────────────────────────────────────────────────────
 function GeckoSVG() {
   return (
-    <svg width="220" height="100" viewBox="0 0 220 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-      {/* Shadow */}
-      <ellipse cx="110" cy="96" rx="85" ry="6" fill="rgba(0,0,0,0.28)"/>
+    <svg width="210" height="88" viewBox="0 0 210 88" fill="none">
+      <ellipse cx="105" cy="84" rx="80" ry="6" fill="rgba(0,0,0,0.25)"/>
 
-      {/* ── TAIL — long, tapering, curved upward at end ── */}
-      <path d="M28 58 Q16 52 10 42 Q4 32 6 22 Q8 14 12 10 Q14 6 13 2"
-        stroke="#4a7a0a" strokeWidth="18" strokeLinecap="round" fill="none"/>
-      <path d="M28 58 Q16 52 10 42 Q4 32 6 22 Q8 14 12 10"
-        stroke="#5a9a10" strokeWidth="12" strokeLinecap="round" fill="none"/>
-      <path d="M28 58 Q16 52 10 42 Q4 32 7 23 Q9 16 12 12"
-        stroke="#6aaa14" strokeWidth="6" strokeLinecap="round" fill="none"/>
+      {/* ── TAIL — long curved, tapering ── */}
+      <path d="M24 50 Q14 44 8 34 Q3 24 6 16 Q9 10 8 4"
+        stroke="#3d6b08" strokeWidth="20" strokeLinecap="round" fill="none"/>
+      <path d="M24 50 Q14 44 8 34 Q3 24 6 16 Q9 10 8 4"
+        stroke="#4f8a0c" strokeWidth="13" strokeLinecap="round" fill="none"/>
+      <path d="M24 50 Q14 44 8 34 Q3 24 7 17 Q9 11 8 5"
+        stroke="#66aa14" strokeWidth="6" strokeLinecap="round" fill="none"/>
 
-      {/* ── DORSAL SPIKES along spine ── */}
-      {[[32,44],[42,38],[52,34],[62,30],[72,27],[82,26],[92,26],[102,27],[112,28],[122,30],[132,33],[142,36],[150,40]].map(([x,y],i)=>(
-        <polygon key={i} points={`${x},${y} ${x-4},${y+10} ${x+4},${y+10}`}
-          fill="#e8b800" stroke="#b88a00" strokeWidth="0.8"
-          transform={`rotate(-10 ${x} ${y+10})`}/>
+      {/* ── DORSAL SPIKES — triangles along spine, yellow-tipped ── */}
+      {[[28,38],[38,30],[48,25],[58,21],[68,18],[78,17],[88,17],[98,18],[108,19],[118,21],[128,23],[138,27],[148,31],[156,36]].map(([x,y],i)=>(
+        <g key={i}>
+          <polygon points={`${x-4},${y+10} ${x},${y-4} ${x+4},${y+10}`} fill="#e8b800" stroke="#a07800" strokeWidth="0.8"/>
+        </g>
       ))}
 
-      {/* ── BODY — iguana shape, wider in middle ── */}
-      <ellipse cx="95" cy="58" rx="68" ry="24" fill="#4a7a0a" stroke="#2a4a06" strokeWidth="2.5"/>
-      <ellipse cx="95" cy="55" rx="65" ry="20" fill="#5a9a10"/>
-      <ellipse cx="90" cy="52" rx="58" ry="16" fill="#6aaa14"/>
-      {/* Belly — lighter */}
-      <ellipse cx="92" cy="62" rx="52" ry="12" fill="#8acc28" opacity="0.4"/>
-      {/* Scale texture */}
-      {[[48,48],[60,44],[72,42],[84,42],[96,42],[108,44],[120,46],[132,48],[144,52],
-        [50,58],[62,56],[74,54],[86,54],[98,54],[110,56],[122,58],[136,60],
-        [56,68],[68,66],[80,65],[92,65],[104,66],[118,66]].map(([x,y],i)=>(
-        <ellipse key={i} cx={x} cy={y} rx="4" ry="3" fill="#4a7a0a" opacity="0.5"/>
+      {/* ── BODY ── */}
+      <ellipse cx="94" cy="54" rx="72" ry="22" fill="#3d6b08" stroke="#2a4a06" strokeWidth="2.5"/>
+      <ellipse cx="94" cy="51" rx="69" ry="18" fill="#4f8a0c"/>
+      <ellipse cx="90" cy="49" rx="62" ry="14" fill="#66aa14"/>
+      {/* Belly lighter */}
+      <ellipse cx="94" cy="60" rx="55" ry="10" fill="#88cc28" opacity="0.35"/>
+      {/* Scale dots */}
+      {[[42,44],[56,40],[70,38],[84,37],[98,38],[112,40],[126,43],[138,46],[150,50],
+        [44,54],[58,51],[72,50],[86,49],[100,50],[114,52],[128,55],[140,58],
+        [50,63],[64,61],[78,60],[92,59],[106,60],[118,62],[130,65]].map(([x,y],i)=>(
+        <ellipse key={i} cx={x} cy={y} rx="4.5" ry="3.5" fill="#3d6b08" opacity="0.55"/>
       ))}
+      {/* Side stripe */}
+      <path d="M24 45 Q70 38 100 42 Q130 46 162 52" stroke="#88cc28" strokeWidth="2" strokeLinecap="round" fill="none" opacity="0.4"/>
+      <path d="M24 58 Q70 64 100 62 Q130 60 162 56" stroke="#88cc28" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.35"/>
 
       {/* ── HEAD ── */}
-      <path d="M155 38 Q175 30 192 32 Q205 34 210 42 Q212 50 204 56 Q196 62 178 60 Q162 58 155 50 Z"
-        fill="#4a7a0a" stroke="#2a4a06" strokeWidth="2.5"/>
-      <path d="M157 40 Q175 33 190 35 Q202 37 206 44 Q206 51 198 55 Q188 59 172 57 Q159 54 157 47 Z"
-        fill="#6aaa14"/>
+      <path d="M158 34 Q174 26 192 28 Q204 30 208 40 Q210 50 202 56 Q192 62 175 60 Q162 58 156 50 Z"
+        fill="#3d6b08" stroke="#2a4a06" strokeWidth="2.5"/>
+      <path d="M160 36 Q174 29 190 31 Q200 33 204 42 Q204 51 196 55 Q186 59 172 57 Q162 54 160 47 Z"
+        fill="#66aa14"/>
       {/* Head scales */}
-      {[[168,38],[180,35],[192,38],[176,46],[188,46],[196,43]].map(([x,y],i)=>(
-        <ellipse key={i} cx={x} cy={y} rx="4" ry="3" fill="#4a7a0a" opacity="0.55"/>
+      {[[168,36],[180,32],[190,36],[176,44],[188,44],[196,40]].map(([x,y],i)=>(
+        <ellipse key={i} cx={x} cy={y} rx="4.5" ry="3.5" fill="#3d6b08" opacity="0.55"/>
       ))}
-      {/* Dewlap/chin */}
-      <path d="M165 55 Q175 65 185 58" stroke="#8acc28" strokeWidth="3" fill="none" opacity="0.6"/>
 
       {/* ── EYE ── */}
-      <circle cx="198" cy="38" r="9" fill="#fff" stroke="#2a4a06" strokeWidth="2"/>
-      <circle cx="198" cy="38" r="6.5" fill="#3a5a0a"/>
-      <circle cx="198" cy="38" r="4.5" fill="#1a1a1a"/>
-      <circle cx="198" cy="38" r="3" fill="#0a0a0a"/>
-      {/* Slit pupil */}
-      <ellipse cx="198" cy="38" rx="1.2" ry="3" fill="#050505"/>
-      {/* Catchlight */}
-      <circle cx="200" cy="35.5" r="2" fill="#fff"/>
-      <circle cx="196" cy="40" r="1" fill="#fff" opacity="0.4"/>
+      <circle cx="198" cy="36" r="9" fill="#fff" stroke="#2a4a06" strokeWidth="2"/>
+      <circle cx="198" cy="36" r="7" fill="#3a5a0a"/>
+      <circle cx="198" cy="36" r="5" fill="#111"/>
+      <ellipse cx="198" cy="36" rx="1.5" ry="4" fill="#050505"/>
+      <circle cx="200" cy="33.5" r="2.2" fill="#fff"/>
+      <circle cx="196.5" cy="38.5" r="1" fill="#fff" opacity="0.4"/>
 
       {/* Nostril */}
-      <circle cx="206" cy="42" r="2" fill="#3a6008"/>
+      <circle cx="206" cy="42" r="2" fill="#2d5006"/>
       {/* Mouth line */}
-      <path d="M204 48 Q200 54 192 54" stroke="#2a4a06" strokeWidth="2" strokeLinecap="round" fill="none"/>
+      <path d="M204 48 Q196 56 188 55" stroke="#2a4a06" strokeWidth="2" strokeLinecap="round" fill="none"/>
 
       {/* ── TONGUE — forked ── */}
-      <path d="M210 46 L218 38 M218 38 L222 33 M218 38 L222 43"
+      <path d="M204 47 L212 40 M212 40 L216 35 M212 40 L216 45"
         stroke="#f87171" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
 
       {/* ── LEGS ── */}
-      {/* Front left leg */}
-      <path d="M60 74 L48 86 M48 86 L38 90 M48 86 L42 92 M48 86 L50 94"
-        stroke="#4a7a0a" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-      <path d="M60 74 L48 86" stroke="#6aaa14" strokeWidth="4" strokeLinecap="round"/>
-      {/* Front right leg */}
-      <path d="M90 76 L94 90 M94 90 L86 94 M94 90 L100 94 M94 90 L96 98"
-        stroke="#4a7a0a" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-      <path d="M90 76 L94 90" stroke="#6aaa14" strokeWidth="4" strokeLinecap="round"/>
-      {/* Back left leg */}
-      <path d="M60 42 L48 30 M48 30 L38 26 M48 30 L42 22 M48 30 L50 20"
-        stroke="#4a7a0a" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-      <path d="M60 42 L48 30" stroke="#6aaa14" strokeWidth="4" strokeLinecap="round"/>
-      {/* Back right leg */}
-      <path d="M90 40 L92 26 M92 26 L84 20 M92 26 L98 20 M92 26 L94 16"
-        stroke="#4a7a0a" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-      <path d="M90 40 L92 26" stroke="#6aaa14" strokeWidth="4" strokeLinecap="round"/>
+      {/* Front left */}
+      <path d="M56 70 L44 82 M44 82 L34 85 M44 82 L38 88 M44 82 L46 88"
+        stroke="#3d6b08" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      <path d="M56 70 L44 82" stroke="#66aa14" strokeWidth="4" strokeLinecap="round"/>
+      {/* Front right */}
+      <path d="M88 72 L92 84 M92 84 L84 88 M92 84 L98 88 M92 84 L94 88"
+        stroke="#3d6b08" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      <path d="M88 72 L92 84" stroke="#66aa14" strokeWidth="4" strokeLinecap="round"/>
+      {/* Back left */}
+      <path d="M56 36 L44 24 M44 24 L34 21 M44 24 L38 18 M44 24 L46 18"
+        stroke="#3d6b08" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      <path d="M56 36 L44 24" stroke="#66aa14" strokeWidth="4" strokeLinecap="round"/>
+      {/* Back right */}
+      <path d="M88 34 L90 20 M90 20 L82 16 M90 20 L96 16 M90 20 L92 14"
+        stroke="#3d6b08" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+      <path d="M88 34 L90 20" stroke="#66aa14" strokeWidth="4" strokeLinecap="round"/>
     </svg>
   )
 }
