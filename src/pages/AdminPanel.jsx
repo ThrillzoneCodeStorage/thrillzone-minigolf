@@ -287,6 +287,7 @@ function LeaderboardTab() {
 }
 
 import { useState, useEffect } from 'react'
+import { HoleInOnePopup } from '../components/HoleScreen/Celebrations'
 import {
   Settings, LayoutDashboard, BookOpen, BarChart2,
   Plus, Trash2, Edit2, Save, X, Eye, EyeOff,
@@ -1044,8 +1045,9 @@ const ANIM_NAMES = {
 }
 
 function AnimationSettings() {
-  const [enabled, setEnabled] = useState(Object.keys(ANIM_NAMES))
-  const [saved,   setSaved]   = useState(false)
+  const [enabled,   setEnabled]   = useState(Object.keys(ANIM_NAMES))
+  const [saved,     setSaved]     = useState(false)
+  const [previewing,setPreviewing] = useState(null) // animation key being previewed
 
   useEffect(() => {
     supabase.from('admin_settings').select('value').eq('key','enabled_animations').single()
@@ -1058,37 +1060,66 @@ function AnimationSettings() {
 
   async function toggle(key) {
     const next = enabled.includes(key) ? enabled.filter(k=>k!==key) : [...enabled, key]
-    if (next.length === 0) return // keep at least one
+    if (next.length === 0) return
     setEnabled(next)
     await supabase.from('admin_settings').upsert({ key:'enabled_animations', value:JSON.stringify(next) })
     setSaved(true); setTimeout(()=>setSaved(false), 1500)
   }
 
+  // Fake player for preview
+  const previewPlayers = [{ name:'Demo Player', color:'#FFD600' }]
+
   return (
-    <div style={{ background:'#161616', border:`1px solid ${A.border}`, borderRadius:12, padding:18, marginBottom:14 }}>
-      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
-        <div>
-          <p style={{ color:A.text, fontSize:14, fontWeight:700, margin:0 }}>Hole-in-One Animations</p>
-          <p style={{ color:A.text3, fontSize:12, margin:'2px 0 0' }}>Toggle which animations can appear. At least one must stay on.</p>
+    <>
+      {/* Preview popup — renders over the whole page */}
+      {previewing && (
+        <HoleInOnePopup
+          players={previewPlayers}
+          enabledAnimations={[previewing]}
+          onDismiss={() => setPreviewing(null)}
+        />
+      )}
+
+      <div style={{ background:'#161616', border:`1px solid ${A.border}`, borderRadius:12, padding:18, marginBottom:14 }}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
+          <div>
+            <p style={{ color:A.text, fontSize:14, fontWeight:700, margin:0 }}>Hole-in-One Animations</p>
+            <p style={{ color:A.text3, fontSize:12, margin:'2px 0 0' }}>Toggle on/off. Tap Preview to test each one.</p>
+          </div>
+          {saved && <span style={{ fontSize:12, color:A.green, fontWeight:700 }}>Saved ✓</span>}
         </div>
-        {saved && <span style={{ fontSize:12, color:A.green, fontWeight:700 }}>Saved ✓</span>}
+        <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+          {Object.entries(ANIM_NAMES).map(([key, label]) => {
+            const on = enabled.includes(key)
+            return (
+              <div key={key} style={{ display:'flex', alignItems:'center', gap:8 }}>
+                {/* Toggle */}
+                <button onClick={()=>toggle(key)}
+                  style={{ flex:1, display:'flex', alignItems:'center', gap:10, padding:'10px 14px',
+                    borderRadius:10, border:`1px solid ${on?A.yellow:A.border}`,
+                    background: on?'rgba(255,214,0,0.08)':'transparent',
+                    cursor:'pointer', fontFamily:'inherit', textAlign:'left',
+                    opacity: !on && enabled.length===1 ? 0.4 : 1, transition:'all 0.15s' }}>
+                  {/* On/off dot */}
+                  <div style={{ width:10, height:10, borderRadius:'50%', flexShrink:0,
+                    background: on ? A.yellow : '#333',
+                    boxShadow: on ? `0 0 8px ${A.yellow}80` : 'none',
+                    transition:'all 0.2s' }}/>
+                  <span style={{ fontSize:13, fontWeight:700, color: on?A.yellow:A.text3 }}>{label}</span>
+                </button>
+                {/* Preview button */}
+                <button onClick={()=>setPreviewing(key)}
+                  style={{ padding:'8px 14px', borderRadius:10, border:`1px solid ${A.border}`,
+                    background:'#1e1e1e', color:A.text2, fontSize:12, fontWeight:700,
+                    cursor:'pointer', fontFamily:'inherit', flexShrink:0, whiteSpace:'nowrap' }}>
+                  ▶ Preview
+                </button>
+              </div>
+            )
+          })}
+        </div>
       </div>
-      <div style={{ display:'flex', flexWrap:'wrap', gap:8 }}>
-        {Object.entries(ANIM_NAMES).map(([key, label]) => {
-          const on = enabled.includes(key)
-          return (
-            <button key={key} onClick={()=>toggle(key)}
-              style={{ padding:'6px 12px', borderRadius:8, border:`1px solid ${on?A.yellow:A.border}`,
-                background: on?'rgba(255,214,0,0.10)':'transparent',
-                color: on?A.yellow:A.text3, fontSize:13, fontWeight:700,
-                cursor:'pointer', fontFamily:'inherit', transition:'all 0.15s',
-                opacity: !on && enabled.length===1 ? 0.4 : 1 }}>
-              {on ? '✓ ' : ''}{label}
-            </button>
-          )
-        })}
-      </div>
-    </div>
+    </>
   )
 }
 
