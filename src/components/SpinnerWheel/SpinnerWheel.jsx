@@ -22,14 +22,23 @@ export default function SpinnerWheel({ effects, forcedEffect, onDismiss }) {
     { id:8, name:'Free Pass',      description:'Nothing happens. Lucky you!' },
   ]
 
-  useEffect(() => { draw(0) }, [list])
+  useEffect(() => {
+    const canvas = canvasRef.current; if (!canvas) return
+    const dpr = window.devicePixelRatio || 1
+    const size = 280
+    canvas.width = size * dpr; canvas.height = size * dpr
+    canvas.style.width = size + 'px'; canvas.style.height = size + 'px'
+    const ctx = canvas.getContext('2d'); ctx.scale(dpr, dpr)
+    draw(0)
+  }, [list])
 
   function draw(rot) {
     const canvas = canvasRef.current; if (!canvas) return
     const ctx = canvas.getContext('2d')
-    const S = canvas.width, cx = S/2, cy = S/2, r = cx-6
+    const dpr = window.devicePixelRatio || 1
+    const S = canvas.width / dpr, cx = S/2, cy = S/2, r = cx-6
     const n = list.length, slice = (2*Math.PI)/n
-    ctx.clearRect(0,0,S,S)
+    ctx.clearRect(0,0,canvas.width,canvas.height)
 
     for (let i=0;i<n;i++) {
       const a0 = rot + i*slice, a1 = a0+slice
@@ -57,8 +66,10 @@ export default function SpinnerWheel({ effects, forcedEffect, onDismiss }) {
   function spin() {
     if (spinning||landed) return
     setSpinning(true)
-    const target = forcedEffect||list[Math.floor(Math.random()*list.length)]
-    const idx    = list.findIndex(e=>e.id===target.id)
+    const target = forcedEffect
+      ? (list.find(e=>e.id===forcedEffect.id) || list[Math.floor(Math.random()*list.length)])
+      : list[Math.floor(Math.random()*list.length)]
+    const idx = list.findIndex(e=>e.id===target.id)
     const n = list.length, slice=(2*Math.PI)/n
     const targetAngle = -Math.PI/2-(idx*slice+slice/2)
     const total = (targetAngle-rotRef.current) + (5+Math.random()*3)*2*Math.PI
@@ -72,7 +83,7 @@ export default function SpinnerWheel({ effects, forcedEffect, onDismiss }) {
       rotRef.current = r0+total*eased
       draw(rotRef.current)
       if (t<1) { rafRef.current=requestAnimationFrame(frame) }
-      else { setSpinning(false); setLanded(true); setResult(target) }
+      else { setSpinning(false); setLanded(true); setResult(list[idx] || target) }
     }
     rafRef.current=requestAnimationFrame(frame)
   }
@@ -89,11 +100,12 @@ export default function SpinnerWheel({ effects, forcedEffect, onDismiss }) {
         </p>
 
         {/* Pointer */}
-        <div style={{ position:'relative', width:260, margin:'0 auto 20px' }}>
+        <div style={{ position:'relative', width:280, margin:'0 auto 20px' }}>
           <div style={{ position:'absolute', top:-10, left:'50%', transform:'translateX(-50%)', color:'var(--yellow)', fontSize:22, zIndex:2, filter:'drop-shadow(0 2px 4px rgba(255,214,0,0.5))' }}>▼</div>
-          <canvas ref={canvasRef} width={260} height={260}
+          <canvas ref={canvasRef}
             onClick={spin}
             style={{ borderRadius:'50%', cursor:spinning||landed?'default':'pointer', display:'block',
+              width:280, height:280,
               boxShadow: spinning ? '0 0 40px rgba(255,214,0,0.4)' : '0 4px 24px rgba(0,0,0,0.6)',
               transition:'box-shadow 0.3s',
             }} />

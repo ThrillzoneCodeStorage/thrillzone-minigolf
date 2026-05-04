@@ -340,8 +340,8 @@ export default function HoleScreen() {
               <span style={{ color: STYLE_CONFIG[playStyle]?.color }}>{STYLE_CONFIG[playStyle]?.label}</span>
             </button>
             <button onClick={() => setShowRules(true)}
-              style={{ background:'var(--bg-card-2)', border:'1px solid var(--border)', borderRadius:8, padding:'6px 12px', color:'var(--text-2)', fontSize:13, cursor:'pointer', fontFamily:'inherit', fontWeight:600, display:'flex', alignItems:'center', gap:5, minHeight:36 }}>
-              <Info size={14}/> {t.rules}
+              style={{ background:'var(--bg-card-2)', border:'1px solid var(--border)', borderRadius:8, padding:'6px 10px', color:'var(--text-2)', fontSize:12, cursor:'pointer', fontFamily:'inherit', fontWeight:600, display:'flex', alignItems:'center', gap:5, minHeight:36 }}>
+              <Info size={13}/> {t.rules}
             </button>
           </div>
         </div>
