@@ -925,160 +925,257 @@ function GeckoAnimation({ active }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-//  8. LIGHTNING → BALL INTO HOLE
+//  8. BALL IN HOLE — lightning strike, epic roll, satisfying drop
 // ─────────────────────────────────────────────────────────────
 function LightningAnimation({ active }) {
   const [phase, setPhase] = useState(0)
-  // 0: flash, 1: bolt+ball, 2: ball rolling, 3: hole, 4: celebrate
+  // 0=dark sky+ball, 1=bolt strikes, 2=ball rolling, 3=drop, 4=celebrate
   useEffect(() => {
     if (!active) return
-    const t1 = setTimeout(() => setPhase(1), 100)
-    const t2 = setTimeout(() => setPhase(2), 700)
-    const t3 = setTimeout(() => setPhase(3), 2000)
-    const t4 = setTimeout(() => setPhase(4), 2800)
+    const t1 = setTimeout(() => setPhase(1), 300)
+    const t2 = setTimeout(() => setPhase(2), 1100)
+    const t3 = setTimeout(() => setPhase(3), 2600)
+    const t4 = setTimeout(() => setPhase(4), 3400)
     return () => [t1,t2,t3,t4].forEach(clearTimeout)
   }, [active])
   if (!active) return null
-
   return (
     <div style={{ position:'absolute', inset:0, overflow:'hidden', pointerEvents:'none' }}>
 
-      {/* Sky flash */}
-      {phase === 0 && (
-        <div style={{ position:'absolute', inset:0, background:'rgba(255,255,255,0.85)',
-          animation:'flashOut 0.25s ease-out forwards' }}/>
+      {/* ── STORMY SKY BG ── */}
+      <div style={{
+        position:'absolute', inset:0,
+        background:'linear-gradient(180deg,#0a0a1a 0%,#0a1a0a 60%,#143a0a 100%)',
+        opacity: phase<=1 ? 0.7 : 0.4,
+        transition:'opacity 0.6s',
+      }}/>
+
+      {/* ── FLASH on strike ── */}
+      {phase===1 && (
+        <div style={{ position:'absolute', inset:0,
+          background:'rgba(220,240,255,0.7)',
+          animation:'bigFlash 0.4s ease-out forwards' }}/>
       )}
 
-      {/* Lightning bolt from top striking the ball */}
-      {phase >= 1 && phase < 3 && (
-        <div style={{ position:'absolute', left:'40%', top:0, transform:'translateX(-50%)',
-          animation:'boltDrop 0.35s ease-out both' }}>
-          <svg width="100" height="420" viewBox="0 0 100 420" fill="none">
+      {/* ── LIGHTNING BOLT — thick, dramatic, branching ── */}
+      {phase>=1 && phase<3 && (
+        <div style={{ position:'absolute', left:'34%', top:0, transform:'translateX(-50%)',
+          animation:'boltAppear 0.3s ease-out both' }}>
+          <svg width="160" height='480' viewBox="0 0 160 480" fill="none">
             <defs>
-              <filter id="lb1"><feGaussianBlur stdDeviation="10" result="b"/>
-                <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-              <filter id="lb2"><feGaussianBlur stdDeviation="3" result="b"/>
-                <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+              <filter id="lbolt">
+                <feGaussianBlur stdDeviation="12" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+              <filter id="lcore">
+                <feGaussianBlur stdDeviation="3" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+              <linearGradient id="boltGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#c8e8ff"/>
+                <stop offset="60%" stopColor="#fff"/>
+                <stop offset="100%" stopColor="#FFD600"/>
+              </linearGradient>
             </defs>
-            {/* Glow */}
-            <polyline points="50,0 32,160 62,160 18,420" stroke="rgba(200,230,255,0.3)" strokeWidth="30" strokeLinejoin="round" filter="url(#lb1)"/>
-            {/* White bolt */}
-            <polyline points="50,0 32,160 62,160 18,420" stroke="#fff" strokeWidth="8" strokeLinejoin="round" filter="url(#lb2)"/>
-            {/* Blue-white core */}
-            <polyline points="50,0 32,160 62,160 18,420" stroke="#c8e8ff" strokeWidth="4" strokeLinejoin="round"/>
-            {/* Branches */}
-            <polyline points="40,100 60,135 74,122" stroke="#c8e8ff" strokeWidth="2" strokeLinejoin="round" opacity="0.7"/>
-            <polyline points="36,200 16,228 6,218" stroke="#c8e8ff" strokeWidth="1.5" strokeLinejoin="round" opacity="0.5"/>
-            <polyline points="40,310 62,342 78,328" stroke="#c8e8ff" strokeWidth="1.5" strokeLinejoin="round" opacity="0.5"/>
+            {/* Wide glow */}
+            <polyline points="80,0 54,170 90,170 28,480"
+              stroke="rgba(180,220,255,0.25)" strokeWidth="50" strokeLinejoin="round" filter="url(#lbolt)"/>
+            {/* Mid glow */}
+            <polyline points="80,0 54,170 90,170 28,480"
+              stroke="rgba(220,240,255,0.5)" strokeWidth="18" strokeLinejoin="round"/>
+            {/* White core */}
+            <polyline points="80,0 54,170 90,170 28,480"
+              stroke="#fff" strokeWidth="9" strokeLinejoin="round" filter="url(#lcore)"/>
+            {/* Gold gradient core */}
+            <polyline points="80,0 54,170 90,170 28,480"
+              stroke="url(#boltGrad)" strokeWidth="4" strokeLinejoin="round"/>
+            {/* Branch 1 */}
+            <polyline points="66,95 88,130 104,118" stroke="#c8e8ff" strokeWidth="3" strokeLinejoin="round" opacity="0.9"/>
+            <polyline points="104,118 116,140 108,155" stroke="#c8e8ff" strokeWidth="2" strokeLinejoin="round" opacity="0.6"/>
+            {/* Branch 2 */}
+            <polyline points="58,210 30,248 14,236" stroke="#c8e8ff" strokeWidth="2.5" strokeLinejoin="round" opacity="0.8"/>
+            {/* Branch 3 */}
+            <polyline points="64,320 88,358 104,345" stroke="#FFD600" strokeWidth="2" strokeLinejoin="round" opacity="0.7"/>
+            {/* Branch 4 */}
+            <polyline points="42,400 18,430 8,420" stroke="#c8e8ff" strokeWidth="1.5" strokeLinejoin="round" opacity="0.5"/>
           </svg>
         </div>
       )}
 
-      {/* Golf ball being struck — phase 1 (glowing) */}
-      {phase === 1 && (
-        <div style={{ position:'absolute', bottom:'25%', left:'32%',
-          animation:'ballGlow 0.5s ease-out both' }}>
-          <svg width="56" height="56" viewBox="0 0 56 56">
-            <circle cx="28" cy="28" r="26" fill="rgba(200,230,255,0.3)"/>
-            <circle cx="28" cy="28" r="20" fill="rgba(200,230,255,0.5)"/>
-            <circle cx="28" cy="28" r="14" fill="#fff" stroke="#c8e8ff" strokeWidth="3"/>
-            {[[20,18],[28,16],[22,24]].map(([x,y],i)=>(
-              <circle key={i} cx={x} cy={y} r="2" fill="#e0e0e0"/>
+      {/* ── IMPACT CRATER at bottom of bolt ── */}
+      {phase>=1 && phase<3 && (
+        <div style={{ position:'absolute', bottom:'24%', left:'24%',
+          animation:'craterIn 0.3s 0.15s ease-out both' }}>
+          <svg width="110" height="110" viewBox="0 0 110 110">
+            <defs>
+              <filter id="cg"><feGaussianBlur stdDeviation="6"/></filter>
+            </defs>
+            {/* Outer glow ring */}
+            <circle cx="55" cy="55" r="50" fill="rgba(200,230,255,0.12)" filter="url(#cg)"/>
+            <circle cx="55" cy="55" r="38" fill="rgba(200,230,255,0.18)" filter="url(#cg)"/>
+            {/* Spark rays */}
+            {[0,22,45,67,90,112,135,157,180,202,225,247,270,292,315,337].map((a,i)=>(
+              <line key={i}
+                x1={55+Math.cos(a*Math.PI/180)*14} y1={55+Math.sin(a*Math.PI/180)*14}
+                x2={55+Math.cos(a*Math.PI/180)*(i%4===0?52:i%2===0?40:32)}
+                y2={55+Math.sin(a*Math.PI/180)*(i%4===0?52:i%2===0?40:32)}
+                stroke={i%4===0?'#FFD600':'#c8e8ff'} strokeWidth={i%4===0?3.5:i%2===0?2:1.2}
+                strokeLinecap="round"/>
+            ))}
+            <circle cx="55" cy="55" r="14" fill="#FFD600"/>
+            <circle cx="55" cy="55" r="9" fill="#fff"/>
+            <circle cx="55" cy="55" r="5" fill="#FFD600"/>
+          </svg>
+        </div>
+      )}
+
+      {/* ── ELECTRIFIED BALL phase 1 ── */}
+      {phase===1 && (
+        <div style={{ position:'absolute', bottom:'26%', left:'28%',
+          animation:'ballElectric 0.6s ease-in-out both' }}>
+          <svg width="58" height="58" viewBox="0 0 58 58">
+            <circle cx="29" cy="29" r="27" fill="rgba(200,230,255,0.3)"/>
+            <circle cx="29" cy="29" r="22" fill="rgba(200,230,255,0.5)"/>
+            <circle cx="29" cy="29" r="15" fill="#fff" stroke="#c8e8ff" strokeWidth="4"/>
+            {[[20,17],[28,15],[18,24]].map(([x,y],i)=>(
+              <circle key={i} cx={x} cy={y} r="2.2" fill="#d0d0d0"/>
+            ))}
+            {/* Electric arcs around ball */}
+            {[0,90,180,270].map((a,i)=>(
+              <path key={i}
+                d={`M${29+Math.cos(a*Math.PI/180)*15} ${29+Math.sin(a*Math.PI/180)*15} Q${29+Math.cos((a+30)*Math.PI/180)*24} ${29+Math.sin((a+30)*Math.PI/180)*24} ${29+Math.cos((a+45)*Math.PI/180)*20} ${29+Math.sin((a+45)*Math.PI/180)*20}`}
+                stroke="#c8e8ff" strokeWidth="1.5" fill="none" opacity="0.8"/>
             ))}
           </svg>
         </div>
       )}
 
-      {/* Ball rolling across the green — phase 2 */}
-      {phase === 2 && (
+      {/* ── GREEN — appears for rolling phase ── */}
+      {phase>=2 && (
         <>
-          {/* Green grass strip */}
-          <div style={{ position:'absolute', bottom:'20%', left:0, right:0, height:40,
-            background:'linear-gradient(180deg, #2d7a1e, #1e5a14)',
-            borderTop:'3px solid #4aaa28' }}/>
-          {/* Ball rolling */}
-          <div style={{ position:'absolute', bottom:'21.5%', left:0,
-            animation:'ballRoll 1.3s cubic-bezier(0.45,0,0.55,1) forwards' }}>
-            <svg width="40" height="40" viewBox="0 0 40 40" style={{ animation:'ballSpin 1.3s linear forwards' }}>
-              <circle cx="20" cy="20" r="19" fill="#fff" stroke="#ddd" strokeWidth="1"/>
-              {[[13,12],[22,10],[10,20],[26,22],[18,18],[14,26]].map(([x,y],i)=>(
-                <circle key={i} cx={x} cy={y} r="2.5" fill="#d0d0d0"/>
-              ))}
-            </svg>
-          </div>
-          {/* Rolling trail shadow */}
-          <div style={{ position:'absolute', bottom:'20%', left:0, right:'38%', height:6,
-            background:'linear-gradient(90deg, transparent, rgba(0,0,0,0.15))',
-            animation:'trailFade 1.3s ease forwards' }}/>
+          <div style={{ position:'absolute', bottom:'18%', left:0, right:0, height:48,
+            background:'linear-gradient(180deg, #2d7a1e 0%, #1e5a14 100%)',
+            borderTop:'3px solid #4aaa28',
+            boxShadow:'0 -4px 20px rgba(0,100,0,0.4)',
+            animation:'greenIn 0.3s ease-out both' }}/>
+          {/* Green texture lines */}
+          {[10,25,40,55,70,85].map(p=>(
+            <div key={p} style={{ position:'absolute', bottom:'20%', left:`${p}%`,
+              width:'12%', height:1, background:'rgba(0,0,0,0.15)',
+              transform:'skewX(-20deg)' }}/>
+          ))}
         </>
       )}
 
-      {/* Mini golf hole — phase 2+ */}
-      {phase >= 2 && (
-        <div style={{ position:'absolute', bottom:'17%', right:'14%' }}>
-          {/* Hole shadow */}
-          <div style={{ width:54, height:22, borderRadius:'50%', background:'#111',
-            position:'absolute', top:8, left:0 }}/>
-          {/* Hole opening */}
-          <div style={{ width:54, height:22, borderRadius:'50%', background:'#0a0a0a',
-            border:'3px solid #333', position:'relative', zIndex:1 }}/>
-          {/* Flag */}
-          <svg width="32" height="70" viewBox="0 0 32 70" style={{ position:'absolute', top:-60, left:18 }}>
-            <rect x="13" y="0" width="3" height="65" rx="1.5" fill="#888"/>
-            <polygon points="16,2 32,12 16,22" fill="#e74c3c"/>
+      {/* ── BALL ROLLING — with realistic spin ── */}
+      {phase===2 && (
+        <div style={{ position:'absolute', bottom:'20.5%',
+          animation:'ballRollFast 1.5s cubic-bezier(0.3,0,0.6,1) forwards' }}>
+          <svg width="38" height="38" viewBox="0 0 38 38"
+            style={{ animation:'ballSpinFast 1.5s linear forwards' }}>
+            <defs>
+              <radialGradient id="ballg" cx="35%" cy="32%">
+                <stop offset="0%" stopColor="#fff"/>
+                <stop offset="100%" stopColor="#e0e0e0"/>
+              </radialGradient>
+            </defs>
+            <circle cx="19" cy="19" r="18" fill="url(#ballg)" stroke="#d0d0d0" strokeWidth="1"/>
+            {/* Dimples in pattern */}
+            {[[12,12],[20,10],[10,19],[24,21],[18,18],[12,25],[22,26]].map(([x,y],i)=>(
+              <circle key={i} cx={x} cy={y} r="2.2" fill="#c0c0c0"/>
+            ))}
+            {/* Equator line */}
+            <path d="M3 19 Q10 14 19 14 Q28 14 35 19" stroke="#ccc" strokeWidth="1" fill="none"/>
           </svg>
         </div>
       )}
 
-      {/* Ball dropping in — phase 3 */}
-      {phase === 3 && (
-        <div style={{ position:'absolute', bottom:'20%', right:'16.5%',
-          animation:'ballDrop 0.8s cubic-bezier(0.5,0,0.5,1) forwards' }}>
-          <svg width="34" height="34" viewBox="0 0 34 34">
-            <circle cx="17" cy="17" r="16" fill="#fff" stroke="#ddd" strokeWidth="1"/>
-            {[[11,10],[18,9],[9,17],[22,19],[16,16]].map(([x,y],i)=>(
-              <circle key={i} cx={x} cy={y} r="2" fill="#d0d0d0"/>
+      {/* ── HOLE + FLAG ── */}
+      {phase>=2 && (
+        <div style={{ position:'absolute', bottom:'16%', right:'8%' }}>
+          {/* Hole */}
+          <div style={{ position:'relative' }}>
+            <div style={{ width:58, height:24, borderRadius:'50%',
+              background:'#050505', border:'3px solid #1a1a1a',
+              boxShadow:'inset 0 4px 12px rgba(0,0,0,0.9)' }}/>
+            {/* Hole rim light */}
+            <div style={{ position:'absolute', top:0, left:4, right:4, height:8,
+              borderRadius:'50%', background:'rgba(255,255,255,0.06)' }}/>
+          </div>
+          {/* Flag on pole */}
+          <svg width="36" height="78" viewBox="0 0 36 78"
+            style={{ position:'absolute', top:-66, left:20,
+              animation: phase>=4 ? 'flagWave 0.4s ease-in-out infinite alternate' : 'none' }}>
+            <rect x="14" y="0" width="3.5" height="74" rx="1.5" fill="#aaa"/>
+            <path d="M17.5 2 L35 12 L17.5 22 Z" fill="#e74c3c"/>
+            <path d="M17.5 2 L35 12 L17.5 22" fill="rgba(255,255,255,0.2)"/>
+          </svg>
+        </div>
+      )}
+
+      {/* ── BALL DROPPING IN ── */}
+      {phase===3 && (
+        <div style={{ position:'absolute', bottom:'22%', right:'10.5%',
+          animation:'dropIn 0.8s cubic-bezier(0.6,0,0.8,0.8) forwards' }}>
+          <svg width="38" height="38" viewBox="0 0 38 38">
+            <defs>
+              <radialGradient id="ballg2" cx="35%" cy="32%">
+                <stop offset="0%" stopColor="#fff"/><stop offset="100%" stopColor="#e0e0e0"/>
+              </radialGradient>
+            </defs>
+            <circle cx="19" cy="19" r="18" fill="url(#ballg2)" stroke="#d0d0d0" strokeWidth="1"/>
+            {[[12,12],[20,10],[10,19],[24,21],[18,18]].map(([x,y],i)=>(
+              <circle key={i} cx={x} cy={y} r="2.2" fill="#c0c0c0"/>
             ))}
           </svg>
         </div>
       )}
 
-      {/* Celebration pop — phase 4 */}
-      {phase >= 4 && (
+      {/* ── CELEBRATION — ball is in! ── */}
+      {phase>=4 && (
         <>
-          {/* Stars burst from hole */}
-          {[0,45,90,135,180,225,270,315].map((a,i)=>(
-            <div key={i} style={{
-              position:'absolute', bottom:'22%', right:'17%',
-              width:8, height:8, borderRadius:'50%', background:'#FFD600',
-              animation:`starPop${i%4} 0.6s ease-out both`,
-              '--dx': `${Math.cos(a*Math.PI/180)*60}px`,
-              '--dy': `${Math.sin(a*Math.PI/180)*60}px`,
-            }}/>
-          ))}
-          {/* IN THE HOLE! */}
-          <div style={{ position:'absolute', bottom:'30%', right:'5%',
-            animation:'holeText 0.5s cubic-bezier(0.34,1.56,0.64,1) both' }}>
-            <span style={{ fontSize:28, fontWeight:900, color:'#FFD600',
-              textShadow:'0 0 20px rgba(255,214,0,0.8), 2px 2px 0 rgba(0,0,0,0.6)',
-              letterSpacing:'-0.02em', whiteSpace:'nowrap' }}>IN THE HOLE! ⚡</span>
+          {/* Ring of sparks from hole */}
+          <div style={{ position:'absolute', bottom:'22%', right:'5%',
+            animation:'craterIn 0.4s ease-out both' }}>
+            <svg width="90" height="90" viewBox="0 0 90 90">
+              {[0,36,72,108,144,180,216,252,288,324].map((a,i)=>(
+                <line key={i} x1="45" y1="45"
+                  x2={45+Math.cos(a*Math.PI/180)*(i%2===0?42:30)}
+                  y2={45+Math.sin(a*Math.PI/180)*(i%2===0?42:30)}
+                  stroke={i%2===0?'#FFD600':'#fff'} strokeWidth={i%2===0?3:1.5}
+                  strokeLinecap="round"/>
+              ))}
+              <circle cx="45" cy="45" r="10" fill="#FFD600"/>
+              <circle cx="45" cy="45" r="5" fill="#fff"/>
+            </svg>
+          </div>
+          {/* IN THE HOLE! banner */}
+          <div style={{ position:'absolute', bottom:'32%', left:'50%', transform:'translateX(-50%)',
+            whiteSpace:'nowrap', animation:'bannerIn 0.55s cubic-bezier(0.34,1.56,0.64,1) both' }}>
+            <div style={{ background:'rgba(0,0,0,0.7)', border:'2px solid #FFD600',
+              borderRadius:12, padding:'8px 20px',
+              boxShadow:'0 0 24px rgba(255,214,0,0.5)' }}>
+              <span style={{ fontSize:30, fontWeight:900, color:'#FFD600',
+                letterSpacing:'-0.02em',
+                textShadow:'0 0 20px rgba(255,214,0,0.8)' }}>
+                ⚡ IN THE HOLE! ⚡
+              </span>
+            </div>
           </div>
         </>
       )}
 
       <style>{`
-        @keyframes flashOut{0%{opacity:0.85}100%{opacity:0}}
-        @keyframes boltDrop{0%{opacity:0;transform:translateX(-50%) scaleY(0);transform-origin:top}70%{opacity:1;transform:translateX(-50%) scaleY(1)}100%{opacity:0.85}}
-        @keyframes ballGlow{0%{opacity:0;transform:scale(0.5)}100%{opacity:1;transform:scale(1)}}
-        @keyframes ballRoll{0%{left:0}100%{left:calc(86% - 40px)}}
-        @keyframes ballSpin{0%{transform:rotate(0)}100%{transform:rotate(720deg)}}
-        @keyframes trailFade{0%{right:99%}100%{right:14%}}
-        @keyframes ballDrop{0%{transform:translateY(0) scale(1)}80%{transform:translateY(18px) scale(0.7)}100%{transform:translateY(24px) scale(0);opacity:0}}
-        @keyframes starPop0{0%{transform:translate(0,0) scale(0);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(1.5);opacity:0}}
-        @keyframes starPop1{0%{transform:translate(0,0) scale(0);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(1.5);opacity:0}}
-        @keyframes starPop2{0%{transform:translate(0,0) scale(0);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(1.5);opacity:0}}
-        @keyframes starPop3{0%{transform:translate(0,0) scale(0);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(1.5);opacity:0}}
-        @keyframes holeText{0%{opacity:0;transform:scale(0.3) rotate(-10deg)}100%{opacity:1;transform:none}}
+        @keyframes bigFlash{0%{opacity:0.7}100%{opacity:0}}
+        @keyframes boltAppear{0%{opacity:0;transform:translateX(-50%) scaleY(0);transform-origin:top}60%{opacity:1;transform:translateX(-50%) scaleY(1)}100%{opacity:0.8}}
+        @keyframes craterIn{0%{opacity:0;transform:scale(0)}55%{opacity:1;transform:scale(1.15)}100%{opacity:1;transform:scale(1)}}
+        @keyframes ballElectric{0%{opacity:0;transform:scale(0.4)}100%{opacity:1;transform:scale(1)}}
+        @keyframes greenIn{from{opacity:0;transform:scaleY(0);transform-origin:bottom}to{opacity:1;transform:scaleY(1)}}
+        @keyframes ballRollFast{0%{left:18%}100%{left:calc(90% - 38px)}}
+        @keyframes ballSpinFast{0%{transform:rotate(0)}100%{transform:rotate(900deg)}}
+        @keyframes dropIn{0%{transform:translateY(0) scale(1);opacity:1}70%{transform:translateY(20px) scale(0.75);opacity:1}100%{transform:translateY(28px) scale(0);opacity:0}}
+        @keyframes bannerIn{from{opacity:0;transform:translateX(-50%) scale(0.2) rotate(-8deg)}to{opacity:1;transform:translateX(-50%) scale(1) rotate(0)}}
+        @keyframes flagWave{0%{transform:rotate(-5deg)}100%{transform:rotate(5deg)}}
       `}</style>
     </div>
   )

@@ -1039,9 +1039,16 @@ function SettingsTab({ onLogout }) {
 
 // ── Animation Settings ────────────────────────────────────────
 const ANIM_NAMES = {
-  confetti:'Confetti', fireworks:'Fireworks', kiwi:'Kiwi Bird',
-  golfswing:'Golf Swing', galaxy:'Galaxy Burst', streamer:'Streamer Cannon',
-  gecko:'Gecko Lizard', lightning:'Lightning Strike', pixel:'8-bit Pixel',
+  confetti: 'Confetti',
+  fireworks:'Fireworks',
+  kiwi:     'Kiwi Bird 🥝',
+  galaxy:   'Star Wars ⭐',
+  streamer: 'Streamer Cannon 🎉',
+  gecko:    'Kea Parrot 🦜',
+  lightning:'Ball in Hole ⛳',
+  pixel:    '8-bit Pixel 🕹️',
+  volcano:  'Volcano 🌋',
+  pinball:  'Pinball 🎰',
 }
 
 function AnimationSettings() {
