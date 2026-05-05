@@ -137,7 +137,7 @@ function StarWarsCrawl({ active }) {
   return (
     <div style={{
       position:'fixed', inset:0, zIndex:9999, pointerEvents:'none',
-      overflow:'hidden', perspective:'500px', perspectiveOrigin:'50% 40%',
+      overflow:'hidden', perspective:'500px', perspectiveOrigin:'50% 35%',
       background:'transparent',
     }}>
       {/* "A long time ago…" fades in first */}
@@ -448,13 +448,13 @@ function VolcanoAnimation({ active }) {
         animation: phase===0 ? 'rumble 0.15s ease-in-out infinite' : 'none',
       }}>
         <svg width="320" height="280" viewBox="0 0 320 280" fill="none">
-          {/* Volcano body — dark layered mountain */}
-          <path d="M0 280 L80 120 L160 60 L240 120 L320 280 Z" fill="#3a2810"/>
-          <path d="M20 280 L90 130 L160 72 L230 130 L300 280 Z" fill="#4a3418"/>
-          <path d="M40 280 L100 140 L160 84 L220 140 L280 280 Z" fill="#5a3e20"/>
-          {/* Rock layers */}
-          <path d="M0 280 Q80 260 160 270 Q240 260 320 280" fill="#2a1c0a" opacity="0.4"/>
-          <path d="M30 280 Q100 255 160 262 Q220 255 290 280" fill="#6a4a28" opacity="0.3"/>
+          {/* Volcano body — clean layered mountain */}
+          <path d="M0 280 L80 120 L160 58 L240 120 L320 280 Z" fill="#2e1e0a"/>
+          <path d="M15 280 L88 128 L160 70 L232 128 L305 280 Z" fill="#3e2812"/>
+          <path d="M34 280 L98 138 L160 82 L222 138 L286 280 Z" fill="#4e341a"/>
+          <path d="M52 280 L108 148 L160 94 L212 148 L268 280 Z" fill="#5e4022"/>
+          {/* Rock detail bands */}
+          <path d="M0 280 Q80 250 160 260 Q240 250 320 280" stroke="#2a1c0a" strokeWidth="2" fill="none" opacity="0.5"/>
           {/* Crater rim */}
           <ellipse cx="160" cy="68" rx="42" ry="16" fill="#2a1c0a" stroke="#1a0e04" strokeWidth="2"/>
           <ellipse cx="160" cy="66" rx="38" ry="12" fill="#3a2810"/>
@@ -464,8 +464,7 @@ function VolcanoAnimation({ active }) {
           <ellipse cx="160" cy="61" rx="14" ry="5" fill="#ff4400"/>
           <ellipse cx="160" cy="60" rx="8" ry="3" fill="#ff8800" opacity="0.9"/>
 
-          {/* Snow cap — classic volcano look */}
-          <path d="M140 68 Q160 48 180 68 Q170 58 160 56 Q150 58 140 68 Z" fill="#f0f0f0" opacity="0.8"/>
+{/* no snow */}
 
           {/* Rock texture */}
           {[[70,180],[90,160],[110,200],[140,175],[180,170],[200,195],[220,165],[240,185]].map(([x,y],i)=>(
@@ -1182,91 +1181,140 @@ function LightningAnimation({ active }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-//  9. 8-BIT PIXEL
+//  9. 8-BIT PIXEL — clean arcade style
 // ─────────────────────────────────────────────────────────────
 function PixelAnimation({ active }) {
   if (!active) return null
-  const pixels = Array.from({ length: 60 }, (_, i) => ({
-    x: Math.random() * 100, delay: Math.random() * 1.0,
-    size: [8, 10, 14, 18, 22][Math.floor(Math.random() * 5)],
-    color: ['#FFD600','#FF3B3B','#4ade80','#60a5fa','#f472b6','#fff','#a78bfa','#FF6B35','#ffe066'][Math.floor(Math.random()*9)],
-    dx: (Math.random() - 0.5) * 100, dy: -(25 + Math.random() * 75),
+  const COLORS = ['#FFD600','#FF3B3B','#4ade80','#60a5fa','#f472b6','#fff','#a78bfa','#FF6B35','#ffe066']
+  const pixels = Array.from({ length:55 }, (_, i) => ({
+    x: 5 + Math.random() * 90,
+    delay: Math.random() * 0.9,
+    size: [8, 10, 14, 18][Math.floor(Math.random() * 4)],
+    color: COLORS[Math.floor(Math.random() * COLORS.length)],
+    dx: (Math.random() - 0.5) * 80,
+    dy: -(20 + Math.random() * 65),
   }))
+
   return (
-    <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
-      {/* Pixel confetti */}
+    <div style={{ position:'absolute', inset:0, overflow:'hidden', pointerEvents:'none' }}>
+
+      {/* Pixel confetti — only in bottom 40% so they don't cover text */}
       {pixels.map((p, i) => (
-        <div key={i} style={{ position: 'absolute', left: `${p.x}%`, top: '28%',
-          width: p.size, height: p.size, background: p.color,
-          animation: `pixFall 1.5s ${p.delay}s ease-in both`,
-          '--dx': `${p.dx}px`, '--dy': `${p.dy}px` }} />
+        <div key={i} style={{
+          position:'absolute', left:`${p.x}%`, bottom:0,
+          width:p.size, height:p.size, background:p.color,
+          animation:`pxRise 1.6s ${p.delay}s ease-out both`,
+          '--dx':`${p.dx}px`, '--dy':`${p.dy}px`,
+        }}/>
       ))}
-      {/* 8-bit golfer dancing */}
-      <div style={{ position: 'absolute', bottom: '14%', left: '50%', transform: 'translateX(-50%)',
-        animation: 'danceBob 0.32s ease-in-out infinite alternate' }}>
-        <svg width="60" height="76" viewBox="0 0 60 76" style={{ imageRendering: 'pixelated' }}>
-          {/* Head */}
-          <rect x="20" y="0" width="20" height="20" fill="#FFD600"/>
-          {/* Eyes */}
-          <rect x="23" y="5" width="5" height="5" fill="#000"/>
-          <rect x="32" y="5" width="5" height="5" fill="#000"/>
-          {/* Smile */}
-          <rect x="23" y="12" width="14" height="3" fill="#cc7700"/>
+
+      {/* Arcade screen background — bottom half */}
+      <div style={{
+        position:'absolute', bottom:0, left:0, right:0, height:'45%',
+        background:'linear-gradient(180deg, transparent, rgba(0,20,0,0.6))',
+        borderTop:'2px solid rgba(255,214,0,0.2)',
+      }}/>
+
+      {/* "INSERT COIN" blinking */}
+      <div style={{
+        position:'absolute', bottom:'10%', left:'50%', transform:'translateX(-50%)',
+        whiteSpace:'nowrap', animation:'blinkText 0.6s ease-in-out infinite',
+      }}>
+        <span style={{ fontFamily:'"Courier New",monospace', fontSize:14,
+          color:'rgba(255,214,0,0.7)', letterSpacing:'0.18em' }}>
+          — INSERT COIN —
+        </span>
+      </div>
+
+      {/* 8-bit golfer sprite — bottom centre, bouncing */}
+      <div style={{
+        position:'absolute', bottom:'14%', left:'50%', transform:'translateX(-50%)',
+        animation:'spriteBounce 0.28s ease-in-out infinite alternate',
+      }}>
+        <svg width="52" height="64" viewBox="0 0 52 64" style={{ imageRendering:'pixelated' }}>
           {/* Cap */}
-          <rect x="18" y="0" width="24" height="4" fill="#cc9900"/>
-          <rect x="14" y="0" width="6" height="4" fill="#cc9900"/>
-          {/* Body */}
-          <rect x="14" y="20" width="32" height="26" fill="#FFD600"/>
-          {/* Shirt details */}
-          <rect x="14" y="24" width="32" height="3" fill="#cc9900" opacity="0.4"/>
-          {/* Left arm up */}
-          <rect x="2" y="18" width="12" height="16" fill="#FFD600"/>
-          <rect x="2" y="14" width="10" height="6" fill="#FFD600"/>
-          {/* Right arm — holding club up */}
-          <rect x="46" y="16" width="12" height="16" fill="#FFD600"/>
-          <rect x="48" y="4" width="5" height="40" fill="#cc9900"/>
-          <rect x="44" y="40" width="16" height="5" fill="#777"/>
+          <rect x="14" y="0"  width="24" height="4"  fill="#FFD600"/>
+          <rect x="10" y="4"  width="32" height="4"  fill="#FFD600"/>
+          {/* Head */}
+          <rect x="14" y="8"  width="24" height="16" fill="#f0c080"/>
+          {/* Eyes */}
+          <rect x="18" y="12" width="4"  height="4"  fill="#1a1a1a"/>
+          <rect x="30" y="12" width="4"  height="4"  fill="#1a1a1a"/>
+          {/* Smile */}
+          <rect x="18" y="20" width="16" height="4"  fill="#c07030"/>
+          <rect x="14" y="24" width="4"  height="4"  fill="#c07030"/>
+          <rect x="34" y="24" width="4"  height="4"  fill="#c07030"/>
+          {/* Body / shirt */}
+          <rect x="10" y="28" width="32" height="20" fill="#5cb84a"/>
+          <rect x="14" y="28" width="24" height="4"  fill="#7ad860"/>
+          {/* Arms up — celebrating */}
+          <rect x="0"  y="24" width="10" height="8"  fill="#5cb84a"/>
+          <rect x="42" y="24" width="10" height="8"  fill="#5cb84a"/>
+          <rect x="0"  y="16" width="8"  height="8"  fill="#f0c080"/>
+          <rect x="44" y="16" width="8"  height="8"  fill="#f0c080"/>
+          {/* Club raised */}
+          <rect x="48" y="4"  width="4"  height="14" fill="#aaa"/>
+          <rect x="44" y="2"  width="8"  height="4"  fill="#888"/>
           {/* Legs */}
-          <rect x="14" y="46" width="13" height="26" fill="#FFD600"/>
-          <rect x="33" y="46" width="13" height="26" fill="#FFD600"/>
+          <rect x="14" y="48" width="10" height="16" fill="#c8b480"/>
+          <rect x="28" y="48" width="10" height="16" fill="#c8b480"/>
           {/* Shoes */}
-          <rect x="10" y="68" width="18" height="8" fill="#cc9900"/>
-          <rect x="32" y="68" width="18" height="8" fill="#cc9900"/>
+          <rect x="10" y="60" width="14" height="4"  fill="#f0ece0"/>
+          <rect x="28" y="60" width="14" height="4"  fill="#f0ece0"/>
         </svg>
       </div>
-      {/* Pixel text — HOLE IN ONE! */}
-      <div style={{ position: 'absolute', top: '10%', left: '50%', transform: 'translateX(-50%)',
-        whiteSpace: 'nowrap', animation: 'pixText 0.4s 0.12s ease-out both' }}>
-        <span style={{ fontFamily: '"Courier New",Courier,monospace', fontSize: 32, fontWeight: 900,
-          color: '#FFD600', letterSpacing: '0.04em',
-          textShadow: '4px 4px 0 #cc7700, 7px 7px 0 rgba(0,0,0,0.6)' }}>
-          HOLE IN ONE!
-        </span>
-      </div>
-      {/* Achievement unlocked */}
-      <div style={{ position: 'absolute', top: '21%', left: '50%', transform: 'translateX(-50%)',
-        whiteSpace: 'nowrap', animation: 'pixText 0.4s 0.42s ease-out both' }}>
-        <span style={{ fontFamily: '"Courier New",Courier,monospace', fontSize: 15, fontWeight: 700,
-          color: '#4ade80', letterSpacing: '0.12em',
-          textShadow: '2px 2px 0 #166534' }}>
-          ★ ACHIEVEMENT UNLOCKED ★
-        </span>
-      </div>
-      {/* Score display */}
-      <div style={{ position: 'absolute', top: '29%', left: '50%', transform: 'translateX(-50%)',
-        animation: 'pixText 0.4s 0.7s ease-out both', whiteSpace: 'nowrap' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8,
-          background: 'rgba(0,0,0,0.6)', border: '2px solid #FFD600',
-          padding: '6px 18px', borderRadius: 0 }}>
-          <span style={{ fontFamily: '"Courier New",monospace', fontSize: 14, color: '#fff', letterSpacing: '0.08em' }}>SCORE:</span>
-          <span style={{ fontFamily: '"Courier New",monospace', fontSize: 18, fontWeight: 900, color: '#FFD600' }}>1</span>
-          <span style={{ fontFamily: '"Courier New",monospace', fontSize: 14, color: '#fff', letterSpacing: '0.08em' }}>STROKE</span>
+
+      {/* Score counter */}
+      <div style={{
+        position:'absolute', bottom:'30%', left:'50%', transform:'translateX(-50%)',
+        whiteSpace:'nowrap', animation:'scoreIn 0.3s 0.5s ease-out both',
+      }}>
+        <div style={{
+          display:'inline-flex', gap:2, alignItems:'center',
+          background:'#000', border:'2px solid #FFD600',
+          padding:'4px 14px', borderRadius:2,
+          boxShadow:'0 0 16px rgba(255,214,0,0.4)',
+        }}>
+          <span style={{ fontFamily:'"Courier New",monospace', fontSize:13,
+            color:'#fff', letterSpacing:'0.1em' }}>SCORE</span>
+          <span style={{ fontFamily:'"Courier New",monospace', fontSize:20,
+            fontWeight:900, color:'#FFD600', marginLeft:10,
+            textShadow:'0 0 10px rgba(255,214,0,0.6)' }}>1,000,000</span>
         </div>
       </div>
+
+      {/* HOLE IN ONE in pixel font — top area */}
+      <div style={{
+        position:'absolute', top:'8%', left:'50%', transform:'translateX(-50%)',
+        whiteSpace:'nowrap', animation:'pxTitleIn 0.4s 0.1s ease-out both',
+      }}>
+        <span style={{
+          fontFamily:'"Courier New",Courier,monospace',
+          fontSize:28, fontWeight:900, color:'#FFD600', letterSpacing:'0.04em',
+          textShadow:'4px 4px 0 #cc7700, 7px 7px 0 rgba(0,0,0,0.7)',
+          display:'block', textAlign:'center',
+        }}>HOLE IN ONE!</span>
+      </div>
+
+      {/* ACHIEVEMENT UNLOCKED */}
+      <div style={{
+        position:'absolute', top:'20%', left:'50%', transform:'translateX(-50%)',
+        whiteSpace:'nowrap', animation:'pxTitleIn 0.4s 0.38s ease-out both',
+      }}>
+        <span style={{
+          fontFamily:'"Courier New",Courier,monospace',
+          fontSize:14, fontWeight:700, color:'#4ade80', letterSpacing:'0.12em',
+          textShadow:'2px 2px 0 #166534',
+          display:'block', textAlign:'center',
+        }}>★ ACHIEVEMENT UNLOCKED ★</span>
+      </div>
+
       <style>{`
-        @keyframes pixFall{0%{opacity:1;transform:translate(0,0) rotate(0deg)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) rotate(180deg)}}
-        @keyframes danceBob{0%{transform:translateX(-50%) translateY(0) scaleX(1)}100%{transform:translateX(-50%) translateY(-16px) scaleX(-1)}}
-        @keyframes pixText{0%{opacity:0;transform:translateX(-50%) scale(0.3)}100%{opacity:1;transform:translateX(-50%) scale(1)}}
+        @keyframes pxRise{0%{opacity:1;transform:translate(0,0) rotate(0)}100%{opacity:0;transform:translate(var(--dx),var(--dy)) rotate(180deg)}}
+        @keyframes spriteBounce{0%{transform:translateX(-50%) translateY(0)}100%{transform:translateX(-50%) translateY(-14px)}}
+        @keyframes blinkText{0%,100%{opacity:0.3}50%{opacity:1}}
+        @keyframes scoreIn{from{opacity:0;transform:translateX(-50%) scale(0.5)}to{opacity:1;transform:translateX(-50%) scale(1)}}
+        @keyframes pxTitleIn{from{opacity:0;transform:translateX(-50%) scale(0.4)}to{opacity:1;transform:translateX(-50%) scale(1)}}
       `}</style>
     </div>
   )
@@ -1312,16 +1360,16 @@ export function HoleInOnePopup({ players, onDismiss, enabledAnimations }) {
       {animType === 'confetti'  && <ConfettiCanvas active={visible} />}
       {animType === 'fireworks' && <FireworksCanvas active={visible} />}
       {animType === 'galaxy'    && <StarWarsCanvas active={visible} />}
+      {animType === 'galaxy'    && <StarWarsCrawl active={visible} />}
       {animType === 'streamer'  && <StreamerCanvas active={visible} />}
-      {animType === 'volcano'   && <ConfettiCanvas active={visible} />}
 
       {/* Main popup */}
       <div onClick={handleTap} style={{
         position: 'fixed', inset: 0, zIndex: 9997,
-        background: 'rgba(0,0,0,0.92)',
+        background: animType === 'galaxy' ? 'transparent' : 'rgba(0,0,0,0.92)',
         display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
         cursor: canDismiss ? 'pointer' : 'default',
-        backdropFilter: 'blur(14px)',
+        backdropFilter: animType === 'galaxy' ? 'none' : 'blur(14px)',
         opacity: visible ? 1 : 0, transition: 'opacity 0.4s',
         padding: '24px 20px',
       }}>
@@ -1330,7 +1378,6 @@ export function HoleInOnePopup({ players, onDismiss, enabledAnimations }) {
         {animType === 'gecko'     && <GeckoAnimation active={visible} />}
         {animType === 'lightning' && <LightningAnimation active={visible} />}
         {animType === 'pixel'     && <PixelAnimation active={visible} />}
-        {animType === 'galaxy'    && <StarWarsCrawl active={visible} />}
         {animType === 'volcano'   && <VolcanoAnimation active={visible} />}
         {animType === 'pinball'   && <PinballAnimation active={visible} />}
 
