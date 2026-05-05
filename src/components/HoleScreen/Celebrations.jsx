@@ -155,7 +155,7 @@ function StarWarsCrawl({ active }) {
       <div style={{
         position:'absolute', bottom:0, left:'8%', right:'8%',
         transformOrigin:'50% 100%',
-        animation:'swCrawl 7s 1.2s linear both',
+        animation:'swCrawl 14s 1.8s linear both', bottom:'-60%',
       }}>
         {/* EPISODE title */}
         <div style={{ textAlign:'center', marginBottom:28, paddingBottom:16,
@@ -212,7 +212,7 @@ function StarWarsCrawl({ active }) {
         @keyframes swIntro{0%{opacity:1}60%{opacity:1}100%{opacity:0}}
         @keyframes swCrawl{
           0%  {transform:rotateX(22deg) translateY(0%);opacity:1}
-          100%{transform:rotateX(22deg) translateY(-82%);opacity:0.5}
+          100%{transform:rotateX(22deg) translateY(-75%);opacity:0.5}
         }
       `}</style>
     </div>
@@ -1335,7 +1335,7 @@ export function HoleInOnePopup({ players, onDismiss, enabledAnimations }) {
 
   useEffect(() => {
     const minT  = setTimeout(() => setCanDismiss(true), 3000)
-    const autoT = setTimeout(() => { setVisible(false); setTimeout(onDismiss, 400) }, 9000)
+    const autoT = setTimeout(() => { setVisible(false); setTimeout(onDismiss, 400) }, animType==='galaxy'?18000:9000)
     return () => { clearTimeout(minT); clearTimeout(autoT) }
   }, [])
 
