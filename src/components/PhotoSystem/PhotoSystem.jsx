@@ -5,11 +5,11 @@ import { useTranslation } from '../../lib/TranslationContext'
 
 // ── Polaroid composer — fixed 4:5, big logo + date ─────────────
 const POLAROID_W = 1080
-const POLAROID_H = 1350
 const SIDE       = 36    // side + top white border
-const BOT        = 220   // bottom label height — bigger for logo/date
-const PHOTO_W    = POLAROID_W - SIDE * 2
-const PHOTO_H    = POLAROID_H - SIDE - BOT
+const BOT        = 230   // bottom label height
+const PHOTO_W    = POLAROID_W - SIDE * 2  // 1008
+const PHOTO_H    = PHOTO_W               // square photo area
+const POLAROID_H = SIDE + PHOTO_H + BOT  // 36 + 1008 + 230 = 1274
 
 export function composePolaroid(photoBlob, isFrontCamera = false) {
   return new Promise((resolve, reject) => {
@@ -496,7 +496,7 @@ export function PhotoGallery({ onClose }) {
   const [processing,    setProcessing]    = useState(false)
   const [carouselIdx,   setCarouselIdx]   = useState(Math.max(0, photos.length - 1))
 
-  const dateLabel = new Date().toLocaleDateString('en-NZ', { day:'numeric', month:'long', year:'numeric' })
+  // dateLabel removed — canvas already includes date
 
   function handleCapture(blob, front) {
     setIsFront(front)

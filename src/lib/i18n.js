@@ -116,6 +116,15 @@ const en = {
   uploading:'Uploading…',
   saveToLeaderboard:'Save to leaderboard',
   skip:'Skip',
+  skipNoFlag:'Skip — no flag',
+  skipNoPhoto:'Skip — continue without photo',
+  stepFlag:'Step 1 · Where are you from?',
+  stepSelfie:'Step 2 · Your leaderboard photo',
+  addToLeaderboard:'Add to Leaderboard',
+  selfieDesc:'Add your photo next to your name on the leaderboard!',
+  cameraCapture:'Capture',
+  saving:'Saving…',
+  broadcastDismiss:'Dismiss',
   strokes:'strokes', holesCompleted:'holes', avgPerHole:'avg/hole',
 }
 

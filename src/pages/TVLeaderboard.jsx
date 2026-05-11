@@ -482,17 +482,8 @@ export default function TVLeaderboard() {
 
                       {/* Avg */}
                       <div style={{ width:avgWidth, textAlign:'right', borderLeft:'1px solid rgba(255,255,255,0.05)', paddingLeft:Math.round(rowGap*0.8) }}>
-                        {(() => {
-                          const parAvg = e.totalPar ? e.totalPar / e.holes : 3
-                          const diff   = e.avg - parAvg
-                          // green = at or below par, yellow = up to 1 above par, red = 1+ above par
-                          const avgCol = diff <= 0 ? '#22c55e' : diff < 1.0 ? '#FFD600' : '#ef4444'
-                          return <>
-                            <p style={{ fontSize:avgSize, fontWeight:900, color:avgCol, margin:0, letterSpacing:'-0.02em', lineHeight:1,
-                              textShadow: diff <= -0.2 ? '0 0 12px rgba(34,197,94,0.4)' : diff < 1.0 ? '0 0 12px rgba(255,214,0,0.3)' : 'none' }}>{e.avg}</p>
-                            <p style={{ fontSize:Math.max(9,avgSize*0.37), color:avgCol, opacity:0.55, margin:'2px 0 0', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.04em' }}>avg/hole</p>
-                          </>
-                        })()}
+                        <p style={{ fontSize:avgSize, fontWeight:800, color:'#313131', margin:0, letterSpacing:'-0.02em', lineHeight:1 }}>{e.avg}</p>
+                        <p style={{ fontSize:Math.max(9,avgSize*0.37), color:'#1e1e1e', margin:'2px 0 0', fontWeight:600, textTransform:'uppercase', letterSpacing:'0.04em' }}>avg/hole</p>
                       </div>
                     </div>
                   )
@@ -524,7 +515,8 @@ export default function TVLeaderboard() {
               {holeAvgs.map((hole, i) => {
                 const par  = hole.par || 3
                 const diff = hole.avg !== null ? hole.avg - par : null
-                const col  = diff===null?'#242424':diff<-0.25?'#22C55E':diff>0.25?'#ef4444':'#FFD600'
+                // green=at/below par, yellow=up to 1 above, red=1+ above
+                const col  = diff===null?'#242424':diff<=0?'#22C55E':diff<1.0?'#FFD600':'#ef4444'
                 const barW = hole.avg ? Math.min(100,(hole.avg/(par*2))*100) : 0
                 return (
                   <div key={hole.id} style={{ display:'flex', alignItems:'center', gap:12, background:'rgba(255,255,255,0.025)', border:'1px solid rgba(255,255,255,0.04)', borderRadius:14, padding:'13px 18px', position:'relative', overflow:'hidden', animation:`slideIn 0.3s ${i*0.02}s both` }}>

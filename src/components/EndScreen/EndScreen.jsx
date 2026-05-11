@@ -146,7 +146,7 @@ function CountryFlagPicker({ player, sessionId, onDone }) {
       <button className="btn btn-ghost btn-sm btn-full"
         style={{ marginTop:10, color:'var(--text-3)', fontSize:12 }}
         onClick={() => onDone(null)}>
-        Skip — no flag
+        {t.skipNoFlag}
       </button>
     </div>
   )
@@ -186,13 +186,18 @@ function LbSelfieButton({ sessionId, player, onDone }) {
   }
 
   async function save() {
+    if (!blob) return
     setPhase('saving')
     try {
-      const lbPhoto = await composeLeaderboardPhoto(blob, false)
+      // blob is already mirrored from capture(), so pass isFrontCamera=false
+      const lbPhoto = await composeLeaderboardPhoto(blob, false).catch(() => null)
       await uploadLeaderboardPhoto(sessionId, player.name, lbPhoto || blob)
       setPhase('done')
-      setTimeout(onDone, 1200)
-    } catch(e) { setPhase('error'); setErrMsg('Could not save. Please try again.') }
+      setTimeout(onDone, 1400)
+    } catch(e) {
+      console.error('Selfie save error:', e)
+      setPhase('error'); setErrMsg('Could not save. Tap "Try again" or skip.')
+    }
   }
 
   function retake() { setBlob(null); if(previewUrl){URL.revokeObjectURL(previewUrl);setPreviewUrl(null)}; openCam() }
@@ -201,7 +206,7 @@ function LbSelfieButton({ sessionId, player, onDone }) {
   if (phase==='idle') return (
     <div style={{ textAlign:'center' }}>
       <p style={{ fontSize:14, color:'var(--text-2)', marginBottom:12 }}>
-        Add your photo next to your name on the leaderboard!
+        {t.selfieDesc}
       </p>
       <button className="btn btn-primary btn-full" onClick={openCam} style={{ gap:8, fontSize:16, padding:'14px' }}>
         <Camera size={22}/> Take Selfie
@@ -486,8 +491,8 @@ export default function EndScreen() {
         }
 
         return (
-          <div className="modal-overlay" style={{ zIndex:400 }}>
-            <div className="modal-sheet" style={{ maxHeight:'94dvh', overflowY:'auto' }}>
+          <div style={{ position:'fixed', inset:0, zIndex:400, background:'var(--bg)', overflowY:'auto' }}>
+            <div className="modal-sheet" style={{ height:'100dvh', maxHeight:'100dvh', overflowY:'auto', borderRadius:0 }}>
 
               {/* Progress indicator for multiple players */}
               {total > 1 && (
@@ -521,7 +526,7 @@ export default function EndScreen() {
               {/* Step 1 — Flag */}
               <div style={{ marginBottom:16 }}>
                 <p style={{ fontSize:12, fontWeight:800, textTransform:'uppercase', letterSpacing:'0.08em',
-                  color:'var(--text-3)', marginBottom:10 }}>Step 1 · Where are you from?</p>
+                  color:'var(--text-3)', marginBottom:10 }}>{t.stepFlag}</p>
                 <CountryFlagPicker
                   player={lbSelfiePlayer}
                   sessionId={sessionId}
@@ -534,7 +539,7 @@ export default function EndScreen() {
               {/* Step 2 — Selfie */}
               <div style={{ marginBottom:14 }}>
                 <p style={{ fontSize:12, fontWeight:800, textTransform:'uppercase', letterSpacing:'0.08em',
-                  color:'var(--text-3)', marginBottom:10 }}>Step 2 · Your leaderboard photo</p>
+                  color:'var(--text-3)', marginBottom:10 }}>{t.stepSelfie}</p>
                 <LbSelfieButton
                   key={lbSelfiePlayer.name}
                   sessionId={sessionId}
