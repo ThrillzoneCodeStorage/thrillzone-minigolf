@@ -3,139 +3,158 @@ import { Camera, X, RotateCcw, Check, SwitchCamera, Zap, ZapOff } from 'lucide-r
 import { useGame } from '../../context/GameContext'
 import { useTranslation } from '../../lib/TranslationContext'
 
-// ── Polaroid composer — always 4:5 (1080×1350) ───────────────
+// ── Polaroid composer — fixed 4:5, big logo + date ─────────────
+const POLAROID_W = 1080
+const POLAROID_H = 1350
+const SIDE       = 36    // side + top white border
+const BOT        = 220   // bottom label height — bigger for logo/date
+const PHOTO_W    = POLAROID_W - SIDE * 2
+const PHOTO_H    = POLAROID_H - SIDE - BOT
+
 export function composePolaroid(photoBlob, isFrontCamera = false) {
-  return new Promise(resolve => {
+  return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(photoBlob)
     const img = new Image()
 
     img.onload = () => {
       URL.revokeObjectURL(url)
-
-      // Fixed 4:5 dimensions — best for social sharing
-      const CANVAS_W = 1080
-      const CANVAS_H = 1350
-
-      const SIDE_PAD = 40   // white border on sides and top
-      const BOT_PAD  = 200  // bottom label zone
-
-      const photoW = CANVAS_W - SIDE_PAD * 2
-      const photoH = CANVAS_H - SIDE_PAD - BOT_PAD
-
       const canvas = document.createElement('canvas')
-      canvas.width  = CANVAS_W
-      canvas.height = CANVAS_H
+      canvas.width = POLAROID_W; canvas.height = POLAROID_H
       const ctx = canvas.getContext('2d')
 
-      // White polaroid background
-      ctx.fillStyle = '#ffffff'
-      ctx.fillRect(0, 0, CANVAS_W, CANVAS_H)
+      // ── White polaroid background
+      ctx.fillStyle = '#fff'
+      ctx.fillRect(0, 0, POLAROID_W, POLAROID_H)
 
-      // Subtle warm tint on edges
-      const vignette = ctx.createRadialGradient(CANVAS_W/2, CANVAS_H/2, photoH*0.3, CANVAS_W/2, CANVAS_H/2, CANVAS_W*0.8)
-      vignette.addColorStop(0, 'rgba(0,0,0,0)')
-      vignette.addColorStop(1, 'rgba(0,0,0,0.04)')
-
-      // Clip to photo area and draw image (crop to fill, centred)
+      // ── Photo — cover-crop centred
       ctx.save()
-      ctx.beginPath()
-      ctx.rect(SIDE_PAD, SIDE_PAD, photoW, photoH)
-      ctx.clip()
-
-      if (isFrontCamera) {
-        ctx.translate(CANVAS_W, 0)
-        ctx.scale(-1, 1)
-      }
-
-      // Cover crop: scale to fill photoW×photoH, centred
-      const imgW = img.naturalWidth || img.width
-      const imgH = img.naturalHeight || img.height
-      const scaleX = photoW / imgW
-      const scaleY = photoH / imgH
-      const scale  = Math.max(scaleX, scaleY)
-      const drawW  = imgW * scale
-      const drawH  = imgH * scale
-      const offsetX = SIDE_PAD + (photoW - drawW) / 2
-      const offsetY = SIDE_PAD + (photoH - drawH) / 2
-
-      if (isFrontCamera) {
-        ctx.drawImage(img, -(CANVAS_W - offsetX - drawW), offsetY, drawW, drawH)
-      } else {
-        ctx.drawImage(img, offsetX, offsetY, drawW, drawH)
-      }
+      ctx.beginPath(); ctx.rect(SIDE, SIDE, PHOTO_W, PHOTO_H); ctx.clip()
+      const iw = img.naturalWidth || img.width
+      const ih = img.naturalHeight || img.height
+      const scale = Math.max(PHOTO_W / iw, PHOTO_H / ih)
+      const dw = iw * scale, dh = ih * scale
+      const dx = SIDE + (PHOTO_W - dw) / 2
+      const dy = SIDE + (PHOTO_H - dh) / 2
+      if (isFrontCamera) { ctx.translate(POLAROID_W, 0); ctx.scale(-1, 1) }
+      ctx.drawImage(img, isFrontCamera ? -(POLAROID_W - dx - dw) : dx, dy, dw, dh)
       ctx.restore()
 
-      // Vignette over photo
-      ctx.fillStyle = vignette
-      ctx.fillRect(SIDE_PAD, SIDE_PAD, photoW, photoH)
+      // ── Subtle inner shadow on photo edges
+      const shadow = ctx.createLinearGradient(SIDE, SIDE, SIDE, SIDE + 60)
+      shadow.addColorStop(0, 'rgba(0,0,0,0.18)'); shadow.addColorStop(1, 'rgba(0,0,0,0)')
+      ctx.fillStyle = shadow; ctx.fillRect(SIDE, SIDE, PHOTO_W, 60)
 
-      // Thin photo border
-      ctx.strokeStyle = '#ddd'
-      ctx.lineWidth = 1
-      ctx.strokeRect(SIDE_PAD, SIDE_PAD, photoW, photoH)
+      // ── Photo frame border
+      ctx.strokeStyle = '#e0e0e0'; ctx.lineWidth = 1.5
+      ctx.strokeRect(SIDE, SIDE, PHOTO_W, PHOTO_H)
 
-      // ── Label area ─────────────────────────────────────────
-      const labelY   = SIDE_PAD + photoH
-      const labelMid = CANVAS_W / 2
+      // ── Label area
+      const labelY = SIDE + PHOTO_H
+      const mid    = POLAROID_W / 2
 
-      // Date
+      // Date — large and clear
       const dateStr = new Date().toLocaleDateString('en-NZ', { day:'numeric', month:'long', year:'numeric' })
-      ctx.fillStyle    = '#999'
-      ctx.font         = '22px Georgia, "Times New Roman", serif'
-      ctx.textAlign    = 'center'
-      ctx.textBaseline = 'top'
-      ctx.fillText(dateStr, labelMid, labelY + 20)
+      ctx.fillStyle = '#555'
+      ctx.font = 'bold 32px Georgia, "Times New Roman", serif'
+      ctx.textAlign = 'center'; ctx.textBaseline = 'top'
+      ctx.fillText(dateStr, mid, labelY + 18)
 
-      // Divider line
-      ctx.strokeStyle = '#eee'
-      ctx.lineWidth = 1
-      ctx.beginPath()
-      ctx.moveTo(SIDE_PAD + 40, labelY + 52)
-      ctx.lineTo(CANVAS_W - SIDE_PAD - 40, labelY + 52)
-      ctx.stroke()
+      // Thin gold divider
+      ctx.strokeStyle = '#FFD600'; ctx.lineWidth = 1.5
+      ctx.beginPath(); ctx.moveTo(SIDE + 60, labelY + 66); ctx.lineTo(POLAROID_W - SIDE - 60, labelY + 66); ctx.stroke()
 
       // Logo
-      const logo = new Image()
-      logo.crossOrigin = 'anonymous'
-
+      const logo = new Image(); logo.crossOrigin = 'anonymous'
       logo.onload = () => {
-        const maxLH = 90
-        const maxLW = CANVAS_W - SIDE_PAD * 4
-        const ratio = logo.width / logo.height
-        let lw = maxLH * ratio, lh = maxLH
-        if (lw > maxLW) { lw = maxLW; lh = lw / ratio }
-        const lx = (CANVAS_W - lw) / 2
-        const ly = labelY + 65 + (BOT_PAD - 65 - lh) / 2
-        ctx.drawImage(logo, lx, ly, lw, lh)
+        const maxH = 88, maxW = POLAROID_W - SIDE * 5
+        const r = logo.naturalWidth / logo.naturalHeight
+        let lw = maxH * r, lh = maxH
+        if (lw > maxW) { lw = maxW; lh = lw / r }
+        ctx.drawImage(logo, (POLAROID_W - lw) / 2, labelY + 80, lw, lh)
 
-        // Putt N Glow text below logo
-        ctx.fillStyle    = '#ccc'
-        ctx.font         = '20px Inter, Arial, sans-serif'
-        ctx.letterSpacing = '0.08em'
+        // Venue line
+        ctx.fillStyle = '#bbb'
+        ctx.font = '22px Inter, Arial, sans-serif'
         ctx.textBaseline = 'bottom'
-        ctx.fillText('Queenstown · putt-n-glow.co.nz', labelMid, CANVAS_H - 20)
+        ctx.fillText('Putt N Glow · Queenstown', mid, POLAROID_H - 16)
 
-        canvas.toBlob(b => resolve(b), 'image/jpeg', 0.93)
+        canvas.toBlob(b => {
+          if (b) resolve(b)
+          else reject(new Error('Canvas toBlob returned null'))
+        }, 'image/jpeg', 0.92)
       }
-
       logo.onerror = () => {
-        ctx.fillStyle    = '#333'
-        ctx.font         = 'bold 40px Inter, Arial, sans-serif'
-        ctx.textAlign    = 'center'
-        ctx.textBaseline = 'middle'
-        ctx.fillText('PUTT N GLOW', labelMid, labelY + BOT_PAD / 2)
-        canvas.toBlob(b => resolve(b), 'image/jpeg', 0.93)
+        // Fallback text logo
+        ctx.fillStyle = '#111'; ctx.font = 'bold 44px Georgia, serif'
+        ctx.textBaseline = 'middle'; ctx.textAlign = 'center'
+        ctx.fillText('PUTT N GLOW', mid, labelY + 120)
+        canvas.toBlob(b => {
+          if (b) resolve(b)
+          else reject(new Error('Canvas toBlob returned null'))
+        }, 'image/jpeg', 0.92)
       }
-
       logo.src = '/logo.png'
     }
-
-    img.onerror = () => { URL.revokeObjectURL(url); resolve(null) }
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Failed to load image')) }
     img.src = url
   })
 }
 
-// ── Camera Nav Button ─────────────────────────────────────────
+// ── Leaderboard photo composer — same shape, no logo, bigger date ──
+export function composeLeaderboardPhoto(photoBlob, isFrontCamera = false) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(photoBlob)
+    const img = new Image()
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      const canvas = document.createElement('canvas')
+      canvas.width = POLAROID_W; canvas.height = POLAROID_H
+      const ctx = canvas.getContext('2d')
+
+      ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, POLAROID_W, POLAROID_H)
+
+      ctx.save()
+      ctx.beginPath(); ctx.rect(SIDE, SIDE, PHOTO_W, PHOTO_H); ctx.clip()
+      const iw = img.naturalWidth || img.width
+      const ih = img.naturalHeight || img.height
+      const scale = Math.max(PHOTO_W / iw, PHOTO_H / ih)
+      const dw = iw * scale, dh = ih * scale
+      const dx = SIDE + (PHOTO_W - dw) / 2
+      const dy = SIDE + (PHOTO_H - dh) / 2
+      if (isFrontCamera) { ctx.translate(POLAROID_W, 0); ctx.scale(-1, 1) }
+      ctx.drawImage(img, isFrontCamera ? -(POLAROID_W - dx - dw) : dx, dy, dw, dh)
+      ctx.restore()
+
+      ctx.strokeStyle = '#e0e0e0'; ctx.lineWidth = 1.5
+      ctx.strokeRect(SIDE, SIDE, PHOTO_W, PHOTO_H)
+
+      const labelY = SIDE + PHOTO_H
+      const mid    = POLAROID_W / 2
+
+      // Bigger date, no logo — centred in the label
+      const dateStr = new Date().toLocaleDateString('en-NZ', { day:'numeric', month:'long', year:'numeric' })
+      ctx.fillStyle = '#333'
+      ctx.font = 'bold 48px Georgia, "Times New Roman", serif'
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
+      ctx.fillText(dateStr, mid, labelY + BOT / 2)
+
+      // Gold line accent
+      ctx.strokeStyle = '#FFD600'; ctx.lineWidth = 2
+      ctx.beginPath(); ctx.moveTo(SIDE + 60, labelY + BOT / 2 + 38); ctx.lineTo(POLAROID_W - SIDE - 60, labelY + BOT / 2 + 38); ctx.stroke()
+
+      canvas.toBlob(b => {
+        if (b) resolve(b)
+        else reject(new Error('Canvas toBlob returned null'))
+      }, 'image/jpeg', 0.92)
+    }
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Failed to load image')) }
+    img.src = url
+  })
+}
+
+
+// ── Polaroid composer — always 4:5 (1080×1350) ───────────────
+
 export function CameraNavButton({ onClick, photoCount }) {
   return (
     <button onClick={onClick} aria-label="Open photo gallery"
@@ -338,6 +357,115 @@ function PolaroidPreview({ url, label }) {
   )
 }
 
+// ── Collage generator ────────────────────────────────────────
+async function buildCollage(photoUrls) {
+  const W = 1080, H = 1350
+  const canvas = document.createElement('canvas')
+  canvas.width = W; canvas.height = H
+  const ctx = canvas.getContext('2d')
+
+  // Dark branded background
+  ctx.fillStyle = '#0a0a0a'; ctx.fillRect(0, 0, W, H)
+  const topGrad = ctx.createLinearGradient(0,0,W,0)
+  topGrad.addColorStop(0,'#cc9900'); topGrad.addColorStop(0.5,'#FFD600'); topGrad.addColorStop(1,'#cc9900')
+  ctx.fillStyle = topGrad; ctx.fillRect(0, 0, W, 8)
+  ctx.fillRect(0, H-8, W, 8)
+
+  const imgs = await Promise.all(photoUrls.slice(0,6).map(u => new Promise(res => {
+    const img = new Image(); img.crossOrigin = 'anonymous'
+    img.onload = () => res(img); img.onerror = () => res(null); img.src = u
+  })))
+  const loaded = imgs.filter(Boolean)
+  const n = loaded.length
+
+  const HEADER = 150, FOOTER = 100, PAD = 10
+  const gridH = H - HEADER - FOOTER
+  const layouts = {
+    2: [[0,0,0.5,1],[0.5,0,0.5,1]],
+    3: [[0,0,1,0.5],[0,0.5,0.5,0.5],[0.5,0.5,0.5,0.5]],
+    4: [[0,0,0.5,0.5],[0.5,0,0.5,0.5],[0,0.5,0.5,0.5],[0.5,0.5,0.5,0.5]],
+    5: [[0,0,0.6,0.55],[0.6,0,0.4,0.55],[0,0.55,0.33,0.45],[0.33,0.55,0.34,0.45],[0.67,0.55,0.33,0.45]],
+    6: [[0,0,0.33,0.5],[0.33,0,0.34,0.5],[0.67,0,0.33,0.5],[0,0.5,0.33,0.5],[0.33,0.5,0.34,0.5],[0.67,0.5,0.33,0.5]],
+  }
+  const cells = layouts[Math.min(n,6)] || layouts[6]
+
+  // Round rect helper
+  function rr(x,y,w,h,r) {
+    ctx.beginPath(); ctx.moveTo(x+r,y)
+    ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r)
+    ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h)
+    ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r)
+    ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y); ctx.closePath()
+  }
+
+  cells.forEach(([cx,cy,cw,ch],i) => {
+    if (!loaded[i]) return
+    const rx = Math.round(PAD + cx*(W-PAD*2))
+    const ry = Math.round(HEADER + PAD + cy*(gridH-PAD*2))
+    const rw = Math.round(cw*(W-PAD*2) - PAD)
+    const rh = Math.round(ch*(gridH-PAD*2) - PAD)
+    ctx.save(); rr(rx,ry,rw,rh,8); ctx.clip()
+    const img = loaded[i]
+    const scale = Math.max(rw/img.naturalWidth, rh/img.naturalHeight)
+    const dw = img.naturalWidth*scale, dh = img.naturalHeight*scale
+    ctx.drawImage(img, rx+(rw-dw)/2, ry+(rh-dh)/2, dw, dh)
+    // Subtle vignette
+    const vg = ctx.createLinearGradient(rx,ry,rx,ry+rh)
+    vg.addColorStop(0,'rgba(0,0,0,0.2)'); vg.addColorStop(0.5,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(0,0,0,0.3)')
+    ctx.fillStyle=vg; ctx.fillRect(rx,ry,rw,rh)
+    ctx.restore()
+  })
+
+  // Load logo for header
+  const logo = new Image(); logo.crossOrigin = 'anonymous'
+  await new Promise(r => { logo.onload=r; logo.onerror=r; logo.src='/logo.png' })
+  if (logo.complete && logo.naturalWidth) {
+    const lh=50, lw=(logo.naturalWidth/logo.naturalHeight)*lh
+    ctx.drawImage(logo, (W-lw)/2, 16, lw, lh)
+  }
+  // Header text
+  ctx.fillStyle='#FFD600'; ctx.font='bold 30px Inter,Arial'; ctx.textAlign='center'; ctx.textBaseline='alphabetic'
+  ctx.fillText('Putt N Glow Memories', W/2, 108)
+  ctx.fillStyle='#555'; ctx.font='18px Inter,Arial'
+  ctx.fillText(new Date().toLocaleDateString('en-NZ',{day:'numeric',month:'long',year:'numeric'}), W/2, 136)
+
+  return new Promise(r => canvas.toBlob(b => r(b), 'image/jpeg', 0.92))
+}
+
+function CollageButton({ photos }) {
+  const [building, setBuilding] = useState(false)
+  const [error,    setError]    = useState(null)
+
+  async function generate() {
+    setBuilding(true); setError(null)
+    try {
+      const blob = await buildCollage(photos)
+      if (!blob) throw new Error('Failed to create collage')
+      const url  = URL.createObjectURL(blob)
+      const file = new File([blob], `putt-n-glow-collage-${Date.now()}.jpg`, { type:'image/jpeg' })
+      if (navigator.canShare?.({ files:[file] })) {
+        await navigator.share({ files:[file], title:'Putt N Glow Memories' })
+      } else {
+        const a = document.createElement('a'); a.href=url; a.download=file.name; a.click()
+      }
+      setTimeout(() => URL.revokeObjectURL(url), 3000)
+    } catch(e) {
+      setError(e.message || 'Could not create collage')
+    } finally { setBuilding(false) }
+  }
+
+  return (
+    <div style={{ marginBottom:8 }}>
+      <button className="btn btn-ghost btn-full" onClick={generate} disabled={building} style={{ gap:7, border:'1px solid rgba(255,214,0,0.25)', color:'var(--yellow)' }}>
+        {building ? (
+          <><span style={{ width:14,height:14,border:'2px solid rgba(255,214,0,0.3)',borderTopColor:'var(--yellow)',borderRadius:'50%',animation:'spin 0.7s linear infinite',display:'inline-block' }}/> Creating collage…</>
+        ) : <>🖼️ Share all as collage</>}
+      </button>
+      {error && <p style={{ color:'#ff5252', fontSize:12, textAlign:'center', marginTop:6 }}>{error}</p>}
+    </div>
+  )
+}
+
 // ── Photo Gallery Sheet ───────────────────────────────────────
 export function PhotoGallery({ onClose }) {
   const { photos, addPhoto } = useGame()
@@ -364,16 +492,26 @@ export function PhotoGallery({ onClose }) {
     setShowCamera(true)
   }
 
+  const [saveError, setSaveError] = useState(null)
+  const [saved,     setSaved]     = useState(false)
+
   async function confirmPhoto() {
     if (!capturedBlob) return
-    setProcessing(true)
+    setProcessing(true); setSaveError(null)
     try {
       const polaroid = await composePolaroid(capturedBlob, isFront)
-      await addPhoto(polaroid || capturedBlob)
+      if (!polaroid) throw new Error('Photo processing failed — please try again.')
+      await addPhoto(polaroid)
+      setSaved(true)
       setCarouselIdx(photos.length)
+      // Auto-close preview after success
+      setTimeout(() => {
+        if (previewUrl) { URL.revokeObjectURL(previewUrl); setPreviewUrl(null) }
+        setCapturedBlob(null); setSaved(false)
+      }, 1400)
+    } catch (err) {
+      setSaveError(err.message || 'Could not save photo. Please try again.')
     } finally {
-      if (previewUrl) { URL.revokeObjectURL(previewUrl); setPreviewUrl(null) }
-      setCapturedBlob(null)
       setProcessing(false)
     }
   }
@@ -399,14 +537,43 @@ export function PhotoGallery({ onClose }) {
         <div style={{ marginBottom:20 }}>
           <PolaroidPreview url={previewUrl} label={dateLabel}/>
         </div>
+        {/* Error state */}
+        {saveError && (
+          <div style={{ background:'rgba(255,59,59,0.10)', border:'1px solid rgba(255,59,59,0.3)',
+            borderRadius:10, padding:'10px 14px', marginBottom:12, display:'flex', gap:10, alignItems:'flex-start' }}>
+            <span style={{ fontSize:18, flexShrink:0 }}>⚠️</span>
+            <div>
+              <p style={{ color:'#ff5252', fontSize:13, fontWeight:700, margin:'0 0 2px' }}>Photo not saved</p>
+              <p style={{ color:'rgba(255,82,82,0.7)', fontSize:12, margin:0 }}>{saveError}</p>
+            </div>
+          </div>
+        )}
+        {/* Success state */}
+        {saved && (
+          <div style={{ background:'rgba(52,211,153,0.10)', border:'1px solid rgba(52,211,153,0.3)',
+            borderRadius:10, padding:'12px 14px', marginBottom:12, textAlign:'center' }}>
+            <p style={{ color:'#34d399', fontSize:14, fontWeight:700, margin:0 }}>✓ Polaroid saved!</p>
+          </div>
+        )}
         <div style={{ display:'flex', gap:10 }}>
-          <button className="btn btn-ghost" onClick={() => { if(previewUrl){URL.revokeObjectURL(previewUrl);setPreviewUrl(null)} setCapturedBlob(null) }} style={{ flex:1 }}>
+          <button className="btn btn-ghost" onClick={() => {
+            if (previewUrl) { URL.revokeObjectURL(previewUrl); setPreviewUrl(null) }
+            setCapturedBlob(null); setSaveError(null); setSaved(false)
+          }} style={{ flex:1 }} disabled={processing || saved}>
             Cancel
           </button>
-          <button className="btn btn-primary" onClick={confirmPhoto} disabled={processing} style={{ flex:2, gap:7 }}>
-            {processing ? t.saving : <>{t.savePolaroid}</>}
+          <button className="btn btn-primary" onClick={confirmPhoto}
+            disabled={processing || saved} style={{ flex:2, gap:7 }}>
+            {saved ? '✓ Saved!' : processing ? (
+              <span style={{ display:'flex', alignItems:'center', gap:8 }}>
+                <span style={{ width:14, height:14, border:'2px solid rgba(255,255,255,0.3)',
+                  borderTopColor:'#fff', borderRadius:'50%', animation:'spin 0.7s linear infinite', display:'inline-block' }}/>
+                Saving…
+              </span>
+            ) : saveError ? 'Try Again' : t.savePolaroid}
           </button>
         </div>
+        <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
       </div>
     </div>
   )
