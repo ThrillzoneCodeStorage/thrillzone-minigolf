@@ -74,12 +74,9 @@ function CountryFlagPicker({ player, sessionId, onDone }) {
 
   async function save(code) {
     setSelected(code); setSaving(true)
-    try {
-      const { supabase } = await import('../../lib/supabase')
-      await supabase.from('sessions').update({ country_code: code }).eq('id', sessionId)
-    } catch {}
+    // Just notify parent — country is stored per player in leaderboard_player_photos
     setSaving(false)
-    setTimeout(() => onDone(code), 500)
+    setTimeout(() => onDone(code), 300)
   }
 
   const filtered = search.trim()
@@ -154,7 +151,7 @@ function CountryFlagPicker({ player, sessionId, onDone }) {
 }
 
 // ── Leaderboard selfie button ─────────────────────────────────
-function LbSelfieButton({ sessionId, player, onDone }) {
+function LbSelfieButton({ sessionId, player, onDone, countryCode = null }) {
   const t         = useTranslation()
   const videoRef  = useRef(null)
   const streamRef = useRef(null)
@@ -193,7 +190,7 @@ function LbSelfieButton({ sessionId, player, onDone }) {
     try {
       // blob is already mirrored from capture(), so pass isFrontCamera=false
       const lbPhoto = await composeLeaderboardPhoto(blob, false).catch(() => null)
-      await uploadLeaderboardPhoto(sessionId, player.name, lbPhoto || blob)
+      await uploadLeaderboardPhoto(sessionId, player.name, lbPhoto || blob, countryCode)
       setPhase('done')
       setTimeout(onDone, 1400)
     } catch(e) {
@@ -532,6 +529,7 @@ export default function EndScreen() {
                   key={lbSelfiePlayer.name}
                   sessionId={sessionId}
                   player={lbSelfiePlayer}
+                  countryCode={lbSelfiePlayer.countryCode || null}
                   onDone={nextPlayer}
                 />
               </div>

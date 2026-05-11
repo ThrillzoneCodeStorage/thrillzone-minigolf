@@ -207,7 +207,10 @@ export default function TVLeaderboard() {
     setBestDay(d); setBestWeek(w); setBestMonth(mo); setBestYear(yr); setBestAll(a); setHoleAvgs(h)
     setPhotos(p.map(x => x.storage_path).filter(Boolean))
     const pm = {}
-    lbp.forEach(lp => { pm[`${lp.session_id}-${lp.player_name}`] = lp.photo_url })
+    lbp.forEach(lp => {
+      pm[`${lp.session_id}-${lp.player_name}`] = lp.photo_url
+      if (lp.country_code) pm[`flag-${lp.session_id}-${lp.player_name}`] = lp.country_code
+    })
     setPlayerPhotos(pm)
   }, [])
 
@@ -453,18 +456,13 @@ export default function TVLeaderboard() {
                             <span style={{ fontSize:nameSize, fontWeight:900, letterSpacing:'-0.03em', color:isFirst?'#FFD600':'#ccc', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>
                               {e.name}
                             </span>
-                            {e.country_code && e.country_code !== 'OTHER' && (
-                              <span style={{ fontSize:Math.max(14,nameSize*0.6), flexShrink:0 }}>
-                                {({'NZ':'🇳🇿','AU':'🇦🇺','GB':'🇬🇧','US':'🇺🇸','DE':'🇩🇪','FR':'🇫🇷','JP':'🇯🇵',
-                                   'CN':'🇨🇳','IN':'🇮🇳','CA':'🇨🇦','BR':'🇧🇷','MX':'🇲🇽','ES':'🇪🇸','IT':'🇮🇹',
-                                   'NL':'🇳🇱','SE':'🇸🇪','NO':'🇳🇴','DK':'🇩🇰','CH':'🇨🇭','AT':'🇦🇹','KR':'🇰🇷',
-                                   'SG':'🇸🇬','ZA':'🇿🇦','IE':'🇮🇪','PT':'🇵🇹','PL':'🇵🇱','FJ':'🇫🇯','WS':'🇼🇸',
-                                   'TO':'🇹🇴','PG':'🇵🇬','TW':'🇹🇼','HK':'🇭🇰','MY':'🇲🇾','TH':'🇹🇭','ID':'🇮🇩',
-                                   'PH':'🇵🇭','VN':'🇻🇳','AR':'🇦🇷','CL':'🇨🇱','FI':'🇫🇮','BE':'🇧🇪','CZ':'🇨🇿',
-                                   'SK':'🇸🇰','HU':'🇭🇺','RO':'🇷🇴','HR':'🇭🇷','GR':'🇬🇷','RU':'🇷🇺','UA':'🇺🇦',
-                                   'AE':'🇦🇪','SA':'🇸🇦','IL':'🇮🇱','KE':'🇰🇪'})[e.country_code] || ''}
-                              </span>
-                            )}
+                            {(() => {
+                              const cc = playerPhotos[`flag-${e.session_id}-${e.name}`] || e.country_code
+                              const FLAGS = {'NZ':'🇳🇿','AU':'🇦🇺','GB':'🇬🇧','US':'🇺🇸','DE':'🇩🇪','FR':'🇫🇷','JP':'🇯🇵','CN':'🇨🇳','IN':'🇮🇳','CA':'🇨🇦','BR':'🇧🇷','MX':'🇲🇽','ES':'🇪🇸','IT':'🇮🇹','NL':'🇳🇱','SE':'🇸🇪','NO':'🇳🇴','DK':'🇩🇰','CH':'🇨🇭','AT':'🇦🇹','KR':'🇰🇷','SG':'🇸🇬','ZA':'🇿🇦','IE':'🇮🇪','PT':'🇵🇹','PL':'🇵🇱','FJ':'🇫🇯','WS':'🇼🇸','TO':'🇹🇴','PG':'🇵🇬','TW':'🇹🇼','HK':'🇭🇰','MY':'🇲🇾','TH':'🇹🇭','ID':'🇮🇩','PH':'🇵🇭','VN':'🇻🇳','AR':'🇦🇷','CL':'🇨🇱','FI':'🇫🇮','BE':'🇧🇪','CZ':'🇨🇿','SK':'🇸🇰','HU':'🇭🇺','RO':'🇷🇴','HR':'🇭🇷','GR':'🇬🇷','RU':'🇷🇺','UA':'🇺🇦','AE':'🇦🇪','SA':'🇸🇦','IL':'🇮🇱','KE':'🇰🇪'}
+                              return cc && cc !== 'OTHER' && FLAGS[cc] ? (
+                                <span style={{ fontSize:Math.max(14,nameSize*0.6), flexShrink:0 }}>{FLAGS[cc]}</span>
+                              ) : null
+                            })()}
                           </span>
                           {e.started_at && (
                             <span style={{ fontSize:dateSize, color:'#2a2a2a', fontWeight:600 }}>

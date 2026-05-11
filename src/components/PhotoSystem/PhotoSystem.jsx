@@ -617,12 +617,9 @@ export function PhotoGallery({ onClose }) {
         {photos.length > 0 && (
           <div style={{ marginBottom:20 }}>
             <div style={{ position:'relative' }}>
-              <div style={{ background:'#fff', padding:'10px 10px 0', borderRadius:6, boxShadow:'0 8px 32px rgba(0,0,0,0.45)' }}>
+              <div style={{ borderRadius:6, overflow:'hidden', boxShadow:'0 8px 32px rgba(0,0,0,0.45)' }}>
                 <img src={photos[carouselIdx]} alt={`Memory ${carouselIdx+1}`}
-                  style={{ width:'100%', display:'block', borderRadius:2 }}/>
-                <div style={{ padding:'6px 0 10px', textAlign:'center' }}>
-                  <p style={{ fontSize:11, color:'#aaa', fontFamily:'Georgia,serif', margin:0 }}>{new Date().toLocaleDateString('en-NZ', { day:'numeric', month:'short', year:'numeric' })}</p>
-                </div>
+                  style={{ width:'100%', display:'block' }}/>
               </div>
               {photos.length > 1 && (
                 <>

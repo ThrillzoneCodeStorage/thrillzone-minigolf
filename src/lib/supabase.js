@@ -460,7 +460,7 @@ export async function uploadLeaderboardPhoto(sessionId, playerName, blob) {
 export async function getLeaderboardPlayerPhotos() {
   const { data } = await supabase
     .from('leaderboard_player_photos')
-    .select('session_id, player_name, photo_url, taken_at')
+    .select('session_id, player_name, photo_url, taken_at, country_code')
     .order('taken_at', { ascending: false })
   return data || []
 }
