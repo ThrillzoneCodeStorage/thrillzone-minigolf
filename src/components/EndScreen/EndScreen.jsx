@@ -188,14 +188,16 @@ function LbSelfieButton({ sessionId, player, onDone, countryCode = null }) {
     if (!blob) return
     setPhase('saving')
     try {
-      // blob is already mirrored from capture(), so pass isFrontCamera=false
-      const lbPhoto = await composeLeaderboardPhoto(blob, false).catch(() => null)
-      await uploadLeaderboardPhoto(sessionId, player.name, lbPhoto || blob, countryCode)
+      // Try to compose leaderboard-formatted photo; fall back to raw blob if it fails
+      let lbPhoto = blob
+      try { lbPhoto = await composeLeaderboardPhoto(blob, false) ?? blob } catch(e) { console.warn('composeLeaderboardPhoto failed, using raw blob', e) }
+      await uploadLeaderboardPhoto(sessionId, player.name, lbPhoto, countryCode)
       setPhase('done')
       setTimeout(onDone, 1400)
     } catch(e) {
       console.error('Selfie save error:', e)
-      setPhase('error'); setErrMsg('Could not save. Tap "Try again" or skip.')
+      setPhase('error')
+      setErrMsg(`Could not save: ${e?.message || 'Unknown error'}. Try again or skip.`)
     }
   }
 

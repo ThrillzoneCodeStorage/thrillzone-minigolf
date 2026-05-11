@@ -444,16 +444,25 @@ export async function setSessionOptOut(sessionId, optOut) {
 }
 
 // ── Leaderboard player photos ──────────────────────────────────
-export async function uploadLeaderboardPhoto(sessionId, playerName, blob) {
-  const fileName = `lb/${sessionId}/${playerName.replace(/\s+/g,'-')}_${Date.now()}.jpg`
+export async function uploadLeaderboardPhoto(sessionId, playerName, blob, countryCode = null) {
+  const safeName = playerName.replace(/[^a-zA-Z0-9]/g, '-')
+  const fileName = `lb/${sessionId}/${safeName}_${Date.now()}.jpg`
   const { error } = await supabase.storage
     .from('photos')
     .upload(fileName, blob, { contentType: 'image/jpeg', upsert: true })
   if (error) throw error
   const { data: { publicUrl } } = supabase.storage.from('photos').getPublicUrl(fileName)
-  await supabase.from('leaderboard_player_photos')
-    .upsert({ session_id: sessionId, player_name: playerName, photo_url: publicUrl },
-             { onConflict: 'session_id,player_name' })
+  // Try with country_code first, fall back without it if column doesn't exist
+  const record = { session_id: sessionId, player_name: playerName, photo_url: publicUrl }
+  if (countryCode) record.country_code = countryCode
+  const { error: upsertErr } = await supabase.from('leaderboard_player_photos')
+    .upsert(record, { onConflict: 'session_id,player_name' })
+  if (upsertErr) {
+    // Retry without country_code in case column doesn't exist yet
+    await supabase.from('leaderboard_player_photos')
+      .upsert({ session_id: sessionId, player_name: playerName, photo_url: publicUrl },
+               { onConflict: 'session_id,player_name' })
+  }
   return publicUrl
 }
 
