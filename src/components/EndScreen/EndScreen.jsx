@@ -154,6 +154,7 @@ function CountryFlagPicker({ player, sessionId, onDone }) {
 
 // ── Leaderboard selfie button ─────────────────────────────────
 function LbSelfieButton({ sessionId, player, onDone }) {
+  const t         = useTranslation()
   const videoRef  = useRef(null)
   const streamRef = useRef(null)
   const [phase,     setPhase]     = useState('idle') // idle | camera | preview | saving | done | error
@@ -264,20 +265,6 @@ function LbSelfieButton({ sessionId, player, onDone }) {
     <div style={{ textAlign:'center', padding:'12px 0' }}>
       <p style={{ color:'#ff5252', fontSize:14, marginBottom:12 }}>{errMsg}</p>
       <button className="btn btn-ghost btn-full" onClick={() => setPhase('idle')}>Try again</button>
-    </div>
-  )
-
-  return (
-    <div>
-      <div style={{ position:'relative', borderRadius:12, overflow:'hidden', aspectRatio:'1', background:'#000', marginBottom:12 }}>
-        <video ref={videoRef} playsInline muted style={{ width:'100%', height:'100%', objectFit:'cover', display:'block', transform:'scaleX(-1)' }}/>
-      </div>
-      <div style={{ display:'flex', justifyContent:'center' }}>
-        <button onClick={capture}
-          style={{ width:68, height:68, borderRadius:'50%', background:'#fff', border:'5px solid rgba(255,255,255,0.35)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center' }}>
-          <Camera size={28} color="#000"/>
-        </button>
-      </div>
     </div>
   )
 }
