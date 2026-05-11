@@ -5,23 +5,43 @@ import { useTranslation } from '../../lib/TranslationContext'
 import { updateSession, upsertScore, uploadLeaderboardPhoto } from '../../lib/supabase'
 import { EndConfetti } from '../HoleScreen/Celebrations'
 import ScorecardShare from './ScorecardShare'
-import { composePolaroid } from '../PhotoSystem/PhotoSystem'
+import { composePolaroid, composeLeaderboardPhoto } from '../PhotoSystem/PhotoSystem'
 
 // ── Country flag picker ───────────────────────────────────────
 const COUNTRIES = [
+  // Oceania
   {code:'NZ',flag:'🇳🇿',name:'New Zealand'},{code:'AU',flag:'🇦🇺',name:'Australia'},
-  {code:'GB',flag:'🇬🇧',name:'UK'},{code:'US',flag:'🇺🇸',name:'USA'},
-  {code:'DE',flag:'🇩🇪',name:'Germany'},{code:'FR',flag:'🇫🇷',name:'France'},
+  {code:'FJ',flag:'🇫🇯',name:'Fiji'},{code:'WS',flag:'🇼🇸',name:'Samoa'},
+  {code:'TO',flag:'🇹🇴',name:'Tonga'},{code:'PG',flag:'🇵🇬',name:'Papua New Guinea'},
+  // Asia
   {code:'JP',flag:'🇯🇵',name:'Japan'},{code:'CN',flag:'🇨🇳',name:'China'},
-  {code:'IN',flag:'🇮🇳',name:'India'},{code:'CA',flag:'🇨🇦',name:'Canada'},
-  {code:'BR',flag:'🇧🇷',name:'Brazil'},{code:'MX',flag:'🇲🇽',name:'Mexico'},
-  {code:'ES',flag:'🇪🇸',name:'Spain'},{code:'IT',flag:'🇮🇹',name:'Italy'},
-  {code:'NL',flag:'🇳🇱',name:'Netherlands'},{code:'SE',flag:'🇸🇪',name:'Sweden'},
-  {code:'NO',flag:'🇳🇴',name:'Norway'},{code:'DK',flag:'🇩🇰',name:'Denmark'},
-  {code:'CH',flag:'🇨🇭',name:'Switzerland'},{code:'AT',flag:'🇦🇹',name:'Austria'},
   {code:'KR',flag:'🇰🇷',name:'South Korea'},{code:'SG',flag:'🇸🇬',name:'Singapore'},
-  {code:'ZA',flag:'🇿🇦',name:'South Africa'},{code:'IE',flag:'🇮🇪',name:'Ireland'},
+  {code:'TW',flag:'🇹🇼',name:'Taiwan'},{code:'HK',flag:'🇭🇰',name:'Hong Kong'},
+  {code:'MY',flag:'🇲🇾',name:'Malaysia'},{code:'TH',flag:'🇹🇭',name:'Thailand'},
+  {code:'ID',flag:'🇮🇩',name:'Indonesia'},{code:'PH',flag:'🇵🇭',name:'Philippines'},
+  {code:'VN',flag:'🇻🇳',name:'Vietnam'},{code:'IN',flag:'🇮🇳',name:'India'},
+  // Americas
+  {code:'US',flag:'🇺🇸',name:'USA'},{code:'CA',flag:'🇨🇦',name:'Canada'},
+  {code:'BR',flag:'🇧🇷',name:'Brazil'},{code:'MX',flag:'🇲🇽',name:'Mexico'},
+  {code:'AR',flag:'🇦🇷',name:'Argentina'},{code:'CL',flag:'🇨🇱',name:'Chile'},
+  // Europe
+  {code:'GB',flag:'🇬🇧',name:'UK'},{code:'DE',flag:'🇩🇪',name:'Germany'},
+  {code:'FR',flag:'🇫🇷',name:'France'},{code:'IT',flag:'🇮🇹',name:'Italy'},
+  {code:'ES',flag:'🇪🇸',name:'Spain'},{code:'NL',flag:'🇳🇱',name:'Netherlands'},
+  {code:'SE',flag:'🇸🇪',name:'Sweden'},{code:'NO',flag:'🇳🇴',name:'Norway'},
+  {code:'DK',flag:'🇩🇰',name:'Denmark'},{code:'FI',flag:'🇫🇮',name:'Finland'},
+  {code:'CH',flag:'🇨🇭',name:'Switzerland'},{code:'AT',flag:'🇦🇹',name:'Austria'},
+  {code:'BE',flag:'🇧🇪',name:'Belgium'},{code:'IE',flag:'🇮🇪',name:'Ireland'},
   {code:'PT',flag:'🇵🇹',name:'Portugal'},{code:'PL',flag:'🇵🇱',name:'Poland'},
+  {code:'CZ',flag:'🇨🇿',name:'Czech Republic'},{code:'SK',flag:'🇸🇰',name:'Slovakia'},
+  {code:'HU',flag:'🇭🇺',name:'Hungary'},{code:'RO',flag:'🇷🇴',name:'Romania'},
+  {code:'HR',flag:'🇭🇷',name:'Croatia'},{code:'GR',flag:'🇬🇷',name:'Greece'},
+  {code:'RU',flag:'🇷🇺',name:'Russia'},{code:'UA',flag:'🇺🇦',name:'Ukraine'},
+  // Middle East & Africa
+  {code:'ZA',flag:'🇿🇦',name:'South Africa'},{code:'AE',flag:'🇦🇪',name:'UAE'},
+  {code:'SA',flag:'🇸🇦',name:'Saudi Arabia'},{code:'IL',flag:'🇮🇱',name:'Israel'},
+  {code:'KE',flag:'🇰🇪',name:'Kenya'},
+  // Other
   {code:'OTHER',flag:'🌍',name:'Other'},
 ]
 
@@ -102,7 +122,9 @@ function LbSelfieButton({ sessionId, player, onDone }) {
     setUploading(true)
     try {
       const polaroid = await composePolaroid(blob)
-      await uploadLeaderboardPhoto(sessionId, player.name, polaroid||blob)
+      // Use leaderboard version — same shape, no logo, big date only
+      const lbPhoto = await composeLeaderboardPhoto(blob, false).catch(() => blob)
+      await uploadLeaderboardPhoto(sessionId, player.name, lbPhoto || blob)
       onDone()
     } finally { setUploading(false) }
   }
