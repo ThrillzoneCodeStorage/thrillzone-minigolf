@@ -154,62 +154,111 @@ function CountryFlagPicker({ player, sessionId, onDone }) {
 
 // ── Leaderboard selfie button ─────────────────────────────────
 function LbSelfieButton({ sessionId, player, onDone }) {
-  const t = useTranslation()
-  const videoRef = useRef(null)
+  const videoRef  = useRef(null)
   const streamRef = useRef(null)
-  const [open, setOpen] = useState(false)
-  const [blob, setBlob] = useState(null)
-  const [previewUrl, setPreviewUrl] = useState(null)
-  const [uploading, setUploading] = useState(false)
+  const [phase,     setPhase]     = useState('idle') // idle | camera | preview | saving | done | error
+  const [blob,      setBlob]      = useState(null)
+  const [previewUrl,setPreviewUrl]= useState(null)
+  const [errMsg,    setErrMsg]    = useState('')
 
   async function openCam() {
-    setOpen(true)
+    setPhase('camera')
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user' }, audio:false })
+      const stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ ideal:1280 }, height:{ ideal:1280 } }, audio:false })
       streamRef.current = stream
       if (videoRef.current) { videoRef.current.srcObject = stream; await videoRef.current.play() }
-    } catch { setOpen(false) }
+    } catch(e) { setPhase('error'); setErrMsg('Camera not available. Please allow camera access.') }
   }
 
   function stopStream() { streamRef.current?.getTracks().forEach(t=>t.stop()); streamRef.current=null }
 
   function capture() {
     const v = videoRef.current; if (!v) return
-    const c = document.createElement('canvas'); c.width=v.videoWidth; c.height=v.videoHeight
-    const ctx=c.getContext('2d'); ctx.translate(c.width,0); ctx.scale(-1,1); ctx.drawImage(v,0,0)
+    const size = Math.min(v.videoWidth, v.videoHeight)
+    const c = document.createElement('canvas'); c.width=size; c.height=size
+    const ctx=c.getContext('2d')
+    // Centre-crop square from video
+    const ox=(v.videoWidth-size)/2, oy=(v.videoHeight-size)/2
+    ctx.translate(size,0); ctx.scale(-1,1)
+    ctx.drawImage(v, ox, oy, size, size, 0, 0, size, size)
     stopStream()
-    c.toBlob(b => { setBlob(b); setPreviewUrl(URL.createObjectURL(b)) }, 'image/jpeg', 0.92)
+    c.toBlob(b => { setBlob(b); setPreviewUrl(URL.createObjectURL(b)); setPhase('preview') }, 'image/jpeg', 0.92)
   }
 
-  async function confirm() {
-    setUploading(true)
+  async function save() {
+    setPhase('saving')
     try {
-      const polaroid = await composePolaroid(blob)
-      // Use leaderboard version — same shape, no logo, big date only
-      const lbPhoto = await composeLeaderboardPhoto(blob, false).catch(() => blob)
+      const lbPhoto = await composeLeaderboardPhoto(blob, false)
       await uploadLeaderboardPhoto(sessionId, player.name, lbPhoto || blob)
-      onDone()
-    } finally { setUploading(false) }
+      setPhase('done')
+      setTimeout(onDone, 1200)
+    } catch(e) { setPhase('error'); setErrMsg('Could not save. Please try again.') }
   }
 
-  if (!open) return (
-    <button className="btn btn-primary btn-full btn-lg" onClick={openCam} style={{ gap:8 }}>
-      <Camera size={20}/> {t.takeSelfie}
-    </button>
+  function retake() { setBlob(null); if(previewUrl){URL.revokeObjectURL(previewUrl);setPreviewUrl(null)}; openCam() }
+
+  // idle
+  if (phase==='idle') return (
+    <div style={{ textAlign:'center' }}>
+      <p style={{ fontSize:14, color:'var(--text-2)', marginBottom:12 }}>
+        Add your photo next to your name on the leaderboard!
+      </p>
+      <button className="btn btn-primary btn-full" onClick={openCam} style={{ gap:8, fontSize:16, padding:'14px' }}>
+        <Camera size={22}/> Take Selfie
+      </button>
+    </div>
   )
 
-  if (blob && previewUrl) return (
+  // camera live
+  if (phase==='camera') return (
     <div>
-      <div style={{ background:'#fff', padding:'8px 8px 28px', borderRadius:6, marginBottom:12, boxShadow:'0 4px 20px rgba(0,0,0,0.5)' }}>
-        <img src={previewUrl} alt="Preview" style={{ width:'100%', aspectRatio:'1', objectFit:'cover', display:'block', borderRadius:2 }}/>
-        <div style={{ textAlign:'center', marginTop:8 }}><img src="/logo.png" alt="" style={{ height:24, objectFit:'contain' }}/></div>
+      <div style={{ position:'relative', borderRadius:12, overflow:'hidden', aspectRatio:'1', marginBottom:12, background:'#000' }}>
+        <video ref={videoRef} autoPlay playsInline muted style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }}/>
+        <div style={{ position:'absolute', inset:0, border:'3px solid rgba(255,214,0,0.5)', borderRadius:12, pointerEvents:'none' }}/>
+        <p style={{ position:'absolute', bottom:8, left:0, right:0, textAlign:'center', fontSize:11, color:'rgba(255,214,0,0.7)', fontWeight:600 }}>Selfie · Square crop</p>
       </div>
-      <div style={{ display:'flex', gap:9 }}>
-        <button className="btn btn-ghost" style={{ flex:1 }} onClick={() => { setBlob(null); setPreviewUrl(null); openCam() }}>{t.retake}</button>
-        <button className="btn btn-primary" style={{ flex:2 }} onClick={confirm} disabled={uploading}>
-          {uploading?t.uploading:t.saveToLeaderboard}
+      <button className="btn btn-primary btn-full" onClick={capture} style={{ gap:8, fontSize:16, padding:'14px' }}>
+        <Camera size={20}/> Capture
+      </button>
+    </div>
+  )
+
+  // preview
+  if (phase==='preview') return (
+    <div>
+      <div style={{ borderRadius:12, overflow:'hidden', marginBottom:12, boxShadow:'0 4px 20px rgba(0,0,0,0.5)' }}>
+        <img src={previewUrl} alt="Selfie preview" style={{ width:'100%', display:'block', aspectRatio:'1', objectFit:'cover' }}/>
+      </div>
+      <div style={{ display:'flex', gap:10 }}>
+        <button className="btn btn-ghost" style={{ flex:1 }} onClick={retake}><RotateCcw size={15}/> Retake</button>
+        <button className="btn btn-primary" style={{ flex:2, gap:8 }} onClick={save}>
+          <Check size={16}/> Add to Leaderboard
         </button>
       </div>
+    </div>
+  )
+
+  // saving
+  if (phase==='saving') return (
+    <div style={{ textAlign:'center', padding:'20px 0' }}>
+      <div style={{ width:32, height:32, border:'3px solid rgba(255,214,0,0.2)', borderTopColor:'var(--yellow)', borderRadius:'50%', animation:'spin 0.7s linear infinite', margin:'0 auto 12px' }}/>
+      <p style={{ color:'var(--text-2)', fontSize:14, margin:0 }}>Saving to leaderboard…</p>
+    </div>
+  )
+
+  // done
+  if (phase==='done') return (
+    <div style={{ textAlign:'center', padding:'16px 0' }}>
+      <div style={{ fontSize:36, marginBottom:8 }}>✅</div>
+      <p style={{ color:'#34d399', fontSize:15, fontWeight:700, margin:0 }}>Added to the leaderboard!</p>
+    </div>
+  )
+
+  // error
+  return (
+    <div style={{ textAlign:'center', padding:'12px 0' }}>
+      <p style={{ color:'#ff5252', fontSize:14, marginBottom:12 }}>{errMsg}</p>
+      <button className="btn btn-ghost btn-full" onClick={() => setPhase('idle')}>Try again</button>
     </div>
   )
 
@@ -421,64 +470,89 @@ export default function EndScreen() {
   return (
     <div className="screen animate-in">
       {/* ── Leaderboard selfie + country flag modal ── */}
-      {showLbSelfie && lbSelfiePlayer && (
-        <div className="modal-overlay" style={{ zIndex:400 }}>
-          <div className="modal-sheet" style={{ maxHeight:'92dvh', overflowY:'auto' }}>
-            {/* Header */}
-            <div style={{ textAlign:'center', marginBottom:20 }}>
-              <div style={{ fontSize:28, marginBottom:8 }}>🏆</div>
-              <h3 style={{ fontSize:20, fontWeight:900, letterSpacing:'-0.02em', margin:'0 0 6px' }}>
-                {t.madeLeaderboard}
-              </h3>
-              <p style={{ fontSize:14, color:'var(--text-2)', margin:0, lineHeight:1.55 }}>
-                <strong style={{ color:lbSelfiePlayer.color }}>{lbSelfiePlayer.name}</strong>{' '}
-                {t.madeLeaderboardDesc}{' '}
-                <strong style={{ color:'var(--yellow)' }}>
-                  {holes.reduce((s,h)=>s+(scores[h.id]?.[lbSelfiePlayer.name]||0),0)}
-                </strong>{' '}
-                {t.madeLeaderboardDesc2}
-              </p>
+      {showLbSelfie && lbSelfiePlayer && (() => {
+        const queueIdx  = lbSelfieQueue.findIndex(p => p.name === lbSelfiePlayer.name)
+        const total     = lbSelfieQueue.length
+        const playerTotal = holes.reduce((s,h)=>s+(scores[h.id]?.[lbSelfiePlayer.name]||0),0)
+
+        function nextPlayer() {
+          const remaining = lbSelfieQueue.slice(queueIdx + 1)
+          if (remaining.length > 0) {
+            setLbSelfiePlayer(remaining[0])
+            setLbSelfieQueue(remaining)
+          } else {
+            setShowLbSelfie(false)
+          }
+        }
+
+        return (
+          <div className="modal-overlay" style={{ zIndex:400 }}>
+            <div className="modal-sheet" style={{ maxHeight:'94dvh', overflowY:'auto' }}>
+
+              {/* Progress indicator for multiple players */}
+              {total > 1 && (
+                <div style={{ display:'flex', gap:6, marginBottom:16, justifyContent:'center' }}>
+                  {lbSelfieQueue.map((p, i) => (
+                    <div key={p.name} style={{ height:4, flex:1, borderRadius:2,
+                      background: i===queueIdx ? p.color : 'var(--border)' }}/>
+                  ))}
+                </div>
+              )}
+
+              {/* Player header */}
+              <div style={{ textAlign:'center', marginBottom:18 }}>
+                <div style={{ width:48, height:48, borderRadius:'50%', background:lbSelfiePlayer.color,
+                  display:'flex', alignItems:'center', justifyContent:'center', fontSize:20,
+                  fontWeight:900, color:'#000', margin:'0 auto 10px' }}>
+                  {lbSelfiePlayer.name[0].toUpperCase()}
+                </div>
+                <h3 style={{ fontSize:22, fontWeight:900, letterSpacing:'-0.02em', margin:'0 0 4px',
+                  color:lbSelfiePlayer.color }}>{lbSelfiePlayer.name}</h3>
+                <p style={{ fontSize:14, color:'var(--text-2)', margin:0 }}>
+                  🏆 Made the leaderboard with <strong style={{ color:'var(--yellow)' }}>{playerTotal} strokes</strong>!
+                </p>
+                {total > 1 && (
+                  <p style={{ fontSize:12, color:'var(--text-3)', margin:'6px 0 0' }}>
+                    Player {queueIdx+1} of {total}
+                  </p>
+                )}
+              </div>
+
+              {/* Step 1 — Flag */}
+              <div style={{ marginBottom:16 }}>
+                <p style={{ fontSize:12, fontWeight:800, textTransform:'uppercase', letterSpacing:'0.08em',
+                  color:'var(--text-3)', marginBottom:10 }}>Step 1 · Where are you from?</p>
+                <CountryFlagPicker
+                  player={lbSelfiePlayer}
+                  sessionId={sessionId}
+                  onDone={(code) => setLbSelfiePlayer(p => ({ ...p, _flagDone:true, countryCode:code }))}
+                />
+              </div>
+
+              <div style={{ height:1, background:'var(--border)', margin:'12px 0 16px' }}/>
+
+              {/* Step 2 — Selfie */}
+              <div style={{ marginBottom:14 }}>
+                <p style={{ fontSize:12, fontWeight:800, textTransform:'uppercase', letterSpacing:'0.08em',
+                  color:'var(--text-3)', marginBottom:10 }}>Step 2 · Your leaderboard photo</p>
+                <LbSelfieButton
+                  key={lbSelfiePlayer.name}
+                  sessionId={sessionId}
+                  player={lbSelfiePlayer}
+                  onDone={nextPlayer}
+                />
+              </div>
+
+              {/* Skip */}
+              <button className="btn btn-ghost btn-full btn-sm"
+                style={{ color:'var(--text-3)', fontSize:12 }}
+                onClick={nextPlayer}>
+                Skip {total > 1 ? '→ Next player' : ''}
+              </button>
             </div>
-
-            {/* Country flag picker — always shown, skip available */}
-            <CountryFlagPicker
-              player={lbSelfiePlayer}
-              sessionId={sessionId}
-              onDone={(code) => {
-                setLbSelfiePlayer(p => ({ ...p, _flagDone:true, countryCode:code }))
-              }}
-            />
-
-            {/* Divider */}
-            <div style={{ height:1, background:'var(--border)', margin:'16px 0' }}/>
-
-            {/* Selfie — always available, not gated on flag */}
-            <LbSelfieButton
-              sessionId={sessionId}
-              player={lbSelfiePlayer}
-              onDone={() => {
-                const remaining = lbSelfieQueue.slice(1)
-                if (remaining.length > 0) {
-                  setLbSelfiePlayer(remaining[0])
-                  setLbSelfieQueue(remaining)
-                } else {
-                  setShowLbSelfie(false)
-                }
-              }}
-            />
-
-            {/* Skip both */}
-            <button className="btn btn-ghost btn-full" style={{ marginTop:10, fontSize:13 }}
-              onClick={() => {
-                const remaining = lbSelfieQueue.slice(1)
-                if (remaining.length > 0) { setLbSelfiePlayer(remaining[0]); setLbSelfieQueue(remaining) }
-                else setShowLbSelfie(false)
-              }}>
-              Skip — continue without photo
-            </button>
           </div>
-        </div>
-      )}
+        )
+      })()}
       <EndConfetti />
       <div className="screen-content" style={{ paddingBottom: 48 }}>
 

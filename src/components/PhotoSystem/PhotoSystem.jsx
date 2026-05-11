@@ -153,8 +153,6 @@ export function composeLeaderboardPhoto(photoBlob, isFrontCamera = false) {
 }
 
 
-// ── Polaroid composer — always 4:5 (1080×1350) ───────────────
-
 export function CameraNavButton({ onClick, photoCount }) {
   return (
     <button onClick={onClick} aria-label="Open photo gallery"
@@ -345,14 +343,35 @@ function FullScreenCamera({ onCapture, onClose }) {
 }
 
 // ── Polaroid preview card ─────────────────────────────────────
-function PolaroidPreview({ url, label }) {
-  return (
-    <div style={{ background:'#fff', padding:'10px 10px 0', borderRadius:4, boxShadow:'0 8px 32px rgba(0,0,0,0.5)', maxWidth:320, margin:'0 auto' }}>
-      <img src={url} alt="Preview" style={{ width:'100%', display:'block', borderRadius:2 }}/>
-      <div style={{ padding:'10px 0 12px', textAlign:'center' }}>
-        {label && <p style={{ fontSize:11, color:'#aaa', fontFamily:'Georgia,serif', marginBottom:6 }}>{label}</p>}
-        <img src="/logo.png" alt="logo" style={{ maxWidth:'75%', maxHeight:44, objectFit:'contain', display:'block', margin:'0 auto' }}/>
+function PolaroidPreview({ url, blob, isFront = false }) {
+  const canvasRef = useRef(null)
+  const [rendered, setRendered] = useState(null)
+
+  useEffect(() => {
+    // Render actual polaroid canvas so preview matches output exactly
+    if (!blob) return
+    composePolaroid(blob, isFront)
+      .then(resultBlob => {
+        if (rendered) URL.revokeObjectURL(rendered)
+        setRendered(URL.createObjectURL(resultBlob))
+      })
+      .catch(() => {}) // fallback to raw url
+    return () => { if (rendered) URL.revokeObjectURL(rendered) }
+  }, [blob])
+
+  // While rendering, show a styled placeholder matching polaroid shape
+  if (!rendered) return (
+    <div style={{ background:'#fff', borderRadius:4, boxShadow:'0 8px 32px rgba(0,0,0,0.5)', maxWidth:300, margin:'0 auto', aspectRatio:'4/5', display:'flex', alignItems:'center', justifyContent:'center' }}>
+      <div style={{ textAlign:'center' }}>
+        <div style={{ width:28, height:28, border:'3px solid rgba(0,0,0,0.1)', borderTopColor:'#999', borderRadius:'50%', animation:'spin 0.7s linear infinite', margin:'0 auto 10px' }}/>
+        <p style={{ color:'#ccc', fontSize:12, margin:0 }}>Preparing preview…</p>
       </div>
+    </div>
+  )
+
+  return (
+    <div style={{ maxWidth:300, margin:'0 auto', borderRadius:4, overflow:'hidden', boxShadow:'0 8px 32px rgba(0,0,0,0.5)' }}>
+      <img ref={canvasRef} src={rendered} alt="Polaroid preview" style={{ width:'100%', display:'block' }}/>
     </div>
   )
 }
@@ -535,7 +554,7 @@ export function PhotoGallery({ onClose }) {
           </button>
         </div>
         <div style={{ marginBottom:20 }}>
-          <PolaroidPreview url={previewUrl} label={dateLabel}/>
+          <PolaroidPreview blob={capturedBlob} isFront={isFront}/>
         </div>
         {/* Error state */}
         {saveError && (
