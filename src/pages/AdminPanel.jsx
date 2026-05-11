@@ -293,7 +293,8 @@ import {
   Plus, Trash2, Edit2, Save, X, Eye, EyeOff,
   GripVertical, Monitor, ChevronDown, ChevronUp, Clock,
   Users, Camera, Zap, TrendingDown,
-  BarChart3, Trophy, CheckCircle, XCircle, RefreshCw, Image
+  BarChart3, Trophy, CheckCircle, XCircle, RefreshCw, Image,
+  Bell, Shuffle
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import {

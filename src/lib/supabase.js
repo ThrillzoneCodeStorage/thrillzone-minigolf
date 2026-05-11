@@ -133,8 +133,9 @@ export async function getAllPhotos(limit = 50) {
 // ── Leaderboard ────────────────────────────────────────────────
 export async function getLeaderboard(period = 'all') {
   // Get total hole count so we can require full course completion
-  const { data: allHoles } = await supabase.from('holes').select('id')
+  const { data: allHoles } = await supabase.from('holes').select('id, par')
   const totalHoles = allHoles?.length || 17
+  const totalPar   = (allHoles || []).reduce((s, h) => s + (h.par || 3), 0)
 
   let query = supabase
     .from('sessions')
@@ -169,6 +170,7 @@ export async function getLeaderboard(period = 'all') {
         color:      player.color,
         total,
         avg,
+        totalPar,
         holes:      playerScores.length,
         session_id: session.id,
         started_at: session.started_at,
@@ -371,8 +373,9 @@ export async function getReportingStats() {
 
 // ── Admin leaderboard (includes session_id for management) ─────
 export async function getAdminLeaderboard(period = 'all') {
-  const { data: allHoles } = await supabase.from('holes').select('id')
+  const { data: allHoles } = await supabase.from('holes').select('id, par')
   const totalHoles = allHoles?.length || 17
+  const totalPar   = (allHoles || []).reduce((s, h) => s + (h.par || 3), 0)
 
   let query = supabase
     .from('sessions')
