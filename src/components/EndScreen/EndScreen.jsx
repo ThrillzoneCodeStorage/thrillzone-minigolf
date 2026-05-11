@@ -7,144 +7,110 @@ import { EndConfetti } from '../HoleScreen/Celebrations'
 import ScorecardShare from './ScorecardShare'
 import { composePolaroid, composeLeaderboardPhoto } from '../PhotoSystem/PhotoSystem'
 
-// ── Country flag picker ───────────────────────────────────────
-const COUNTRIES = [
-  // Oceania
+// ── Country flag picker ────────────────────────────────────────
+const ALL_COUNTRIES = [
   {code:'NZ',flag:'🇳🇿',name:'New Zealand'},{code:'AU',flag:'🇦🇺',name:'Australia'},
-  {code:'FJ',flag:'🇫🇯',name:'Fiji'},{code:'WS',flag:'🇼🇸',name:'Samoa'},
-  {code:'TO',flag:'🇹🇴',name:'Tonga'},{code:'PG',flag:'🇵🇬',name:'Papua New Guinea'},
-  // Asia
-  {code:'JP',flag:'🇯🇵',name:'Japan'},{code:'CN',flag:'🇨🇳',name:'China'},
-  {code:'KR',flag:'🇰🇷',name:'South Korea'},{code:'SG',flag:'🇸🇬',name:'Singapore'},
-  {code:'TW',flag:'🇹🇼',name:'Taiwan'},{code:'HK',flag:'🇭🇰',name:'Hong Kong'},
+  {code:'US',flag:'🇺🇸',name:'USA'},{code:'GB',flag:'🇬🇧',name:'UK'},
+  {code:'CA',flag:'🇨🇦',name:'Canada'},{code:'DE',flag:'🇩🇪',name:'Germany'},
+  {code:'FR',flag:'🇫🇷',name:'France'},{code:'JP',flag:'🇯🇵',name:'Japan'},
+  {code:'CN',flag:'🇨🇳',name:'China'},{code:'KR',flag:'🇰🇷',name:'S. Korea'},
+  {code:'SG',flag:'🇸🇬',name:'Singapore'},{code:'IN',flag:'🇮🇳',name:'India'},
   {code:'MY',flag:'🇲🇾',name:'Malaysia'},{code:'TH',flag:'🇹🇭',name:'Thailand'},
   {code:'ID',flag:'🇮🇩',name:'Indonesia'},{code:'PH',flag:'🇵🇭',name:'Philippines'},
-  {code:'VN',flag:'🇻🇳',name:'Vietnam'},{code:'IN',flag:'🇮🇳',name:'India'},
-  // Americas
-  {code:'US',flag:'🇺🇸',name:'USA'},{code:'CA',flag:'🇨🇦',name:'Canada'},
-  {code:'BR',flag:'🇧🇷',name:'Brazil'},{code:'MX',flag:'🇲🇽',name:'Mexico'},
-  {code:'AR',flag:'🇦🇷',name:'Argentina'},{code:'CL',flag:'🇨🇱',name:'Chile'},
-  // Europe
-  {code:'GB',flag:'🇬🇧',name:'UK'},{code:'DE',flag:'🇩🇪',name:'Germany'},
-  {code:'FR',flag:'🇫🇷',name:'France'},{code:'IT',flag:'🇮🇹',name:'Italy'},
+  {code:'HK',flag:'🇭🇰',name:'Hong Kong'},{code:'TW',flag:'🇹🇼',name:'Taiwan'},
+  {code:'VN',flag:'🇻🇳',name:'Vietnam'},{code:'IT',flag:'🇮🇹',name:'Italy'},
   {code:'ES',flag:'🇪🇸',name:'Spain'},{code:'NL',flag:'🇳🇱',name:'Netherlands'},
   {code:'SE',flag:'🇸🇪',name:'Sweden'},{code:'NO',flag:'🇳🇴',name:'Norway'},
-  {code:'DK',flag:'🇩🇰',name:'Denmark'},{code:'FI',flag:'🇫🇮',name:'Finland'},
-  {code:'CH',flag:'🇨🇭',name:'Switzerland'},{code:'AT',flag:'🇦🇹',name:'Austria'},
-  {code:'BE',flag:'🇧🇪',name:'Belgium'},{code:'IE',flag:'🇮🇪',name:'Ireland'},
-  {code:'PT',flag:'🇵🇹',name:'Portugal'},{code:'PL',flag:'🇵🇱',name:'Poland'},
-  {code:'CZ',flag:'🇨🇿',name:'Czech Republic'},{code:'SK',flag:'🇸🇰',name:'Slovakia'},
-  {code:'HU',flag:'🇭🇺',name:'Hungary'},{code:'RO',flag:'🇷🇴',name:'Romania'},
-  {code:'HR',flag:'🇭🇷',name:'Croatia'},{code:'GR',flag:'🇬🇷',name:'Greece'},
-  {code:'RU',flag:'🇷🇺',name:'Russia'},{code:'UA',flag:'🇺🇦',name:'Ukraine'},
-  // Middle East & Africa
-  {code:'ZA',flag:'🇿🇦',name:'South Africa'},{code:'AE',flag:'🇦🇪',name:'UAE'},
+  {code:'DK',flag:'🇩🇰',name:'Denmark'},{code:'CH',flag:'🇨🇭',name:'Switzerland'},
+  {code:'AT',flag:'🇦🇹',name:'Austria'},{code:'BE',flag:'🇧🇪',name:'Belgium'},
+  {code:'IE',flag:'🇮🇪',name:'Ireland'},{code:'PT',flag:'🇵🇹',name:'Portugal'},
+  {code:'PL',flag:'🇵🇱',name:'Poland'},{code:'FI',flag:'🇫🇮',name:'Finland'},
+  {code:'CZ',flag:'🇨🇿',name:'Czechia'},{code:'GR',flag:'🇬🇷',name:'Greece'},
+  {code:'ZA',flag:'🇿🇦',name:'S. Africa'},{code:'AE',flag:'🇦🇪',name:'UAE'},
   {code:'SA',flag:'🇸🇦',name:'Saudi Arabia'},{code:'IL',flag:'🇮🇱',name:'Israel'},
-  {code:'KE',flag:'🇰🇪',name:'Kenya'},
-  // Other
+  {code:'BR',flag:'🇧🇷',name:'Brazil'},{code:'MX',flag:'🇲🇽',name:'Mexico'},
+  {code:'AR',flag:'🇦🇷',name:'Argentina'},{code:'CL',flag:'🇨🇱',name:'Chile'},
+  {code:'FJ',flag:'🇫🇯',name:'Fiji'},{code:'WS',flag:'🇼🇸',name:'Samoa'},
+  {code:'TO',flag:'🇹🇴',name:'Tonga'},{code:'KE',flag:'🇰🇪',name:'Kenya'},
+  {code:'RU',flag:'🇷🇺',name:'Russia'},{code:'UA',flag:'🇺🇦',name:'Ukraine'},
+  {code:'HR',flag:'🇭🇷',name:'Croatia'},{code:'HU',flag:'🇭🇺',name:'Hungary'},
+  {code:'RO',flag:'🇷🇴',name:'Romania'},{code:'SK',flag:'🇸🇰',name:'Slovakia'},
   {code:'OTHER',flag:'🌍',name:'Other'},
 ]
+const TOP_COUNTRIES = ['NZ','AU','US','GB','DE','JP','CN','KR','SG','IN','MY','TH','CA','FR','IT','IE']
 
-function CountryFlagPicker({ player, sessionId, onDone }) {
-  const t           = useTranslation()
-  const [selected,  setSelected]  = useState(null)
-  const [search,    setSearch]    = useState('')
-  const [popular,   setPopular]   = useState([])
-  const [saving,    setSaving]    = useState(false)
+function CountryFlagPicker({ sessionId, onDone }) {
+  const [search,  setSearch]  = useState('')
+  const [popular, setPopular] = useState(TOP_COUNTRIES)
+  const [picked,  setPicked]  = useState(null)
 
   useEffect(() => {
-    // Load most popular countries from recent sessions
-    import('../../lib/supabase').then(({ supabase }) => {
-      supabase.from('sessions')
-        .select('country_code')
-        .not('country_code', 'is', null)
-        .order('started_at', { ascending: false })
-        .limit(200)
-        .then(({ data }) => {
-          if (!data) return
-          const counts = {}
-          data.forEach(s => { if (s.country_code) counts[s.country_code] = (counts[s.country_code]||0)+1 })
-          const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([code])=>code)
-          // Always include NZ and AU at front
-          const top = ['NZ','AU',...sorted.filter(c=>c!=='NZ'&&c!=='AU')].slice(0,8)
-          setPopular(top)
-        })
-    })
+    supabase.from('sessions').select('country_code')
+      .not('country_code','is',null).order('started_at',{ascending:false}).limit(300)
+      .then(({ data }) => {
+        if (!data?.length) return
+        const counts = {}
+        data.forEach(s => { if (s.country_code) counts[s.country_code] = (counts[s.country_code]||0)+1 })
+        const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1])
+          .map(([c])=>c).filter(c=>c!=='OTHER')
+        const top = ['NZ','AU',...sorted.filter(c=>c!=='NZ'&&c!=='AU')].slice(0,16)
+        setPopular(top)
+      })
   }, [])
 
-  async function save(code) {
-    setSelected(code); setSaving(true)
-    // Just notify parent — country is stored per player in leaderboard_player_photos
-    setSaving(false)
-    setTimeout(() => onDone(code), 300)
+  function pick(code) {
+    setPicked(code)
+    setTimeout(() => onDone(code), 200)
   }
 
-  const filtered = search.trim()
-    ? COUNTRIES.filter(c => c.name.toLowerCase().includes(search.toLowerCase()) || c.code.toLowerCase().includes(search.toLowerCase()))
-    : COUNTRIES
+  const popularList = popular.map(c=>ALL_COUNTRIES.find(x=>x.code===c)).filter(Boolean)
+  const searchResults = search.trim()
+    ? ALL_COUNTRIES.filter(c=>c.name.toLowerCase().includes(search.toLowerCase())||c.code.toLowerCase().includes(search.toLowerCase()))
+    : []
 
-  const popularList = popular.map(code => COUNTRIES.find(c=>c.code===code)).filter(Boolean)
+  const FlagBtn = ({ c }) => (
+    <button onClick={() => pick(c.code)}
+      style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:3,
+        background: picked===c.code ? 'rgba(255,214,0,0.15)' : 'var(--bg-card-2)',
+        border: `1.5px solid ${picked===c.code?'var(--yellow)':'var(--border)'}`,
+        borderRadius:10, padding:'8px 6px', cursor:'pointer', fontFamily:'inherit',
+        minWidth:56, maxWidth:64, transition:'all 0.12s' }}>
+      <span style={{ fontSize:24 }}>{c.flag}</span>
+      <span style={{ fontSize:9, fontWeight:600, color:'var(--text-2)', textAlign:'center', lineHeight:1.2 }}>{c.name}</span>
+    </button>
+  )
 
   return (
     <div>
-      <p style={{ fontSize:13, fontWeight:700, color:'var(--text-2)', marginBottom:10, textAlign:'center' }}>
-        🌍 Where are you from?
-      </p>
+      {/* Search bar */}
+      <div style={{ position:'relative', marginBottom:12 }}>
+        <input placeholder="🔍  Search country…" value={search} onChange={e=>setSearch(e.target.value)}
+          style={{ width:'100%', background:'var(--bg-card-2)', border:'1px solid var(--border)',
+            borderRadius:10, padding:'10px 14px', color:'var(--text)', fontSize:14,
+            fontFamily:'inherit', boxSizing:'border-box' }}/>
+        {search && <button onClick={()=>setSearch('')}
+          style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)',
+            background:'none', border:'none', color:'var(--text-3)', cursor:'pointer', fontSize:18, lineHeight:1 }}>×</button>}
+      </div>
 
-      {/* Search */}
-      <input
-        placeholder="Search country…"
-        value={search} onChange={e=>setSearch(e.target.value)}
-        style={{ width:'100%', background:'var(--bg-card-2)', border:'1px solid var(--border)',
-          borderRadius:8, padding:'8px 12px', color:'var(--text)', fontSize:13,
-          fontFamily:'inherit', marginBottom:10, boxSizing:'border-box' }}
-      />
-
-      {/* Popular (only when not searching) */}
-      {!search.trim() && popularList.length > 0 && (
-        <div style={{ marginBottom:10 }}>
-          <p style={{ fontSize:10, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:7 }}>Popular</p>
-          <div style={{ display:'flex', flexWrap:'wrap', gap:7 }}>
-            {popularList.map(c => (
-              <button key={c.code} onClick={() => save(c.code)}
-                disabled={saving}
-                style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:3,
-                  background: selected===c.code ? 'rgba(255,214,0,0.12)' : 'var(--bg-card-2)',
-                  border: `1px solid ${selected===c.code?'var(--yellow)':'var(--border)'}`,
-                  borderRadius:10, padding:'8px 10px', cursor:'pointer', fontFamily:'inherit', minWidth:60, transition:'all 0.12s' }}>
-                <span style={{ fontSize:22 }}>{c.flag}</span>
-                <span style={{ fontSize:10, fontWeight:600, color:'var(--text-2)', whiteSpace:'nowrap' }}>{c.name}</span>
-              </button>
-            ))}
-          </div>
+      {search.trim() ? (
+        /* Search results */
+        <div style={{ display:'flex', flexWrap:'wrap', gap:7, maxHeight:200, overflowY:'auto', marginBottom:12 }}>
+          {searchResults.length ? searchResults.map(c=><FlagBtn key={c.code} c={c}/>)
+            : <p style={{ color:'var(--text-3)', fontSize:13, margin:0 }}>No results for "{search}"</p>}
+        </div>
+      ) : (
+        /* Popular grid */
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:7, marginBottom:12 }}>
+          {popularList.map(c=><FlagBtn key={c.code} c={c}/>)}
         </div>
       )}
 
-      {/* All / search results */}
-      <div style={{ maxHeight:170, overflowY:'auto' }}>
-        <p style={{ fontSize:10, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:7 }}>
-          {search.trim() ? `Results (${filtered.length})` : 'All Countries'}
-        </p>
-        <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
-          {filtered.map(c => (
-            <button key={c.code} onClick={() => save(c.code)}
-              disabled={saving}
-              style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:2,
-                background: selected===c.code ? 'rgba(255,214,0,0.12)' : 'var(--bg-card-2)',
-                border: `1px solid ${selected===c.code?'var(--yellow)':'var(--border)'}`,
-                borderRadius:8, padding:'6px 8px', cursor:'pointer', fontFamily:'inherit',
-                minWidth:52, transition:'all 0.12s' }}>
-              <span style={{ fontSize:18 }}>{c.flag}</span>
-              <span style={{ fontSize:9, fontWeight:600, color:'var(--text-2)', whiteSpace:'nowrap' }}>{c.name}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <button className="btn btn-ghost btn-sm btn-full"
-        style={{ marginTop:10, color:'var(--text-3)', fontSize:12 }}
-        onClick={() => onDone(null)}>
-        {t.skipNoFlag}
+      {/* Skip */}
+      <button onClick={() => onDone(null)}
+        style={{ width:'100%', padding:'10px', background:'transparent', border:'1px dashed var(--border)',
+          borderRadius:10, color:'var(--text-3)', fontSize:13, cursor:'pointer', fontFamily:'inherit' }}>
+        Skip — I'd rather not say
       </button>
     </div>
   )
@@ -159,42 +125,44 @@ function LbSelfieButton({ sessionId, player, onDone, countryCode = null }) {
   const [previewUrl, setPreviewUrl] = useState(null)
   const [errMsg,     setErrMsg]     = useState('')
 
-  useEffect(() => () => stopStream(), [])
+  function stopStream() {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(t => t.stop())
+      streamRef.current = null
+    }
+  }
+
+  useEffect(() => stopStream, [])
 
   async function openCam() {
-    setPhase('camera')
+    setPhase('camera'); setErrMsg('')
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'user', width: { ideal: 1080 }, height: { ideal: 1080 } }, audio: false
+        video: { facingMode:'user', width:{ideal:1080}, height:{ideal:1080} }, audio: false
       })
       streamRef.current = stream
       if (videoRef.current) {
         videoRef.current.srcObject = stream
-        videoRef.current.play().catch(() => {})
+        await videoRef.current.play()
       }
     } catch(e) {
       setPhase('error')
-      setErrMsg('Camera not available — please allow camera access and try again.')
+      setErrMsg('Camera blocked — allow access in your browser settings then try again.')
     }
   }
 
-  function stopStream() {
-    streamRef.current?.getTracks().forEach(t => t.stop())
-    streamRef.current = null
-  }
-
   function capture() {
-    const v = videoRef.current; if (!v || !v.videoWidth) return
+    const v = videoRef.current
+    if (!v || !v.videoWidth) return
     const size = Math.min(v.videoWidth, v.videoHeight)
     const c = document.createElement('canvas')
     c.width = size; c.height = size
     const ctx = c.getContext('2d')
-    // Crop centre square, mirror for selfie
-    ctx.translate(size, 0); ctx.scale(-1, 1)
-    ctx.drawImage(v, (v.videoWidth - size) / 2, (v.videoHeight - size) / 2, size, size, 0, 0, size, size)
+    ctx.translate(size,0); ctx.scale(-1,1)
+    ctx.drawImage(v, (v.videoWidth-size)/2, (v.videoHeight-size)/2, size, size, 0, 0, size, size)
     stopStream()
     c.toBlob(b => {
-      if (!b) { setPhase('error'); setErrMsg('Could not capture photo. Try again.'); return }
+      if (!b) { setPhase('error'); setErrMsg('Capture failed. Try again.'); return }
       setBlob(b)
       setPreviewUrl(URL.createObjectURL(b))
       setPhase('preview')
@@ -205,28 +173,26 @@ function LbSelfieButton({ sessionId, player, onDone, countryCode = null }) {
     if (!blob) return
     setPhase('saving')
     try {
-      // Direct upload — no canvas processing, avoids all logo/canvas issues
-      const safeName = player.name.replace(/[^a-zA-Z0-9]/g, '_')
+      const safeName = player.name.replace(/[^a-zA-Z0-9]/g,'_')
       const fileName = `lb/${sessionId}/${safeName}_${Date.now()}.jpg`
       const { error: upErr } = await supabase.storage
-        .from('photos').upload(fileName, blob, { contentType: 'image/jpeg', upsert: true })
-      if (upErr) throw new Error(`Storage: ${upErr.message}`)
-      const { data: { publicUrl } } = supabase.storage.from('photos').getPublicUrl(fileName)
-      const row = { session_id: sessionId, player_name: player.name, photo_url: publicUrl }
+        .from('photos').upload(fileName, blob, { contentType:'image/jpeg', upsert:true })
+      if (upErr) throw new Error(upErr.message)
+      const { data:{ publicUrl } } = supabase.storage.from('photos').getPublicUrl(fileName)
+      const row = { session_id:sessionId, player_name:player.name, photo_url:publicUrl }
       if (countryCode) row.country_code = countryCode
       const { error: dbErr } = await supabase.from('leaderboard_player_photos')
-        .upsert(row, { onConflict: 'session_id,player_name' })
+        .upsert(row, { onConflict:'session_id,player_name' })
       if (dbErr) {
-        // Retry without country_code
         await supabase.from('leaderboard_player_photos')
-          .upsert({ session_id: sessionId, player_name: player.name, photo_url: publicUrl },
-                  { onConflict: 'session_id,player_name' })
+          .upsert({ session_id:sessionId, player_name:player.name, photo_url:publicUrl },
+                  { onConflict:'session_id,player_name' })
       }
       setPhase('done')
       setTimeout(onDone, 1600)
     } catch(e) {
       setPhase('error')
-      setErrMsg(e?.message || 'Upload failed. Check your connection and try again.')
+      setErrMsg(e?.message || 'Upload failed. Check connection and try again.')
     }
   }
 
@@ -236,94 +202,69 @@ function LbSelfieButton({ sessionId, player, onDone, countryCode = null }) {
     openCam()
   }
 
-  if (phase === 'idle') return (
-    <div>
-      <p style={{ fontSize:14, color:'var(--text-2)', marginBottom:16, textAlign:'center', lineHeight:1.6 }}>
-        📸 Add your selfie next to your name on the big screen!
-      </p>
-      <button className="btn btn-primary btn-full" onClick={openCam}
-        style={{ gap:10, fontSize:17, padding:'16px', borderRadius:14 }}>
-        <Camera size={22}/> Take Selfie
-      </button>
-    </div>
+  if (phase==='idle') return (
+    <button className="btn btn-primary btn-full" onClick={openCam}
+      style={{ gap:10, fontSize:16, padding:'14px', borderRadius:12 }}>
+      <Camera size={20}/> Take Selfie
+    </button>
   )
 
-  if (phase === 'camera') return (
+  if (phase==='camera') return (
     <div>
-      <p style={{ fontSize:12, color:'var(--text-3)', textAlign:'center', marginBottom:10 }}>
-        Position yourself in the frame and tap Capture
-      </p>
-      <div style={{ position:'relative', borderRadius:16, overflow:'hidden', aspectRatio:'1', background:'#111', marginBottom:14, boxShadow:'0 8px 32px rgba(0,0,0,0.6)' }}>
-        <video ref={videoRef} autoPlay playsInline muted
-          style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }}/>
-        {/* Gold frame corners */}
-        {[['top','left'],['top','right'],['bottom','left'],['bottom','right']].map(([v,h]) => (
-          <div key={v+h} style={{ position:'absolute', [v]:10, [h]:10, width:24, height:24,
-            borderTop: v==='top'?'3px solid #FFD600':'none',
-            borderBottom: v==='bottom'?'3px solid #FFD600':'none',
-            borderLeft: h==='left'?'3px solid #FFD600':'none',
-            borderRight: h==='right'?'3px solid #FFD600':'none' }}/>
+      <div style={{ position:'relative', borderRadius:14, overflow:'hidden', aspectRatio:'1', background:'#111', marginBottom:12, boxShadow:'0 8px 32px rgba(0,0,0,0.5)' }}>
+        <video ref={videoRef} autoPlay playsInline muted style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }}/>
+        {[['top','left'],['top','right'],['bottom','left'],['bottom','right']].map(([v,h])=>(
+          <div key={v+h} style={{ position:'absolute',[v]:8,[h]:8,width:20,height:20,
+            borderTop:v==='top'?'2.5px solid #FFD600':'none', borderBottom:v==='bottom'?'2.5px solid #FFD600':'none',
+            borderLeft:h==='left'?'2.5px solid #FFD600':'none', borderRight:h==='right'?'2.5px solid #FFD600':'none' }}/>
         ))}
       </div>
       <div style={{ display:'flex', gap:10 }}>
-        <button className="btn btn-ghost" style={{ flex:1 }} onClick={() => { stopStream(); setPhase('idle') }}>
-          Cancel
-        </button>
-        <button className="btn btn-primary" onClick={capture}
-          style={{ flex:2, gap:8, fontSize:16, padding:'14px' }}>
-          <Camera size={20}/> Capture
-        </button>
+        <button className="btn btn-ghost" style={{flex:1}} onClick={()=>{stopStream();setPhase('idle')}}>Cancel</button>
+        <button className="btn btn-primary" style={{flex:2,gap:8}} onClick={capture}><Camera size={18}/> Capture</button>
       </div>
     </div>
   )
 
-  if (phase === 'preview') return (
+  if (phase==='preview') return (
     <div>
-      <p style={{ fontSize:12, color:'var(--text-3)', textAlign:'center', marginBottom:10 }}>
-        Happy with this? Add it to the leaderboard!
-      </p>
-      <div style={{ borderRadius:16, overflow:'hidden', marginBottom:14, boxShadow:'0 8px 32px rgba(0,0,0,0.6)', border:'3px solid rgba(255,214,0,0.3)' }}>
+      <div style={{ borderRadius:14, overflow:'hidden', marginBottom:12, border:'2px solid rgba(255,214,0,0.3)', boxShadow:'0 8px 32px rgba(0,0,0,0.5)' }}>
         <img src={previewUrl} alt="Selfie" style={{ width:'100%', display:'block', aspectRatio:'1', objectFit:'cover' }}/>
       </div>
       <div style={{ display:'flex', gap:10 }}>
-        <button className="btn btn-ghost" style={{ flex:1, gap:6 }} onClick={retake}>
-          <RotateCcw size={14}/> Retake
-        </button>
-        <button className="btn btn-primary" style={{ flex:2, gap:8, fontSize:15 }} onClick={save}>
-          <Check size={16}/> Add to Leaderboard
-        </button>
+        <button className="btn btn-ghost" style={{flex:1,gap:6}} onClick={retake}><RotateCcw size={13}/> Retake</button>
+        <button className="btn btn-primary" style={{flex:2,gap:8}} onClick={save}><Check size={16}/> Save to Leaderboard</button>
       </div>
     </div>
   )
 
-  if (phase === 'saving') return (
-    <div style={{ textAlign:'center', padding:'28px 0' }}>
-      <div style={{ width:40, height:40, border:'3px solid rgba(255,214,0,0.2)', borderTopColor:'#FFD600',
-        borderRadius:'50%', animation:'spin 0.7s linear infinite', margin:'0 auto 14px' }}/>
-      <p style={{ color:'var(--text-2)', fontSize:15, fontWeight:600, margin:0 }}>Uploading to leaderboard…</p>
+  if (phase==='saving') return (
+    <div style={{ textAlign:'center', padding:'20px 0' }}>
+      <div style={{ width:36,height:36,border:'3px solid rgba(255,214,0,0.2)',borderTopColor:'#FFD600',
+        borderRadius:'50%',animation:'spin 0.7s linear infinite',margin:'0 auto 12px' }}/>
+      <p style={{ color:'var(--text-2)', fontSize:14, margin:0 }}>Saving photo…</p>
     </div>
   )
 
-  if (phase === 'done') return (
-    <div style={{ textAlign:'center', padding:'24px 0' }}>
-      <div style={{ fontSize:52, marginBottom:10 }}>🏆</div>
-      <p style={{ color:'#FFD600', fontSize:17, fontWeight:800, margin:'0 0 4px' }}>You're on the board!</p>
-      <p style={{ color:'var(--text-3)', fontSize:13, margin:0 }}>Your photo will appear on the big screen</p>
+  if (phase==='done') return (
+    <div style={{ textAlign:'center', padding:'20px 0' }}>
+      <div style={{ fontSize:44, marginBottom:8 }}>🏆</div>
+      <p style={{ color:'#FFD600', fontSize:16, fontWeight:800, margin:'0 0 4px' }}>You're on the board!</p>
+      <p style={{ color:'var(--text-3)', fontSize:12, margin:0 }}>Photo will appear on the big screen</p>
     </div>
   )
 
-  // error
   return (
-    <div style={{ textAlign:'center', padding:'16px 0' }}>
-      <div style={{ fontSize:32, marginBottom:10 }}>⚠️</div>
-      <p style={{ color:'#ff5252', fontSize:13, marginBottom:16, lineHeight:1.5 }}>{errMsg}</p>
+    <div style={{ textAlign:'center', padding:'12px 0' }}>
+      <p style={{ color:'#ff5252', fontSize:13, marginBottom:14, lineHeight:1.5 }}>⚠️ {errMsg}</p>
       <div style={{ display:'flex', gap:10 }}>
-        <button className="btn btn-ghost" style={{ flex:1 }} onClick={onDone}>Skip</button>
-        <button className="btn btn-primary" style={{ flex:2 }} onClick={() => setPhase('idle')}>Try Again</button>
+        <button className="btn btn-ghost" style={{flex:1}} onClick={onDone}>Skip</button>
+        <button className="btn btn-primary" style={{flex:2}} onClick={()=>setPhase('idle')}>Try Again</button>
       </div>
     </div>
   )
 }
+
 
 export default function EndScreen() {
   const { players, holes, scores, skippedHoles, photos, sessionId, playAgain, leaderboard, saveScore, optOut } = useGame()
@@ -518,90 +459,83 @@ export default function EndScreen() {
   return (
     <div className="screen animate-in">
       {/* ── Leaderboard selfie + country flag modal ── */}
-      {showLbSelfie && lbSelfiePlayer && (() => {
-        const queueIdx  = lbSelfieQueue.findIndex(p => p.name === lbSelfiePlayer.name)
-        const total     = lbSelfieQueue.length
-        const playerTotal = holes.reduce((s,h)=>s+(scores[h.id]?.[lbSelfiePlayer.name]||0),0)
-
-        function nextPlayer() {
-          const remaining = lbSelfieQueue.slice(queueIdx + 1)
-          if (remaining.length > 0) {
-            setLbSelfiePlayer(remaining[0])
-            setLbSelfieQueue(remaining)
-          } else {
-            setShowLbSelfie(false)
-          }
+            {showLbSelfie && lbSelfiePlayer && (() => {
+        const queue = lbSelfieQueue
+        const idx   = queue.findIndex(p=>p.name===lbSelfiePlayer.name)
+        const total = queue.length
+        const score = holes.reduce((s,h)=>s+(scores[h.id]?.[lbSelfiePlayer.name]||0),0)
+        function next() {
+          const rem = queue.slice(idx+1)
+          if (rem.length>0) { setLbSelfiePlayer(rem[0]); setLbSelfieQueue(rem) }
+          else setShowLbSelfie(false)
         }
-
         return (
-          <div style={{ position:'fixed', inset:0, zIndex:400, background:'var(--bg)', overflowY:'auto' }}>
-            <div className="modal-sheet" style={{ height:'100dvh', maxHeight:'100dvh', overflowY:'auto', borderRadius:0 }}>
+          <div style={{ position:'fixed', inset:0, zIndex:400, background:'var(--bg)',
+            overflowY:'auto', display:'flex', flexDirection:'column', padding:'20px 16px 24px' }}>
 
-              {/* Progress indicator for multiple players */}
-              {total > 1 && (
-                <div style={{ display:'flex', gap:6, marginBottom:16, justifyContent:'center' }}>
-                  {lbSelfieQueue.map((p, i) => (
-                    <div key={p.name} style={{ height:4, flex:1, borderRadius:2,
-                      background: i===queueIdx ? p.color : 'var(--border)' }}/>
-                  ))}
-                </div>
-              )}
-
-              {/* Player header */}
-              <div style={{ textAlign:'center', marginBottom:18 }}>
-                <div style={{ width:48, height:48, borderRadius:'50%', background:lbSelfiePlayer.color,
-                  display:'flex', alignItems:'center', justifyContent:'center', fontSize:20,
-                  fontWeight:900, color:'#000', margin:'0 auto 10px' }}>
-                  {lbSelfiePlayer.name[0].toUpperCase()}
-                </div>
-                <h3 style={{ fontSize:22, fontWeight:900, letterSpacing:'-0.02em', margin:'0 0 4px',
-                  color:lbSelfiePlayer.color }}>{lbSelfiePlayer.name}</h3>
-                <p style={{ fontSize:14, color:'var(--text-2)', margin:0 }}>
-                  🏆 Made the leaderboard with <strong style={{ color:'var(--yellow)' }}>{playerTotal} strokes</strong>!
-                </p>
-                {total > 1 && (
-                  <p style={{ fontSize:12, color:'var(--text-3)', margin:'6px 0 0' }}>
-                    Player {queueIdx+1} of {total}
-                  </p>
-                )}
+            {/* Progress dots for multiple players */}
+            {total>1 && (
+              <div style={{ display:'flex', gap:6, marginBottom:16 }}>
+                {queue.map((p,i)=>(
+                  <div key={p.name} style={{ flex:1, height:3, borderRadius:2,
+                    background:i===idx?p.color:'var(--border)', transition:'background 0.3s' }}/>
+                ))}
               </div>
+            )}
 
-              {/* Step 1 — Flag */}
-              <div style={{ marginBottom:16 }}>
-                <p style={{ fontSize:12, fontWeight:800, textTransform:'uppercase', letterSpacing:'0.08em',
-                  color:'var(--text-3)', marginBottom:10 }}>{t.stepFlag}</p>
-                <CountryFlagPicker
-                  player={lbSelfiePlayer}
-                  sessionId={sessionId}
-                  onDone={(code) => setLbSelfiePlayer(p => ({ ...p, _flagDone:true, countryCode:code }))}
-                />
-              </div>
-
-              <div style={{ height:1, background:'var(--border)', margin:'12px 0 16px' }}/>
-
-              {/* Step 2 — Selfie */}
-              <div style={{ marginBottom:14 }}>
-                <p style={{ fontSize:12, fontWeight:800, textTransform:'uppercase', letterSpacing:'0.08em',
-                  color:'var(--text-3)', marginBottom:10 }}>{t.stepSelfie}</p>
-                <LbSelfieButton
-                  key={lbSelfiePlayer.name}
-                  sessionId={sessionId}
-                  player={lbSelfiePlayer}
-                  countryCode={lbSelfiePlayer.countryCode || null}
-                  onDone={nextPlayer}
-                />
-              </div>
-
-              {/* Skip */}
-              <button className="btn btn-ghost btn-full btn-sm"
-                style={{ color:'var(--text-3)', fontSize:12 }}
-                onClick={nextPlayer}>
-                Skip {total > 1 ? '→ Next player' : ''}
+            {/* Skip — top right */}
+            <div style={{ display:'flex', justifyContent:'flex-end', marginBottom:12 }}>
+              <button onClick={next}
+                style={{ background:'var(--bg-card-2)', border:'1px solid var(--border)',
+                  borderRadius:8, padding:'6px 14px', color:'var(--text-3)', fontSize:13,
+                  cursor:'pointer', fontFamily:'inherit', fontWeight:600 }}>
+                {total>1 ? `Skip → (${idx+1}/${total})` : 'Skip'}
               </button>
+            </div>
+
+            {/* Player badge */}
+            <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:20,
+              background:'var(--bg-card-2)', border:'1px solid var(--border)', borderRadius:14, padding:'12px 16px' }}>
+              <div style={{ width:44, height:44, borderRadius:'50%', background:lbSelfiePlayer.color,
+                display:'flex', alignItems:'center', justifyContent:'center', fontSize:18,
+                fontWeight:900, color:'#000', flexShrink:0 }}>
+                {lbSelfiePlayer.name[0].toUpperCase()}
+              </div>
+              <div>
+                <p style={{ fontSize:17, fontWeight:800, color:lbSelfiePlayer.color, margin:'0 0 2px' }}>{lbSelfiePlayer.name}</p>
+                <p style={{ fontSize:13, color:'var(--text-3)', margin:0 }}>🏆 {score} strokes · Made the leaderboard!</p>
+              </div>
+            </div>
+
+            {/* Country flag */}
+            <div style={{ marginBottom:20 }}>
+              <p style={{ fontSize:12, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase',
+                letterSpacing:'0.08em', marginBottom:10 }}>Where are you from?</p>
+              <CountryFlagPicker
+                key={lbSelfiePlayer.name+'-flag'}
+                sessionId={sessionId}
+                onDone={(code) => setLbSelfiePlayer(p=>({...p,_flagDone:true,countryCode:code}))}
+              />
+            </div>
+
+            <div style={{ height:1, background:'var(--border)', margin:'4px 0 20px' }}/>
+
+            {/* Selfie */}
+            <div style={{ marginBottom:8 }}>
+              <p style={{ fontSize:12, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase',
+                letterSpacing:'0.08em', marginBottom:10 }}>Leaderboard photo (optional)</p>
+              <LbSelfieButton
+                key={lbSelfiePlayer.name+'-selfie'}
+                sessionId={sessionId}
+                player={lbSelfiePlayer}
+                countryCode={lbSelfiePlayer.countryCode||null}
+                onDone={next}
+              />
             </div>
           </div>
         )
       })()}
+
       <EndConfetti />
       <div className="screen-content" style={{ paddingBottom: 48 }}>
 
