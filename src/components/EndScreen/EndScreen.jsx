@@ -7,6 +7,68 @@ import { EndConfetti } from '../HoleScreen/Celebrations'
 import ScorecardShare from './ScorecardShare'
 import { composePolaroid } from '../PhotoSystem/PhotoSystem'
 
+// ── Country flag picker ───────────────────────────────────────
+const COUNTRIES = [
+  {code:'NZ',flag:'🇳🇿',name:'New Zealand'},{code:'AU',flag:'🇦🇺',name:'Australia'},
+  {code:'GB',flag:'🇬🇧',name:'UK'},{code:'US',flag:'🇺🇸',name:'USA'},
+  {code:'DE',flag:'🇩🇪',name:'Germany'},{code:'FR',flag:'🇫🇷',name:'France'},
+  {code:'JP',flag:'🇯🇵',name:'Japan'},{code:'CN',flag:'🇨🇳',name:'China'},
+  {code:'IN',flag:'🇮🇳',name:'India'},{code:'CA',flag:'🇨🇦',name:'Canada'},
+  {code:'BR',flag:'🇧🇷',name:'Brazil'},{code:'MX',flag:'🇲🇽',name:'Mexico'},
+  {code:'ES',flag:'🇪🇸',name:'Spain'},{code:'IT',flag:'🇮🇹',name:'Italy'},
+  {code:'NL',flag:'🇳🇱',name:'Netherlands'},{code:'SE',flag:'🇸🇪',name:'Sweden'},
+  {code:'NO',flag:'🇳🇴',name:'Norway'},{code:'DK',flag:'🇩🇰',name:'Denmark'},
+  {code:'CH',flag:'🇨🇭',name:'Switzerland'},{code:'AT',flag:'🇦🇹',name:'Austria'},
+  {code:'KR',flag:'🇰🇷',name:'South Korea'},{code:'SG',flag:'🇸🇬',name:'Singapore'},
+  {code:'ZA',flag:'🇿🇦',name:'South Africa'},{code:'IE',flag:'🇮🇪',name:'Ireland'},
+  {code:'PT',flag:'🇵🇹',name:'Portugal'},{code:'PL',flag:'🇵🇱',name:'Poland'},
+  {code:'OTHER',flag:'🌍',name:'Other'},
+]
+
+function CountryFlagPicker({ player, sessionId, onDone }) {
+  const [selected, setSelected] = useState(null)
+  const [saved, setSaved]       = useState(false)
+
+  async function save(code) {
+    setSelected(code)
+    try {
+      const { supabase } = await import('../../lib/supabase')
+      await supabase.from('sessions')
+        .update({ country_code: code })
+        .eq('id', sessionId)
+    } catch {}
+    setSaved(true)
+    setTimeout(() => onDone(code), 600)
+  }
+
+  return (
+    <div>
+      <p style={{ fontSize:13, fontWeight:700, color:'var(--text-2)', marginBottom:12, textAlign:'center' }}>
+        🌍 Where are you from?
+      </p>
+      <div style={{ display:'flex', flexWrap:'wrap', gap:7, justifyContent:'center', maxHeight:200, overflowY:'auto' }}>
+        {COUNTRIES.map(c => (
+          <button key={c.code} onClick={() => save(c.code)}
+            style={{
+              display:'flex', flexDirection:'column', alignItems:'center', gap:3,
+              background: selected===c.code ? 'rgba(255,214,0,0.12)' : 'var(--bg-card-2)',
+              border: `1px solid ${selected===c.code?'var(--yellow)':'var(--border)'}`,
+              borderRadius:10, padding:'8px 10px', cursor:'pointer', fontFamily:'inherit',
+              minWidth:64, transition:'all 0.12s',
+            }}>
+            <span style={{ fontSize:22 }}>{c.flag}</span>
+            <span style={{ fontSize:10, fontWeight:600, color:'var(--text-2)', whiteSpace:'nowrap' }}>{c.name}</span>
+          </button>
+        ))}
+      </div>
+      <button className="btn btn-ghost btn-sm btn-full" style={{ marginTop:10, color:'var(--text-3)', fontSize:12 }}
+        onClick={() => onDone(null)}>
+        Skip country selection
+      </button>
+    </div>
+  )
+}
+
 // ── Leaderboard selfie button ─────────────────────────────────
 function LbSelfieButton({ sessionId, player, onDone }) {
   const t = useTranslation()
@@ -269,6 +331,65 @@ export default function EndScreen() {
 
   return (
     <div className="screen animate-in">
+      {/* ── Leaderboard selfie + country flag modal ── */}
+      {showLbSelfie && lbSelfiePlayer && (
+        <div className="modal-overlay" style={{ zIndex:400 }}>
+          <div className="modal-sheet" style={{ maxHeight:'92dvh', overflowY:'auto' }}>
+            {/* Header */}
+            <div style={{ textAlign:'center', marginBottom:20 }}>
+              <div style={{ fontSize:28, marginBottom:8 }}>🏆</div>
+              <h3 style={{ fontSize:20, fontWeight:900, letterSpacing:'-0.02em', margin:'0 0 6px' }}>
+                {t.madeLeaderboard}
+              </h3>
+              <p style={{ fontSize:14, color:'var(--text-2)', margin:0, lineHeight:1.55 }}>
+                <strong style={{ color:lbSelfiePlayer.color }}>{lbSelfiePlayer.name}</strong>{' '}
+                {t.madeLeaderboardDesc}{' '}
+                <strong style={{ color:'var(--yellow)' }}>
+                  {holes.reduce((s,h)=>s+(scores[h.id]?.[lbSelfiePlayer.name]||0),0)}
+                </strong>{' '}
+                {t.madeLeaderboardDesc2}
+              </p>
+            </div>
+
+            {/* Country flag picker — always shown, skip available */}
+            <CountryFlagPicker
+              player={lbSelfiePlayer}
+              sessionId={sessionId}
+              onDone={(code) => {
+                setLbSelfiePlayer(p => ({ ...p, _flagDone:true, countryCode:code }))
+              }}
+            />
+
+            {/* Divider */}
+            <div style={{ height:1, background:'var(--border)', margin:'16px 0' }}/>
+
+            {/* Selfie — always available, not gated on flag */}
+            <LbSelfieButton
+              sessionId={sessionId}
+              player={lbSelfiePlayer}
+              onDone={() => {
+                const remaining = lbSelfieQueue.slice(1)
+                if (remaining.length > 0) {
+                  setLbSelfiePlayer(remaining[0])
+                  setLbSelfieQueue(remaining)
+                } else {
+                  setShowLbSelfie(false)
+                }
+              }}
+            />
+
+            {/* Skip both */}
+            <button className="btn btn-ghost btn-full" style={{ marginTop:10, fontSize:13 }}
+              onClick={() => {
+                const remaining = lbSelfieQueue.slice(1)
+                if (remaining.length > 0) { setLbSelfiePlayer(remaining[0]); setLbSelfieQueue(remaining) }
+                else setShowLbSelfie(false)
+              }}>
+              Skip — continue without photo
+            </button>
+          </div>
+        </div>
+      )}
       <EndConfetti />
       <div className="screen-content" style={{ paddingBottom: 48 }}>
 

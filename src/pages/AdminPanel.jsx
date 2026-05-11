@@ -298,6 +298,7 @@ import {
 import { supabase } from '../lib/supabase'
 import {
   checkAdminPassword, getHoles, upsertHole, deleteHole, reorderHoles,
+  broadcastMessage, clearBroadcastMessage, deleteLbPhoto,
   getAllSpinnerEffects, upsertSpinnerEffect, deleteSpinnerEffect,
   getAllSessions, setAdminSetting, deleteSession, deletePlayerScores,
   getAllGameModeRules, upsertGameModeRule, deleteGameModeRule, reorderGameModeRules,
@@ -1189,6 +1190,127 @@ function BannedWordsSection() {
   )
 }
 
+// ── Broadcast Tab ─────────────────────────────────────────────
+const QUICK_MESSAGES = [
+  { label:'30 min warning', text:'⏰ We will be closing in 30 minutes. Please start wrapping up your game!' },
+  { label:'15 min warning', text:'⚠️ We will be closing in 15 minutes. Please finish your current hole and head to reception.' },
+  { label:'5 min warning',  text:'🔔 Final 5 minutes! Please complete your scoring and return your putters and balls.' },
+  { label:'Return equipment', text:'Please return your putters and balls to reception downstairs after your round. Thank you!' },
+  { label:'Downstairs closing', text:'📢 Downstairs will be closing soon. Please return to Escape Quest and hand in your equipment.' },
+  { label:'Payment reminder', text:'💳 Please go to reception to complete payment before continuing your game.' },
+  { label:'Staff assistance', text:'A staff member will be with you shortly. Please wait at your current hole.' },
+]
+
+function BroadcastTab() {
+  const [active, setActive]   = useState('')
+  const [custom, setCustom]   = useState('')
+  const [sending, setSending] = useState(false)
+  const [sent,    setSent]    = useState(false)
+  const [currentMsg, setCurrentMsg] = useState('')
+
+  useEffect(() => {
+    supabase.from('admin_settings').select('value').eq('key','broadcast_message').single()
+      .then(({ data }) => {
+        if (data?.value) {
+          try { setCurrentMsg(JSON.parse(data.value).text || '') } catch {}
+        }
+      })
+  }, [])
+
+  async function send(text) {
+    if (!text.trim()) return
+    setSending(true)
+    await broadcastMessage(text.trim())
+    setCurrentMsg(text.trim())
+    setSent(true)
+    setTimeout(() => setSent(false), 2500)
+    setSending(false)
+  }
+
+  async function clear() {
+    await clearBroadcastMessage()
+    setCurrentMsg('')
+    setActive('')
+    setCustom('')
+  }
+
+  return (
+    <div>
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:18 }}>
+        <div>
+          <h3 style={{ color:A.text, fontSize:15, fontWeight:800, margin:'0 0 4px' }}>Broadcast Message</h3>
+          <p style={{ color:A.text3, fontSize:12, margin:0 }}>Send a message to all active scorecards instantly.</p>
+        </div>
+        {sent && <span style={{ fontSize:12, color:A.green, fontWeight:700 }}>✓ Sent!</span>}
+      </div>
+
+      {/* Current message indicator */}
+      {currentMsg && (
+        <div style={{ background:'rgba(255,149,0,0.08)', border:'1px solid rgba(255,149,0,0.3)', borderRadius:10, padding:'12px 14px', marginBottom:16, display:'flex', alignItems:'center', gap:10 }}>
+          <span style={{ fontSize:16, flexShrink:0 }}>📢</span>
+          <div style={{ flex:1, minWidth:0 }}>
+            <p style={{ color:'#ff9500', fontSize:12, fontWeight:700, margin:'0 0 2px' }}>Currently showing on all active scorecards:</p>
+            <p style={{ color:A.text2, fontSize:13, margin:0, lineHeight:1.4 }}>{currentMsg}</p>
+          </div>
+          <button onClick={clear} style={{ background:'none', border:`1px solid rgba(255,59,59,0.4)`, borderRadius:6, color:A.red, cursor:'pointer', fontSize:11, fontWeight:700, padding:'4px 8px', flexShrink:0, fontFamily:'inherit' }}>
+            Clear
+          </button>
+        </div>
+      )}
+
+      {/* Quick message buttons */}
+      <p style={{ color:A.text3, fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:10 }}>Quick Messages</p>
+      <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:20 }}>
+        {QUICK_MESSAGES.map((m, i) => (
+          <button key={i} onClick={() => { setActive(m.text); setCustom('') }}
+            style={{
+              display:'flex', alignItems:'flex-start', gap:10, textAlign:'left',
+              background: active===m.text ? 'rgba(255,149,0,0.08)' : '#161616',
+              border: `1px solid ${active===m.text?'rgba(255,149,0,0.4)':A.border}`,
+              borderRadius:10, padding:'10px 14px', cursor:'pointer', fontFamily:'inherit',
+              transition:'all 0.12s',
+            }}>
+            <div style={{ flex:1, minWidth:0 }}>
+              <div style={{ fontSize:12, fontWeight:800, color:active===m.text?'#ff9500':A.text2, marginBottom:3 }}>{m.label}</div>
+              <div style={{ fontSize:12, color:A.text3, lineHeight:1.45 }}>{m.text}</div>
+            </div>
+            <div style={{ width:18, height:18, borderRadius:'50%', border:`2px solid ${active===m.text?'#ff9500':A.text3}`,
+              background:active===m.text?'#ff9500':'transparent', flexShrink:0, marginTop:2,
+              display:'flex', alignItems:'center', justifyContent:'center' }}>
+              {active===m.text && <div style={{ width:6, height:6, borderRadius:'50%', background:'#000' }}/>}
+            </div>
+          </button>
+        ))}
+      </div>
+
+      {/* Custom message */}
+      <p style={{ color:A.text3, fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:8 }}>Custom Message</p>
+      <textarea
+        style={{ ...inp, minHeight:72, resize:'vertical', marginBottom:12 }}
+        placeholder="Type a custom message to all players…"
+        value={custom}
+        onChange={e => { setCustom(e.target.value); setActive('') }}
+      />
+
+      {/* Send button */}
+      <button
+        onClick={() => send(custom || active)}
+        disabled={(!active && !custom.trim()) || sending}
+        style={{ ...saveBtn, width:'100%', justifyContent:'center', gap:8,
+          background: sending?A.text3:sent?A.green:'#ff9500',
+          opacity:(!active&&!custom.trim())?0.4:1 }}>
+        <Bell size={14}/> {sending?'Sending…':sent?'Sent!':'Send to All Active Players'}
+      </button>
+
+      {(!active && !custom.trim()) && (
+        <p style={{ color:A.text3, fontSize:12, textAlign:'center', marginTop:8 }}>
+          Select a quick message or type a custom one above
+        </p>
+      )}
+    </div>
+  )
+}
+
 // ── Main ───────────────────────────────────────────────────────
 export default function AdminPanel() {
   const [authed, setAuthed] = useState(sessionStorage.getItem('tz_admin')==='1')
@@ -1201,14 +1323,15 @@ export default function AdminPanel() {
   if (!authed) return <AdminLogin onLogin={()=>setAuthed(true)} />
 
   const TABS = [
-    { id:'data',       Icon:BarChart2,       label:'Live Games' },
-    { id:'leaderboard',Icon:Trophy,          label:'Leaderboard'},
-    { id:'photos',     Icon:Image,           label:'LB Photos'  },
-    { id:'holes',      Icon:LayoutDashboard, label:'Holes'      },
-    { id:'rules',      Icon:BookOpen,        label:'Rules'      },
-    { id:'spinner',    Icon:Settings,        label:'Spinner'    },
-    { id:'reports',    Icon:BarChart3,       label:'Reports'    },
-    { id:'settings',   Icon:Settings,        label:'Settings'   },
+    { id:'data',       Icon:BarChart2,       label:'Live Games',  group:'ops'     },
+    { id:'broadcast',  Icon:Bell,            label:'Broadcast',   group:'ops'     },
+    { id:'leaderboard',Icon:Trophy,          label:'Leaderboard', group:'content' },
+    { id:'photos',     Icon:Image,           label:'LB Photos',   group:'content' },
+    { id:'holes',      Icon:LayoutDashboard, label:'Holes',       group:'content' },
+    { id:'rules',      Icon:BookOpen,        label:'Rules',       group:'content' },
+    { id:'spinner',    Icon:Shuffle,         label:'Spinner',     group:'content' },
+    { id:'reports',    Icon:BarChart3,       label:'Reports',     group:'analytics'},
+    { id:'settings',   Icon:Settings,        label:'Settings',    group:'config'  },
   ]
 
   return (
@@ -1252,6 +1375,7 @@ export default function AdminPanel() {
         {tab==='rules'       && <RulesTab/>}
         {tab==='spinner'     && <SpinnerTab/>}
         {tab==='data'        && <DataTab/>}
+        {tab==='broadcast'   && <BroadcastTab/>}
         {tab==='settings'    && <SettingsTab onLogout={()=>{ sessionStorage.removeItem('tz_admin'); setAuthed(false) }}/>}
       </div>
     </div>

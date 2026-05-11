@@ -53,7 +53,8 @@ export function GameProvider({ children }) {
   const [isLoading, setIsLoading]             = useState(false)
   // New state
   const [spinnerPreference, setSpinnerPreference] = useState('digital')
-  const [sessionLocked, setSessionLocked]         = useState(false) // 'digital' | 'physical'
+  const [sessionLocked, setSessionLocked]         = useState(false)
+  const [broadcastMsg, setBroadcastMsg]           = useState('') // 'digital' | 'physical'
   const [language, setLanguage]                   = useState(() => localStorage.getItem('tz_lang') || 'en')
   const [showPostHole8Camera, setShowPostHole8Camera] = useState(false)
 
@@ -86,6 +87,18 @@ export function GameProvider({ children }) {
             supabase.channel('session-lock-'+existing.id)
               .on('postgres_changes', { event:'UPDATE', schema:'public', table:'sessions', filter:'id=eq.'+existing.id },
                 p => setSessionLocked(p.new?.locked || false))
+              .subscribe()
+          } catch(e) {}
+          // Subscribe to broadcast messages
+          try {
+            supabase.channel('broadcast-msg')
+              .on('postgres_changes', { event:'UPDATE', schema:'public', table:'admin_settings', filter:'key=eq.broadcast_message' },
+                p => {
+                  try {
+                    const d = JSON.parse(p.new?.value || '{}')
+                    setBroadcastMsg(d.text || '')
+                  } catch {}
+                })
               .subscribe()
           } catch(e) {}
           setPhase('playing'); return
@@ -293,6 +306,7 @@ export function GameProvider({ children }) {
     showPostHole8Camera, setShowPostHole8Camera,
     startGame, goToHole, nextHole, dismissSpinner, playAgain,
     pendingPlayers, setPendingPlayers,
+    broadcastMsg, setBroadcastMsg,
     sessionLocked,
     language, setLanguage: (lang) => { localStorage.setItem('tz_lang', lang); setLanguage(lang) },
   }

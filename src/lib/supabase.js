@@ -467,3 +467,22 @@ export async function lockSession(id) {
 export async function unlockSession(id) {
   await supabase.from('sessions').update({ locked: false }).eq('id', id)
 }
+
+// ── Delete leaderboard player photo ───────────────────────────
+export async function deleteLbPhoto(sessionId, playerName) {
+  await supabase.from('leaderboard_player_photos')
+    .delete()
+    .eq('session_id', sessionId)
+    .eq('player_name', playerName)
+}
+
+// ── Broadcast message to active sessions ──────────────────────
+export async function broadcastMessage(message) {
+  await supabase.from('admin_settings')
+    .upsert({ key:'broadcast_message', value: JSON.stringify({ text: message, ts: Date.now() }) })
+}
+
+export async function clearBroadcastMessage() {
+  await supabase.from('admin_settings')
+    .upsert({ key:'broadcast_message', value: JSON.stringify({ text:'', ts:0 }) })
+}

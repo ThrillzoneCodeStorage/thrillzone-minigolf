@@ -120,7 +120,7 @@ export default function HoleScreen() {
     showSpinner, dismissSpinner, setShowSpinner, setSpinnerEffect,
     currentTurnIndex, setCurrentTurnIndex,
     previousHoleWinner, leaderboard, language,
-    spinnerPreference, setSpinnerPreference, sessionLocked,
+    spinnerPreference, setSpinnerPreference, sessionLocked, broadcastMsg, setBroadcastMsg,
     showPostHole8Camera, setShowPostHole8Camera,
   } = useGame()
 
@@ -314,6 +314,24 @@ export default function HoleScreen() {
               A staff member will unlock your game once payment is confirmed.
             </p>
           </div>
+        </div>
+      )}
+
+      {/* Broadcast message banner */}
+      {broadcastMsg && (
+        <div style={{
+          position:'fixed', top:0, left:0, right:0, zIndex:9996,
+          background:'linear-gradient(90deg,#1a0a00,#2a1400,#1a0a00)',
+          border:'1px solid rgba(255,150,0,0.4)',
+          padding:'10px 20px', display:'flex', alignItems:'center', gap:12,
+          animation:'broadcastSlide 0.4s cubic-bezier(0.34,1.56,0.64,1)',
+        }}>
+          <span style={{ fontSize:16 }}>📢</span>
+          <span style={{ fontSize:14, fontWeight:700, color:'#ff9500', flex:1, lineHeight:1.4 }}>
+            {broadcastMsg}
+          </span>
+          <button onClick={() => setBroadcastMsg('')}
+            style={{ background:'none', border:'none', color:'rgba(255,150,0,0.5)', cursor:'pointer', fontSize:18, lineHeight:1, padding:0 }}>×</button>
         </div>
       )}
 
@@ -717,6 +735,7 @@ export default function HoleScreen() {
       <style>{`
         @keyframes countUp{from{transform:translateY(8px) scale(0.88);opacity:0}to{transform:none;opacity:1}}
         @keyframes popIn{0%{opacity:0;transform:scale(0.6)}80%{transform:scale(1.04)}100%{opacity:1;transform:scale(1)}}
+        @keyframes broadcastSlide{from{transform:translateY(-100%);opacity:0}to{transform:none;opacity:1}}
         @keyframes shineSweep1{0%,100%{transform:translateX(-60%) skewX(-8deg);opacity:0.5}50%{transform:translateX(60%) skewX(-8deg);opacity:1}}
         @keyframes shineSweep2{0%,100%{transform:translateX(50%) skewX(6deg);opacity:0.3}50%{transform:translateX(-50%) skewX(6deg);opacity:0.8}}
         @keyframes glowPulse{0%,100%{opacity:0.5}50%{opacity:1}}
