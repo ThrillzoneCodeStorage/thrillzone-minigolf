@@ -175,22 +175,29 @@ function LbSelfieButton({ sessionId, player, onDone, countryCode = null }) {
     try {
       const safeName = player.name.replace(/[^a-zA-Z0-9]/g,'_')
       const fileName = `lb/${sessionId}/${safeName}_${Date.now()}.jpg`
+      console.log('[LbSelfie] Uploading to storage:', fileName)
       const { error: upErr } = await supabase.storage
         .from('photos').upload(fileName, blob, { contentType:'image/jpeg', upsert:true })
-      if (upErr) throw new Error(upErr.message)
+      if (upErr) { console.error('[LbSelfie] Storage error:', upErr); throw new Error(upErr.message) }
       const { data:{ publicUrl } } = supabase.storage.from('photos').getPublicUrl(fileName)
+      console.log('[LbSelfie] Public URL:', publicUrl)
       const row = { session_id:sessionId, player_name:player.name, photo_url:publicUrl }
       if (countryCode) row.country_code = countryCode
+      console.log('[LbSelfie] Upserting row:', row)
       const { error: dbErr } = await supabase.from('leaderboard_player_photos')
         .upsert(row, { onConflict:'session_id,player_name' })
       if (dbErr) {
-        await supabase.from('leaderboard_player_photos')
+        console.warn('[LbSelfie] Upsert with country failed, retrying without:', dbErr)
+        const { error: dbErr2 } = await supabase.from('leaderboard_player_photos')
           .upsert({ session_id:sessionId, player_name:player.name, photo_url:publicUrl },
                   { onConflict:'session_id,player_name' })
+        if (dbErr2) { console.error('[LbSelfie] DB error:', dbErr2); throw new Error(dbErr2.message) }
       }
+      console.log('[LbSelfie] Success!')
       setPhase('done')
       setTimeout(onDone, 1600)
     } catch(e) {
+      console.error('[LbSelfie] Save failed:', e)
       setPhase('error')
       setErrMsg(e?.message || 'Upload failed. Check connection and try again.')
     }
@@ -546,23 +553,6 @@ export default function EndScreen() {
                     </span>
                   </div>
                 )}
-              </div>
-
-              <div style={{ height: 1, background: 'var(--border)', marginBottom: 24 }}/>
-
-              {/* Selfie section */}
-              <div>
-                <p style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-3)',
-                  textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>
-                  📸 Leaderboard photo (optional)
-                </p>
-                <LbSelfieButton
-                  key={lbSelfiePlayer.name + '-selfie'}
-                  sessionId={sessionId}
-                  player={lbSelfiePlayer}
-                  countryCode={lbSelfiePlayer.countryCode || null}
-                  onDone={next}
-                />
               </div>
 
               {/* Done button at bottom */}

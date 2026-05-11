@@ -427,7 +427,8 @@ export default function TVLeaderboard() {
 
                 return entries.map((e, i) => {
                   const isFirst = i === 0
-                  const avatar  = playerPhotos[`${e.session_id}-${e.name}`]
+                  // Photos disabled — flags only
+                  const avatar  = null
                   return (
                     <div key={`${e.name}-${i}`} style={{
                       display:'flex', alignItems:'center', gap:rowGap,
