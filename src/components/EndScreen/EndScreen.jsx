@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { Trophy, Mail, RotateCcw, AlertTriangle, CheckCircle, SkipForward, Camera, Star } from 'lucide-react'
+import { Trophy, Mail, RotateCcw, AlertTriangle, CheckCircle, Check, SkipForward, Camera, Star } from 'lucide-react'
 import { useGame } from '../../context/GameContext'
 import { useTranslation } from '../../lib/TranslationContext'
 import { updateSession, upsertScore, uploadLeaderboardPhoto, supabase } from '../../lib/supabase'
