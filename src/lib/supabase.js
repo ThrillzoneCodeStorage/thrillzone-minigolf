@@ -467,10 +467,19 @@ export async function uploadLeaderboardPhoto(sessionId, playerName, blob, countr
 }
 
 export async function getLeaderboardPlayerPhotos() {
-  const { data } = await supabase
+  // Try with country_code first, fall back if column doesn't exist
+  let { data, error } = await supabase
     .from('leaderboard_player_photos')
     .select('session_id, player_name, photo_url, taken_at, country_code')
     .order('taken_at', { ascending: false })
+  if (error) {
+    // Retry without country_code
+    const res = await supabase
+      .from('leaderboard_player_photos')
+      .select('session_id, player_name, photo_url, taken_at')
+      .order('taken_at', { ascending: false })
+    data = res.data
+  }
   return data || []
 }
 
