@@ -301,7 +301,7 @@ import {
   checkAdminPassword, getHoles, upsertHole, deleteHole, reorderHoles,
   broadcastMessage, clearBroadcastMessage, deleteLbPhoto,
   getSavedMessages, saveBroadcastMessages,
-  pruneLeaderboardPhotos,
+  pruneLeaderboardPhotos, getAllPhotos,
   getAllSpinnerEffects, upsertSpinnerEffect, deleteSpinnerEffect,
   getAllSessions, setAdminSetting, deleteSession, deletePlayerScores,
   getAllGameModeRules, upsertGameModeRule, deleteGameModeRule, reorderGameModeRules,
@@ -695,63 +695,145 @@ function SpinnerTab() {
 
 // ── LB Photos Tab ─────────────────────────────────────────────
 function LBPhotosTab() {
-  const [photos, setPhotos] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [deleting, setDeleting] = useState(null)
-  const [locking, setLocking] = useState(null)
+  const [lbPhotos,    setLbPhotos]    = useState([])
+  const [polaroids,   setPolaroids]   = useState([])
+  const [loading,     setLoading]     = useState(true)
+  const [deleting,    setDeleting]    = useState(null)
+  const [tab,         setTab]         = useState('lb') // 'lb' | 'polaroids'
 
   async function load() {
     setLoading(true)
-    try { setPhotos(await getLeaderboardPlayerPhotos()) } finally { setLoading(false) }
+    try {
+      const [lb, pol] = await Promise.all([
+        getLeaderboardPlayerPhotos(),
+        getAllPhotos(100),
+      ])
+      setLbPhotos(lb || [])
+      setPolaroids(pol || [])
+    } finally { setLoading(false) }
   }
   useEffect(() => { load() }, [])
 
-  async function deletePhoto(sessionId, playerName) {
-    if (!confirm(`Remove leaderboard photo for ${playerName}?`)) return
-    setDeleting(`${sessionId}-${playerName}`)
-    try {
-      await supabase.from('leaderboard_player_photos')
-        .delete().eq('session_id', sessionId).eq('player_name', playerName)
-      load()
-    } finally { setDeleting(null) }
+  async function deleteLb(sessionId, playerName) {
+    if (!confirm(`Remove leaderboard selfie for ${playerName}?`)) return
+    setDeleting(`lb-${sessionId}-${playerName}`)
+    await supabase.from('leaderboard_player_photos')
+      .delete().eq('session_id', sessionId).eq('player_name', playerName)
+    load(); setDeleting(null)
   }
+
+  async function deletePolaroid(id) {
+    if (!confirm('Delete this polaroid?')) return
+    setDeleting(`pol-${id}`)
+    await supabase.from('photos').delete().eq('id', id)
+    load(); setDeleting(null)
+  }
+
+  const tabStyle = (t) => ({
+    flex:1, padding:'8px 0', borderRadius:8, border:`1px solid ${tab===t?A.yellow:A.border}`,
+    background:tab===t?'rgba(255,214,0,0.08)':'transparent',
+    color:tab===t?A.yellow:A.text3, fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:'inherit',
+  })
 
   return (
     <div>
-      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
-        <div>
-          <h3 style={{ color:A.text, fontSize:15, fontWeight:800, margin:0 }}>Leaderboard Photos</h3>
-          <p style={{ color:A.text3, fontSize:12, margin:'3px 0 0' }}>Player selfies shown next to their name on the TV board. Auto-deleted after 10 days.</p>
-        </div>
+      {/* Tab picker */}
+      <div style={{ display:'flex', gap:8, marginBottom:16 }}>
+        <button style={tabStyle('lb')} onClick={() => setTab('lb')}>
+          📸 Leaderboard Selfies ({lbPhotos.length})
+        </button>
+        <button style={tabStyle('polaroids')} onClick={() => setTab('polaroids')}>
+          🖼️ Polaroids ({polaroids.length})
+        </button>
+      </div>
+
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
+        <p style={{ color:A.text3, fontSize:12, margin:0 }}>
+          {tab === 'lb'
+            ? 'Selfies shown next to player names on the TV leaderboard. Kept while player is in top 10.'
+            : 'Polaroid photos taken by players during their game.'}
+        </p>
         <button onClick={load} style={iconBtn}><RefreshCw size={13}/></button>
       </div>
 
-      {loading && <p style={{ color:A.text3, fontSize:14 }}>Loading…</p>}
-      {!loading && photos.length === 0 && (
-        <p style={{ color:A.text3, fontSize:14 }}>No leaderboard photos yet. Players take these at the end of a qualifying round.</p>
+      {tab === 'lb' && (
+        <>
+          <button onClick={async () => {
+            const n = await pruneLeaderboardPhotos()
+            alert(n > 0 ? `Removed ${n} photo${n!==1?'s':''} no longer in top 10.` : 'All photos belong to current top 10.')
+            load()
+          }} style={{ ...iconBtn, marginBottom:14, color:A.text2, fontSize:12, border:`1px solid ${A.border}`, borderRadius:8, padding:'6px 14px' }}>
+            <RefreshCw size={12}/> Clean up (remove non-top-10)
+          </button>
+
+          {loading && <p style={{ color:A.text3, fontSize:13 }}>Loading…</p>}
+          {!loading && lbPhotos.length === 0 && (
+            <div style={{ background:'#161616', border:`1px solid ${A.border}`, borderRadius:12, padding:24, textAlign:'center' }}>
+              <p style={{ color:A.text3, fontSize:14, margin:'0 0 6px' }}>No leaderboard selfies yet.</p>
+              <p style={{ color:A.text3, fontSize:12, margin:0 }}>Players take a selfie at the end screen when they qualify for the top 10.</p>
+            </div>
+          )}
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(140px,1fr))', gap:10 }}>
+            {lbPhotos.map(p => {
+              const key = `lb-${p.session_id}-${p.player_name}`
+              return (
+                <div key={key} style={{ background:'#fff', borderRadius:10, overflow:'hidden', boxShadow:'0 4px 16px rgba(0,0,0,0.4)', position:'relative' }}>
+                  <img src={p.photo_url} alt={p.player_name}
+                    style={{ width:'100%', aspectRatio:'4/5', objectFit:'cover', display:'block' }}/>
+                  <div style={{ padding:'6px 8px', background:'#fff' }}>
+                    <p style={{ color:'#111', fontSize:11, fontWeight:700, margin:0, textAlign:'center' }}>{p.player_name}</p>
+                    <p style={{ color:'#999', fontSize:9, margin:'2px 0 0', textAlign:'center', fontFamily:'Georgia,serif' }}>
+                      {p.taken_at ? new Date(p.taken_at).toLocaleDateString('en-NZ') : ''}
+                    </p>
+                  </div>
+                  <button onClick={() => deleteLb(p.session_id, p.player_name)}
+                    disabled={deleting===key}
+                    style={{ position:'absolute', top:5, right:5, width:22, height:22, borderRadius:'50%',
+                      background:'rgba(0,0,0,0.65)', border:'none', color:'#fff', cursor:'pointer',
+                      fontSize:14, fontWeight:900, lineHeight:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                    {deleting===key ? '…' : '×'}
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+        </>
       )}
 
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(180px,1fr))', gap:12, marginTop:12 }}>
-        {photos.map(p => (
-          <div key={`${p.session_id}-${p.player_name}`} style={{ background:'#161616', border:`1px solid ${A.border}`, borderRadius:12, overflow:'hidden' }}>
-            <div style={{ background:'#fff', padding:'6px 6px 18px' }}>
-              <img src={p.photo_url} alt={p.player_name} style={{ width:'100%', aspectRatio:'1', objectFit:'cover', display:'block', borderRadius:2 }}/>
-              <div style={{ textAlign:'center', marginTop:6 }}>
-                <img src="/logo.png" alt="" style={{ maxWidth:'80%', maxHeight:22, objectFit:'contain', display:'block', margin:'0 auto' }}/>
-              </div>
+      {tab === 'polaroids' && (
+        <>
+          {loading && <p style={{ color:A.text3, fontSize:13 }}>Loading…</p>}
+          {!loading && polaroids.length === 0 && (
+            <div style={{ background:'#161616', border:`1px solid ${A.border}`, borderRadius:12, padding:24, textAlign:'center' }}>
+              <p style={{ color:A.text3, fontSize:14, margin:'0 0 6px' }}>No polaroids taken yet.</p>
+              <p style={{ color:A.text3, fontSize:12, margin:0 }}>Photos taken during games appear here.</p>
             </div>
-            <div style={{ padding:'10px 12px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
-              <span style={{ color:A.text, fontSize:13, fontWeight:700 }}>{p.player_name}</span>
-              <button
-                onClick={() => deletePhoto(p.session_id, p.player_name)}
-                disabled={deleting===`${p.session_id}-${p.player_name}`}
-                style={{ ...iconBtn, color:A.red }}>
-                <Trash2 size={13}/>
-              </button>
-            </div>
+          )}
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill,minmax(140px,1fr))', gap:10 }}>
+            {polaroids.map(p => {
+              const key = `pol-${p.id}`
+              return (
+                <div key={key} style={{ background:'#fff', borderRadius:10, overflow:'hidden', boxShadow:'0 4px 16px rgba(0,0,0,0.4)', position:'relative' }}>
+                  <img src={p.storage_path} alt="Polaroid"
+                    style={{ width:'100%', aspectRatio:'4/5', objectFit:'cover', display:'block' }}/>
+                  <div style={{ padding:'5px 8px', background:'#fff' }}>
+                    <p style={{ color:'#999', fontSize:9, margin:0, textAlign:'center', fontFamily:'Georgia,serif' }}>
+                      {p.taken_at ? new Date(p.taken_at).toLocaleDateString('en-NZ') : ''}
+                    </p>
+                  </div>
+                  <button onClick={() => deletePolaroid(p.id)}
+                    disabled={deleting===key}
+                    style={{ position:'absolute', top:5, right:5, width:22, height:22, borderRadius:'50%',
+                      background:'rgba(0,0,0,0.65)', border:'none', color:'#fff', cursor:'pointer',
+                      fontSize:14, fontWeight:900, lineHeight:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
+                    {deleting===key ? '…' : '×'}
+                  </button>
+                </div>
+              )
+            })}
           </div>
-        ))}
-      </div>
+        </>
+      )}
     </div>
   )
 }
