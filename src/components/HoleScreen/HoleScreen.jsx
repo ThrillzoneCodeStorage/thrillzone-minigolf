@@ -214,8 +214,7 @@ export default function HoleScreen() {
     const par = currentHole?.par || 3
     setLocalScores(prev => {
       const cur = prev[playerName]
-      // First press: default to par, then increment from there
-      const next = (cur === null || cur === undefined) ? par : cur + 1
+      const next = (cur === null || cur === undefined) ? par : Math.min(10, cur + 1)
       return { ...prev, [playerName]: next }
     })
     const el = document.getElementById(`score-plus-${playerName}`)

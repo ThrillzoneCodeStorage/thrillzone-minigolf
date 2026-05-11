@@ -460,77 +460,119 @@ export default function EndScreen() {
     <div className="screen animate-in">
       {/* ── Leaderboard selfie + country flag modal ── */}
             {showLbSelfie && lbSelfiePlayer && (() => {
-        const queue = lbSelfieQueue
-        const idx   = queue.findIndex(p=>p.name===lbSelfiePlayer.name)
-        const total = queue.length
-        const score = holes.reduce((s,h)=>s+(scores[h.id]?.[lbSelfiePlayer.name]||0),0)
+        const idx   = lbSelfieQueue.findIndex(p => p.name === lbSelfiePlayer.name)
+        const total = lbSelfieQueue.length
+        const score = holes.reduce((s,h) => s + (scores[h.id]?.[lbSelfiePlayer.name] || 0), 0)
+
         function next() {
-          const rem = queue.slice(idx+1)
-          if (rem.length>0) { setLbSelfiePlayer(rem[0]); setLbSelfieQueue(rem) }
+          const rem = lbSelfieQueue.slice(idx + 1)
+          if (rem.length > 0) { setLbSelfiePlayer(rem[0]); setLbSelfieQueue(rem) }
           else setShowLbSelfie(false)
         }
-        return (
-          <div style={{ position:'fixed', inset:0, zIndex:400, background:'var(--bg)',
-            overflowY:'auto', display:'flex', flexDirection:'column', padding:'20px 16px 24px' }}>
 
-            {/* Progress dots for multiple players */}
-            {total>1 && (
-              <div style={{ display:'flex', gap:6, marginBottom:16 }}>
-                {queue.map((p,i)=>(
-                  <div key={p.name} style={{ flex:1, height:3, borderRadius:2,
-                    background:i===idx?p.color:'var(--border)', transition:'background 0.3s' }}/>
+        return (
+          <div style={{
+            position: 'fixed', inset: 0, zIndex: 400,
+            background: 'var(--bg)', overflowY: 'auto',
+            display: 'flex', flexDirection: 'column',
+          }}>
+            {/* Header bar */}
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '14px 18px', borderBottom: '1px solid var(--border)',
+              background: 'var(--bg-card)', flexShrink: 0,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 32, height: 32, borderRadius: '50%',
+                  background: lbSelfiePlayer.color, display: 'flex', alignItems: 'center',
+                  justifyContent: 'center', fontSize: 14, fontWeight: 900, color: '#000' }}>
+                  {lbSelfiePlayer.name[0].toUpperCase()}
+                </div>
+                <div>
+                  <p style={{ fontSize: 15, fontWeight: 800, color: lbSelfiePlayer.color, margin: 0 }}>
+                    {lbSelfiePlayer.name}
+                  </p>
+                  <p style={{ fontSize: 11, color: 'var(--text-3)', margin: 0 }}>
+                    🏆 {score} strokes · Leaderboard!{total > 1 ? ` · ${idx + 1}/${total}` : ''}
+                  </p>
+                </div>
+              </div>
+              <button onClick={next}
+                style={{ background: 'var(--bg-card-2)', border: '1px solid var(--border)',
+                  borderRadius: 8, padding: '7px 14px', color: 'var(--text-3)',
+                  fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>
+                {total > 1 && idx + 1 < total ? `Skip → ${idx + 2}/${total}` : 'Skip'}
+              </button>
+            </div>
+
+            {/* Progress bar */}
+            {total > 1 && (
+              <div style={{ display: 'flex', height: 3, flexShrink: 0 }}>
+                {lbSelfieQueue.map((p, i) => (
+                  <div key={p.name} style={{ flex: 1, background: i <= idx ? p.color : 'var(--border)', transition: 'background 0.3s' }}/>
                 ))}
               </div>
             )}
 
-            {/* Skip — top right */}
-            <div style={{ display:'flex', justifyContent:'flex-end', marginBottom:12 }}>
-              <button onClick={next}
-                style={{ background:'var(--bg-card-2)', border:'1px solid var(--border)',
-                  borderRadius:8, padding:'6px 14px', color:'var(--text-3)', fontSize:13,
-                  cursor:'pointer', fontFamily:'inherit', fontWeight:600 }}>
-                {total>1 ? `Skip → (${idx+1}/${total})` : 'Skip'}
-              </button>
-            </div>
+            {/* Scrollable content */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '20px 18px 32px' }}>
 
-            {/* Player badge */}
-            <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:20,
-              background:'var(--bg-card-2)', border:'1px solid var(--border)', borderRadius:14, padding:'12px 16px' }}>
-              <div style={{ width:44, height:44, borderRadius:'50%', background:lbSelfiePlayer.color,
-                display:'flex', alignItems:'center', justifyContent:'center', fontSize:18,
-                fontWeight:900, color:'#000', flexShrink:0 }}>
-                {lbSelfiePlayer.name[0].toUpperCase()}
+              {/* Flag section */}
+              <div style={{ marginBottom: 24 }}>
+                <p style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-3)',
+                  textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>
+                  🌍 Where are you from?
+                </p>
+                <CountryFlagPicker
+                  key={lbSelfiePlayer.name + '-flag'}
+                  sessionId={sessionId}
+                  onDone={async code => {
+                    setLbSelfiePlayer(p => ({ ...p, _flagDone: true, countryCode: code }))
+                    // Also save to sessions table so TV leaderboard can show flag even without selfie
+                    if (code && sessionId) {
+                      try { await supabase.from('sessions').update({ country_code: code }).eq('id', sessionId) } catch {}
+                    }
+                  }}
+                />
+                {lbSelfiePlayer.countryCode && (
+                  <div style={{ marginTop: 10, display: 'flex', alignItems: 'center', gap: 8,
+                    background: 'rgba(255,214,0,0.08)', border: '1px solid rgba(255,214,0,0.2)',
+                    borderRadius: 8, padding: '8px 12px' }}>
+                    <span style={{ fontSize: 22 }}>
+                      {({'NZ':'🇳🇿','AU':'🇦🇺','US':'🇺🇸','GB':'🇬🇧','DE':'🇩🇪','FR':'🇫🇷','JP':'🇯🇵','CN':'🇨🇳','KR':'🇰🇷','SG':'🇸🇬','IN':'🇮🇳','CA':'🇨🇦','IT':'🇮🇹','ES':'🇪🇸','NL':'🇳🇱','SE':'🇸🇪','NO':'🇳🇴','DK':'🇩🇰','CH':'🇨🇭','AT':'🇦🇹','BE':'🇧🇪','IE':'🇮🇪','PT':'🇵🇹','PL':'🇵🇱','FI':'🇫🇮','CZ':'🇨🇿','GR':'🇬🇷','ZA':'🇿🇦','AE':'🇦🇪','SA':'🇸🇦','IL':'🇮🇱','BR':'🇧🇷','MX':'🇲🇽','AR':'🇦🇷','CL':'🇨🇱','FJ':'🇫🇯','WS':'🇼🇸','TO':'🇹🇴','MY':'🇲🇾','TH':'🇹🇭','ID':'🇮🇩','PH':'🇵🇭','HK':'🇭🇰','TW':'🇹🇼','VN':'🇻🇳','KE':'🇰🇪','RU':'🇷🇺','UA':'🇺🇦','HR':'🇭🇷','HU':'🇭🇺','RO':'🇷🇴','SK':'🇸🇰'})[lbSelfiePlayer.countryCode] || '🌍'}
+                    </span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--yellow)' }}>
+                      Selected! ✓ You can still change it above.
+                    </span>
+                  </div>
+                )}
               </div>
+
+              <div style={{ height: 1, background: 'var(--border)', marginBottom: 24 }}/>
+
+              {/* Selfie section */}
               <div>
-                <p style={{ fontSize:17, fontWeight:800, color:lbSelfiePlayer.color, margin:'0 0 2px' }}>{lbSelfiePlayer.name}</p>
-                <p style={{ fontSize:13, color:'var(--text-3)', margin:0 }}>🏆 {score} strokes · Made the leaderboard!</p>
+                <p style={{ fontSize: 12, fontWeight: 800, color: 'var(--text-3)',
+                  textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 12 }}>
+                  📸 Leaderboard photo (optional)
+                </p>
+                <LbSelfieButton
+                  key={lbSelfiePlayer.name + '-selfie'}
+                  sessionId={sessionId}
+                  player={lbSelfiePlayer}
+                  countryCode={lbSelfiePlayer.countryCode || null}
+                  onDone={next}
+                />
               </div>
-            </div>
 
-            {/* Country flag */}
-            <div style={{ marginBottom:20 }}>
-              <p style={{ fontSize:12, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase',
-                letterSpacing:'0.08em', marginBottom:10 }}>Where are you from?</p>
-              <CountryFlagPicker
-                key={lbSelfiePlayer.name+'-flag'}
-                sessionId={sessionId}
-                onDone={(code) => setLbSelfiePlayer(p=>({...p,_flagDone:true,countryCode:code}))}
-              />
-            </div>
-
-            <div style={{ height:1, background:'var(--border)', margin:'4px 0 20px' }}/>
-
-            {/* Selfie */}
-            <div style={{ marginBottom:8 }}>
-              <p style={{ fontSize:12, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase',
-                letterSpacing:'0.08em', marginBottom:10 }}>Leaderboard photo (optional)</p>
-              <LbSelfieButton
-                key={lbSelfiePlayer.name+'-selfie'}
-                sessionId={sessionId}
-                player={lbSelfiePlayer}
-                countryCode={lbSelfiePlayer.countryCode||null}
-                onDone={next}
-              />
+              {/* Done button at bottom */}
+              <button onClick={next}
+                style={{ width: '100%', marginTop: 24, padding: '13px',
+                  background: 'transparent', border: '1px solid var(--border)',
+                  borderRadius: 12, color: 'var(--text-3)', fontSize: 14,
+                  cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600 }}>
+                {total > 1 && idx + 1 < total ? `Continue to next player →` : 'Done — back to scorecard'}
+              </button>
             </div>
           </div>
         )
