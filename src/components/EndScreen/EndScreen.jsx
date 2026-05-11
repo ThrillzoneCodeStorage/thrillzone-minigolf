@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Trophy, Mail, RotateCcw, AlertTriangle, CheckCircle, SkipForward, Camera, Star } from 'lucide-react'
 import { useGame } from '../../context/GameContext'
 import { useTranslation } from '../../lib/TranslationContext'
-import { updateSession, upsertScore, uploadLeaderboardPhoto } from '../../lib/supabase'
+import { updateSession, upsertScore, uploadLeaderboardPhoto, supabase } from '../../lib/supabase'
 import { EndConfetti } from '../HoleScreen/Celebrations'
 import ScorecardShare from './ScorecardShare'
 import { composePolaroid, composeLeaderboardPhoto } from '../PhotoSystem/PhotoSystem'
@@ -152,119 +152,175 @@ function CountryFlagPicker({ player, sessionId, onDone }) {
 
 // ── Leaderboard selfie button ─────────────────────────────────
 function LbSelfieButton({ sessionId, player, onDone, countryCode = null }) {
-  const t         = useTranslation()
   const videoRef  = useRef(null)
   const streamRef = useRef(null)
-  const [phase,     setPhase]     = useState('idle') // idle | camera | preview | saving | done | error
-  const [blob,      setBlob]      = useState(null)
-  const [previewUrl,setPreviewUrl]= useState(null)
-  const [errMsg,    setErrMsg]    = useState('')
+  const [phase,      setPhase]      = useState('idle')
+  const [blob,       setBlob]       = useState(null)
+  const [previewUrl, setPreviewUrl] = useState(null)
+  const [errMsg,     setErrMsg]     = useState('')
+
+  useEffect(() => () => stopStream(), [])
 
   async function openCam() {
     setPhase('camera')
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ ideal:1280 }, height:{ ideal:1280 } }, audio:false })
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'user', width: { ideal: 1080 }, height: { ideal: 1080 } }, audio: false
+      })
       streamRef.current = stream
-      if (videoRef.current) { videoRef.current.srcObject = stream; await videoRef.current.play() }
-    } catch(e) { setPhase('error'); setErrMsg('Camera not available. Please allow camera access.') }
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream
+        videoRef.current.play().catch(() => {})
+      }
+    } catch(e) {
+      setPhase('error')
+      setErrMsg('Camera not available — please allow camera access and try again.')
+    }
   }
 
-  function stopStream() { streamRef.current?.getTracks().forEach(t=>t.stop()); streamRef.current=null }
+  function stopStream() {
+    streamRef.current?.getTracks().forEach(t => t.stop())
+    streamRef.current = null
+  }
 
   function capture() {
-    const v = videoRef.current; if (!v) return
+    const v = videoRef.current; if (!v || !v.videoWidth) return
     const size = Math.min(v.videoWidth, v.videoHeight)
-    const c = document.createElement('canvas'); c.width=size; c.height=size
-    const ctx=c.getContext('2d')
-    // Centre-crop square from video
-    const ox=(v.videoWidth-size)/2, oy=(v.videoHeight-size)/2
-    ctx.translate(size,0); ctx.scale(-1,1)
-    ctx.drawImage(v, ox, oy, size, size, 0, 0, size, size)
+    const c = document.createElement('canvas')
+    c.width = size; c.height = size
+    const ctx = c.getContext('2d')
+    // Crop centre square, mirror for selfie
+    ctx.translate(size, 0); ctx.scale(-1, 1)
+    ctx.drawImage(v, (v.videoWidth - size) / 2, (v.videoHeight - size) / 2, size, size, 0, 0, size, size)
     stopStream()
-    c.toBlob(b => { setBlob(b); setPreviewUrl(URL.createObjectURL(b)); setPhase('preview') }, 'image/jpeg', 0.92)
+    c.toBlob(b => {
+      if (!b) { setPhase('error'); setErrMsg('Could not capture photo. Try again.'); return }
+      setBlob(b)
+      setPreviewUrl(URL.createObjectURL(b))
+      setPhase('preview')
+    }, 'image/jpeg', 0.9)
   }
 
   async function save() {
     if (!blob) return
     setPhase('saving')
     try {
-      // Try to compose leaderboard-formatted photo; fall back to raw blob if it fails
-      let lbPhoto = blob
-      try { lbPhoto = await composeLeaderboardPhoto(blob, false) ?? blob } catch(e) { console.warn('composeLeaderboardPhoto failed, using raw blob', e) }
-      await uploadLeaderboardPhoto(sessionId, player.name, lbPhoto, countryCode)
+      // Direct upload — no canvas processing, avoids all logo/canvas issues
+      const safeName = player.name.replace(/[^a-zA-Z0-9]/g, '_')
+      const fileName = `lb/${sessionId}/${safeName}_${Date.now()}.jpg`
+      const { error: upErr } = await supabase.storage
+        .from('photos').upload(fileName, blob, { contentType: 'image/jpeg', upsert: true })
+      if (upErr) throw new Error(`Storage: ${upErr.message}`)
+      const { data: { publicUrl } } = supabase.storage.from('photos').getPublicUrl(fileName)
+      const row = { session_id: sessionId, player_name: player.name, photo_url: publicUrl }
+      if (countryCode) row.country_code = countryCode
+      const { error: dbErr } = await supabase.from('leaderboard_player_photos')
+        .upsert(row, { onConflict: 'session_id,player_name' })
+      if (dbErr) {
+        // Retry without country_code
+        await supabase.from('leaderboard_player_photos')
+          .upsert({ session_id: sessionId, player_name: player.name, photo_url: publicUrl },
+                  { onConflict: 'session_id,player_name' })
+      }
       setPhase('done')
-      setTimeout(onDone, 1400)
+      setTimeout(onDone, 1600)
     } catch(e) {
-      console.error('Selfie save error:', e)
       setPhase('error')
-      setErrMsg(`Could not save: ${e?.message || 'Unknown error'}. Try again or skip.`)
+      setErrMsg(e?.message || 'Upload failed. Check your connection and try again.')
     }
   }
 
-  function retake() { setBlob(null); if(previewUrl){URL.revokeObjectURL(previewUrl);setPreviewUrl(null)}; openCam() }
+  function retake() {
+    setBlob(null)
+    if (previewUrl) { URL.revokeObjectURL(previewUrl); setPreviewUrl(null) }
+    openCam()
+  }
 
-  // idle
-  if (phase==='idle') return (
-    <div style={{ textAlign:'center' }}>
-      <p style={{ fontSize:14, color:'var(--text-2)', marginBottom:12 }}>
-        {t.selfieDesc}
+  if (phase === 'idle') return (
+    <div>
+      <p style={{ fontSize:14, color:'var(--text-2)', marginBottom:16, textAlign:'center', lineHeight:1.6 }}>
+        📸 Add your selfie next to your name on the big screen!
       </p>
-      <button className="btn btn-primary btn-full" onClick={openCam} style={{ gap:8, fontSize:16, padding:'14px' }}>
+      <button className="btn btn-primary btn-full" onClick={openCam}
+        style={{ gap:10, fontSize:17, padding:'16px', borderRadius:14 }}>
         <Camera size={22}/> Take Selfie
       </button>
     </div>
   )
 
-  // camera live
-  if (phase==='camera') return (
+  if (phase === 'camera') return (
     <div>
-      <div style={{ position:'relative', borderRadius:12, overflow:'hidden', aspectRatio:'1', marginBottom:12, background:'#000' }}>
-        <video ref={videoRef} autoPlay playsInline muted style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }}/>
-        <div style={{ position:'absolute', inset:0, border:'3px solid rgba(255,214,0,0.5)', borderRadius:12, pointerEvents:'none' }}/>
-        <p style={{ position:'absolute', bottom:8, left:0, right:0, textAlign:'center', fontSize:11, color:'rgba(255,214,0,0.7)', fontWeight:600 }}>Selfie · Square crop</p>
+      <p style={{ fontSize:12, color:'var(--text-3)', textAlign:'center', marginBottom:10 }}>
+        Position yourself in the frame and tap Capture
+      </p>
+      <div style={{ position:'relative', borderRadius:16, overflow:'hidden', aspectRatio:'1', background:'#111', marginBottom:14, boxShadow:'0 8px 32px rgba(0,0,0,0.6)' }}>
+        <video ref={videoRef} autoPlay playsInline muted
+          style={{ width:'100%', height:'100%', objectFit:'cover', display:'block' }}/>
+        {/* Gold frame corners */}
+        {[['top','left'],['top','right'],['bottom','left'],['bottom','right']].map(([v,h]) => (
+          <div key={v+h} style={{ position:'absolute', [v]:10, [h]:10, width:24, height:24,
+            borderTop: v==='top'?'3px solid #FFD600':'none',
+            borderBottom: v==='bottom'?'3px solid #FFD600':'none',
+            borderLeft: h==='left'?'3px solid #FFD600':'none',
+            borderRight: h==='right'?'3px solid #FFD600':'none' }}/>
+        ))}
       </div>
-      <button className="btn btn-primary btn-full" onClick={capture} style={{ gap:8, fontSize:16, padding:'14px' }}>
-        <Camera size={20}/> Capture
-      </button>
+      <div style={{ display:'flex', gap:10 }}>
+        <button className="btn btn-ghost" style={{ flex:1 }} onClick={() => { stopStream(); setPhase('idle') }}>
+          Cancel
+        </button>
+        <button className="btn btn-primary" onClick={capture}
+          style={{ flex:2, gap:8, fontSize:16, padding:'14px' }}>
+          <Camera size={20}/> Capture
+        </button>
+      </div>
     </div>
   )
 
-  // preview
-  if (phase==='preview') return (
+  if (phase === 'preview') return (
     <div>
-      <div style={{ borderRadius:12, overflow:'hidden', marginBottom:12, boxShadow:'0 4px 20px rgba(0,0,0,0.5)' }}>
-        <img src={previewUrl} alt="Selfie preview" style={{ width:'100%', display:'block', aspectRatio:'1', objectFit:'cover' }}/>
+      <p style={{ fontSize:12, color:'var(--text-3)', textAlign:'center', marginBottom:10 }}>
+        Happy with this? Add it to the leaderboard!
+      </p>
+      <div style={{ borderRadius:16, overflow:'hidden', marginBottom:14, boxShadow:'0 8px 32px rgba(0,0,0,0.6)', border:'3px solid rgba(255,214,0,0.3)' }}>
+        <img src={previewUrl} alt="Selfie" style={{ width:'100%', display:'block', aspectRatio:'1', objectFit:'cover' }}/>
       </div>
       <div style={{ display:'flex', gap:10 }}>
-        <button className="btn btn-ghost" style={{ flex:1 }} onClick={retake}><RotateCcw size={15}/> Retake</button>
-        <button className="btn btn-primary" style={{ flex:2, gap:8 }} onClick={save}>
+        <button className="btn btn-ghost" style={{ flex:1, gap:6 }} onClick={retake}>
+          <RotateCcw size={14}/> Retake
+        </button>
+        <button className="btn btn-primary" style={{ flex:2, gap:8, fontSize:15 }} onClick={save}>
           <Check size={16}/> Add to Leaderboard
         </button>
       </div>
     </div>
   )
 
-  // saving
-  if (phase==='saving') return (
-    <div style={{ textAlign:'center', padding:'20px 0' }}>
-      <div style={{ width:32, height:32, border:'3px solid rgba(255,214,0,0.2)', borderTopColor:'var(--yellow)', borderRadius:'50%', animation:'spin 0.7s linear infinite', margin:'0 auto 12px' }}/>
-      <p style={{ color:'var(--text-2)', fontSize:14, margin:0 }}>Saving to leaderboard…</p>
+  if (phase === 'saving') return (
+    <div style={{ textAlign:'center', padding:'28px 0' }}>
+      <div style={{ width:40, height:40, border:'3px solid rgba(255,214,0,0.2)', borderTopColor:'#FFD600',
+        borderRadius:'50%', animation:'spin 0.7s linear infinite', margin:'0 auto 14px' }}/>
+      <p style={{ color:'var(--text-2)', fontSize:15, fontWeight:600, margin:0 }}>Uploading to leaderboard…</p>
     </div>
   )
 
-  // done
-  if (phase==='done') return (
-    <div style={{ textAlign:'center', padding:'16px 0' }}>
-      <div style={{ fontSize:36, marginBottom:8 }}>✅</div>
-      <p style={{ color:'#34d399', fontSize:15, fontWeight:700, margin:0 }}>Added to the leaderboard!</p>
+  if (phase === 'done') return (
+    <div style={{ textAlign:'center', padding:'24px 0' }}>
+      <div style={{ fontSize:52, marginBottom:10 }}>🏆</div>
+      <p style={{ color:'#FFD600', fontSize:17, fontWeight:800, margin:'0 0 4px' }}>You're on the board!</p>
+      <p style={{ color:'var(--text-3)', fontSize:13, margin:0 }}>Your photo will appear on the big screen</p>
     </div>
   )
 
   // error
   return (
-    <div style={{ textAlign:'center', padding:'12px 0' }}>
-      <p style={{ color:'#ff5252', fontSize:14, marginBottom:12 }}>{errMsg}</p>
-      <button className="btn btn-ghost btn-full" onClick={() => setPhase('idle')}>Try again</button>
+    <div style={{ textAlign:'center', padding:'16px 0' }}>
+      <div style={{ fontSize:32, marginBottom:10 }}>⚠️</div>
+      <p style={{ color:'#ff5252', fontSize:13, marginBottom:16, lineHeight:1.5 }}>{errMsg}</p>
+      <div style={{ display:'flex', gap:10 }}>
+        <button className="btn btn-ghost" style={{ flex:1 }} onClick={onDone}>Skip</button>
+        <button className="btn btn-primary" style={{ flex:2 }} onClick={() => setPhase('idle')}>Try Again</button>
+      </div>
     </div>
   )
 }
