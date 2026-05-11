@@ -300,6 +300,8 @@ import { supabase } from '../lib/supabase'
 import {
   checkAdminPassword, getHoles, upsertHole, deleteHole, reorderHoles,
   broadcastMessage, clearBroadcastMessage, deleteLbPhoto,
+  getSavedMessages, saveBroadcastMessages,
+  pruneLeaderboardPhotos,
   getAllSpinnerEffects, upsertSpinnerEffect, deleteSpinnerEffect,
   getAllSessions, setAdminSetting, deleteSession, deletePlayerScores,
   getAllGameModeRules, upsertGameModeRule, deleteGameModeRule, reorderGameModeRules,
@@ -1056,7 +1058,8 @@ const ANIM_NAMES = {
 function AnimationSettings() {
   const [enabled,   setEnabled]   = useState(Object.keys(ANIM_NAMES))
   const [saved,     setSaved]     = useState(false)
-  const [previewing,setPreviewing] = useState(null) // animation key being previewed
+  const [previewing,setPreviewing] = useState(null)
+  const [previewMode,setPreviewMode] = useState('phone') // 'phone' or 'tv'
 
   useEffect(() => {
     supabase.from('admin_settings').select('value').eq('key','enabled_animations').single()
@@ -1080,22 +1083,57 @@ function AnimationSettings() {
 
   return (
     <>
-      {/* Preview popup — renders over the whole page */}
-      {previewing && (
+      {/* Preview popup — phone or TV frame */}
+      {previewing && previewMode === 'phone' && (
         <HoleInOnePopup
           players={previewPlayers}
           enabledAnimations={[previewing]}
           onDismiss={() => setPreviewing(null)}
         />
       )}
+      {previewing && previewMode === 'tv' && (
+        <div style={{ position:'fixed', inset:0, zIndex:10000, background:'#000', display:'flex', alignItems:'center', justifyContent:'center' }}>
+          {/* TV frame */}
+          <div style={{ position:'relative', width:'min(90vw, 960px)', aspectRatio:'16/9',
+            background:'#060606', border:'3px solid #222', borderRadius:8, overflow:'hidden',
+            boxShadow:'0 0 60px rgba(0,0,0,0.8)' }}>
+            <HoleInOnePopup
+              players={previewPlayers}
+              enabledAnimations={[previewing]}
+              onDismiss={() => setPreviewing(null)}
+            />
+            <div style={{ position:'absolute', top:8, left:12, fontSize:10, fontWeight:700,
+              color:'rgba(255,255,255,0.3)', letterSpacing:'0.1em', pointerEvents:'none' }}>
+              📺 TV LEADERBOARD PREVIEW
+            </div>
+          </div>
+          <button onClick={() => setPreviewing(null)}
+            style={{ position:'absolute', top:16, right:16, background:'rgba(255,255,255,0.1)',
+              border:'1px solid rgba(255,255,255,0.2)', borderRadius:8, color:'#fff',
+              cursor:'pointer', padding:'6px 14px', fontSize:13, fontFamily:'inherit', fontWeight:700 }}>
+            Close preview
+          </button>
+        </div>
+      )}
 
       <div style={{ background:'#161616', border:`1px solid ${A.border}`, borderRadius:12, padding:18, marginBottom:14 }}>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
           <div>
             <p style={{ color:A.text, fontSize:14, fontWeight:700, margin:0 }}>Hole-in-One Animations</p>
-            <p style={{ color:A.text3, fontSize:12, margin:'2px 0 0' }}>Toggle on/off. Tap Preview to test each one.</p>
+            <p style={{ color:A.text3, fontSize:12, margin:'2px 0 0' }}>Toggle on/off. Preview in phone or TV mode.</p>
           </div>
           {saved && <span style={{ fontSize:12, color:A.green, fontWeight:700 }}>Saved ✓</span>}
+        </div>
+        {/* Preview mode selector */}
+        <div style={{ display:'flex', gap:8, marginBottom:14 }}>
+          {['phone','tv'].map(m => (
+            <button key={m} onClick={() => setPreviewMode(m)}
+              style={{ flex:1, padding:'7px 0', borderRadius:8, border:`1px solid ${previewMode===m?A.yellow:A.border}`,
+                background:previewMode===m?'rgba(255,214,0,0.08)':'transparent',
+                color:previewMode===m?A.yellow:A.text3, fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:'inherit' }}>
+              {m==='phone' ? '📱 Phone view' : '📺 TV view'}
+            </button>
+          ))}
         </div>
         <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
           {Object.entries(ANIM_NAMES).map(([key, label]) => {
@@ -1192,47 +1230,71 @@ function BannedWordsSection() {
 }
 
 // ── Broadcast Tab ─────────────────────────────────────────────
-const QUICK_MESSAGES = [
-  { label:'30 min warning', text:'⏰ We will be closing in 30 minutes. Please start wrapping up your game!' },
-  { label:'15 min warning', text:'⚠️ We will be closing in 15 minutes. Please finish your current hole and head to reception.' },
-  { label:'5 min warning',  text:'🔔 Final 5 minutes! Please complete your scoring and return your putters and balls.' },
-  { label:'Return equipment', text:'Please return your putters and balls to reception downstairs after your round. Thank you!' },
-  { label:'Downstairs closing', text:'📢 Downstairs will be closing soon. Please return to Escape Quest and hand in your equipment.' },
-  { label:'Payment reminder', text:'💳 Please go to reception to complete payment before continuing your game.' },
-  { label:'Staff assistance', text:'A staff member will be with you shortly. Please wait at your current hole.' },
+const DEFAULT_MESSAGES = [
+  { id:'d1', label:'30 min warning',    text:'⏰ We will be closing in 30 minutes. Please start wrapping up your game!' },
+  { id:'d2', label:'15 min warning',    text:'⚠️ We will be closing in 15 minutes. Please finish your current hole and head to reception.' },
+  { id:'d3', label:'5 min warning',     text:'🔔 Final 5 minutes! Please complete your scoring and return your putters and balls.' },
+  { id:'d4', label:'Return equipment',  text:'Please return your putters and balls to reception downstairs after your round. Thank you!' },
+  { id:'d5', label:'Downstairs closing',text:'📢 Downstairs will be closing soon. Please return to Escape Quest and hand in your equipment.' },
+  { id:'d6', label:'Payment reminder',  text:'💳 Please go to reception to complete payment before continuing your game.' },
+  { id:'d7', label:'Staff assistance',  text:'A staff member will be with you shortly. Please wait at your current hole.' },
 ]
 
 function BroadcastTab() {
-  const [active, setActive]   = useState('')
-  const [custom, setCustom]   = useState('')
-  const [sending, setSending] = useState(false)
-  const [sent,    setSent]    = useState(false)
-  const [currentMsg, setCurrentMsg] = useState('')
+  const [messages,    setMessages]    = useState([...DEFAULT_MESSAGES])
+  const [active,      setActive]      = useState('')
+  const [sending,     setSending]     = useState(false)
+  const [sent,        setSent]        = useState(false)
+  const [currentMsg,  setCurrentMsg]  = useState('')
+  const [editingId,   setEditingId]   = useState(null)
+  const [editText,    setEditText]    = useState('')
+  const [editLabel,   setEditLabel]   = useState('')
+  const [newLabel,    setNewLabel]    = useState('')
+  const [newText,     setNewText]     = useState('')
+  const [showNew,     setShowNew]     = useState(false)
+  const [customText,  setCustomText]  = useState('')
 
   useEffect(() => {
+    // Load current broadcast
     supabase.from('admin_settings').select('value').eq('key','broadcast_message').single()
-      .then(({ data }) => {
-        if (data?.value) {
-          try { setCurrentMsg(JSON.parse(data.value).text || '') } catch {}
-        }
-      })
+      .then(({ data }) => { if (data?.value) { try { setCurrentMsg(JSON.parse(data.value).text||'') } catch {} } })
+    // Load saved messages
+    getSavedMessages().then(saved => { if (saved.length > 0) setMessages(saved) })
   }, [])
+
+  async function persist(msgs) {
+    setMessages(msgs)
+    await saveBroadcastMessages(msgs)
+  }
 
   async function send(text) {
     if (!text.trim()) return
     setSending(true)
     await broadcastMessage(text.trim())
     setCurrentMsg(text.trim())
-    setSent(true)
-    setTimeout(() => setSent(false), 2500)
+    setSent(true); setTimeout(() => setSent(false), 2500)
     setSending(false)
   }
 
-  async function clear() {
-    await clearBroadcastMessage()
-    setCurrentMsg('')
-    setActive('')
-    setCustom('')
+  async function clearMsg() {
+    await clearBroadcastMessage(); setCurrentMsg(''); setActive(''); setCustomText('')
+  }
+
+  function startEdit(m) { setEditingId(m.id); setEditText(m.text); setEditLabel(m.label) }
+
+  async function saveEdit(id) {
+    const next = messages.map(m => m.id===id ? { ...m, text:editText.trim(), label:editLabel.trim()||m.label } : m)
+    await persist(next); setEditingId(null)
+  }
+
+  async function deleteMsg(id) {
+    await persist(messages.filter(m => m.id !== id))
+  }
+
+  async function addNew() {
+    if (!newText.trim()) return
+    const next = [...messages, { id:'c'+Date.now(), label:newLabel.trim()||'Custom', text:newText.trim() }]
+    await persist(next); setNewLabel(''); setNewText(''); setShowNew(false)
   }
 
   return (
@@ -1245,69 +1307,99 @@ function BroadcastTab() {
         {sent && <span style={{ fontSize:12, color:A.green, fontWeight:700 }}>✓ Sent!</span>}
       </div>
 
-      {/* Current message indicator */}
+      {/* Current active message */}
       {currentMsg && (
-        <div style={{ background:'rgba(255,149,0,0.08)', border:'1px solid rgba(255,149,0,0.3)', borderRadius:10, padding:'12px 14px', marginBottom:16, display:'flex', alignItems:'center', gap:10 }}>
-          <span style={{ fontSize:16, flexShrink:0 }}>📢</span>
-          <div style={{ flex:1, minWidth:0 }}>
-            <p style={{ color:'#ff9500', fontSize:12, fontWeight:700, margin:'0 0 2px' }}>Currently showing on all active scorecards:</p>
+        <div style={{ background:'rgba(255,149,0,0.08)', border:'1px solid rgba(255,149,0,0.3)', borderRadius:10, padding:'12px 14px', marginBottom:16, display:'flex', alignItems:'flex-start', gap:10 }}>
+          <span style={{ fontSize:16 }}>📢</span>
+          <div style={{ flex:1 }}>
+            <p style={{ color:'#ff9500', fontSize:12, fontWeight:700, margin:'0 0 3px' }}>Currently active on all scorecards:</p>
             <p style={{ color:A.text2, fontSize:13, margin:0, lineHeight:1.4 }}>{currentMsg}</p>
           </div>
-          <button onClick={clear} style={{ background:'none', border:`1px solid rgba(255,59,59,0.4)`, borderRadius:6, color:A.red, cursor:'pointer', fontSize:11, fontWeight:700, padding:'4px 8px', flexShrink:0, fontFamily:'inherit' }}>
-            Clear
-          </button>
+          <button onClick={clearMsg} style={{ background:'none', border:`1px solid rgba(255,59,59,0.4)`, borderRadius:6, color:A.red, cursor:'pointer', fontSize:11, fontWeight:700, padding:'4px 8px', flexShrink:0, fontFamily:'inherit' }}>Clear</button>
         </div>
       )}
 
-      {/* Quick message buttons */}
-      <p style={{ color:A.text3, fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:10 }}>Quick Messages</p>
-      <div style={{ display:'flex', flexDirection:'column', gap:8, marginBottom:20 }}>
-        {QUICK_MESSAGES.map((m, i) => (
-          <button key={i} onClick={() => { setActive(m.text); setCustom('') }}
-            style={{
-              display:'flex', alignItems:'flex-start', gap:10, textAlign:'left',
-              background: active===m.text ? 'rgba(255,149,0,0.08)' : '#161616',
-              border: `1px solid ${active===m.text?'rgba(255,149,0,0.4)':A.border}`,
-              borderRadius:10, padding:'10px 14px', cursor:'pointer', fontFamily:'inherit',
-              transition:'all 0.12s',
-            }}>
-            <div style={{ flex:1, minWidth:0 }}>
-              <div style={{ fontSize:12, fontWeight:800, color:active===m.text?'#ff9500':A.text2, marginBottom:3 }}>{m.label}</div>
-              <div style={{ fontSize:12, color:A.text3, lineHeight:1.45 }}>{m.text}</div>
-            </div>
-            <div style={{ width:18, height:18, borderRadius:'50%', border:`2px solid ${active===m.text?'#ff9500':A.text3}`,
-              background:active===m.text?'#ff9500':'transparent', flexShrink:0, marginTop:2,
-              display:'flex', alignItems:'center', justifyContent:'center' }}>
-              {active===m.text && <div style={{ width:6, height:6, borderRadius:'50%', background:'#000' }}/>}
-            </div>
-          </button>
+      {/* Saved messages */}
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10 }}>
+        <p style={{ color:A.text3, fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', margin:0 }}>Saved Messages</p>
+        <button onClick={() => setShowNew(v=>!v)}
+          style={{ ...iconBtn, color:A.yellow, fontSize:12, gap:4 }}>
+          <Plus size={12}/> Add new
+        </button>
+      </div>
+
+      {/* New message form */}
+      {showNew && (
+        <div style={{ background:'#161616', border:`1px solid ${A.yellow}44`, borderRadius:10, padding:14, marginBottom:12 }}>
+          <input style={{ ...inp, marginBottom:8 }} placeholder="Label (e.g. Rain warning)" value={newLabel} onChange={e=>setNewLabel(e.target.value)}/>
+          <textarea style={{ ...inp, minHeight:64, resize:'vertical', marginBottom:8 }} placeholder="Message text…" value={newText} onChange={e=>setNewText(e.target.value)}/>
+          <div style={{ display:'flex', gap:8 }}>
+            <button onClick={addNew} style={{ ...saveBtn, flex:1 }} disabled={!newText.trim()}>Save Message</button>
+            <button onClick={() => setShowNew(false)} style={{ ...cancelBtn, flex:1 }}>Cancel</button>
+          </div>
+        </div>
+      )}
+
+      <div style={{ display:'flex', flexDirection:'column', gap:7, marginBottom:18 }}>
+        {messages.map(m => (
+          <div key={m.id} style={{
+            background: active===m.id ? 'rgba(255,149,0,0.08)' : '#161616',
+            border: `1px solid ${active===m.id?'rgba(255,149,0,0.4)':A.border}`,
+            borderRadius:10, overflow:'hidden',
+          }}>
+            {editingId === m.id ? (
+              <div style={{ padding:12 }}>
+                <input style={{ ...inp, marginBottom:6 }} value={editLabel} onChange={e=>setEditLabel(e.target.value)} placeholder="Label"/>
+                <textarea style={{ ...inp, minHeight:60, resize:'vertical', marginBottom:8 }} value={editText} onChange={e=>setEditText(e.target.value)}/>
+                <div style={{ display:'flex', gap:8 }}>
+                  <button onClick={() => saveEdit(m.id)} style={{ ...saveBtn, flex:1 }}>Save</button>
+                  <button onClick={() => setEditingId(null)} style={{ ...cancelBtn, flex:1 }}>Cancel</button>
+                </div>
+              </div>
+            ) : (
+              <button onClick={() => setActive(v => v===m.id ? '' : m.id)}
+                style={{ display:'flex', alignItems:'flex-start', gap:10, textAlign:'left', width:'100%',
+                  background:'none', border:'none', padding:'10px 12px', cursor:'pointer', fontFamily:'inherit' }}>
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ fontSize:12, fontWeight:800, color:active===m.id?'#ff9500':A.text2, marginBottom:3 }}>{m.label}</div>
+                  <div style={{ fontSize:12, color:A.text3, lineHeight:1.45 }}>{m.text}</div>
+                </div>
+                <div style={{ display:'flex', gap:6, flexShrink:0, alignItems:'center', marginTop:2 }}>
+                  <button onClick={e=>{e.stopPropagation();startEdit(m)}}
+                    style={{ background:'none', border:`1px solid ${A.border}`, borderRadius:6, color:A.text3, cursor:'pointer', padding:'3px 7px', fontSize:11, fontFamily:'inherit' }}>
+                    Edit
+                  </button>
+                  {!m.id.startsWith('d') && (
+                    <button onClick={e=>{e.stopPropagation();deleteMsg(m.id)}}
+                      style={{ background:'none', border:`1px solid rgba(255,59,59,0.3)`, borderRadius:6, color:A.red, cursor:'pointer', padding:'3px 7px', fontSize:11, fontFamily:'inherit' }}>
+                      <Trash2 size={11}/>
+                    </button>
+                  )}
+                  <div style={{ width:16, height:16, borderRadius:'50%', border:`2px solid ${active===m.id?'#ff9500':A.text3}`,
+                    background:active===m.id?'#ff9500':'transparent', flexShrink:0,
+                    display:'flex', alignItems:'center', justifyContent:'center' }}>
+                    {active===m.id && <div style={{ width:5, height:5, borderRadius:'50%', background:'#000' }}/>}
+                  </div>
+                </div>
+              </button>
+            )}
+          </div>
         ))}
       </div>
 
-      {/* Custom message */}
-      <p style={{ color:A.text3, fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:8 }}>Custom Message</p>
-      <textarea
-        style={{ ...inp, minHeight:72, resize:'vertical', marginBottom:12 }}
-        placeholder="Type a custom message to all players…"
-        value={custom}
-        onChange={e => { setCustom(e.target.value); setActive('') }}
-      />
+      {/* Custom one-off message */}
+      <p style={{ color:A.text3, fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:8 }}>One-off Custom Message</p>
+      <textarea style={{ ...inp, minHeight:64, resize:'vertical', marginBottom:10 }}
+        placeholder="Type a custom message…" value={customText}
+        onChange={e => { setCustomText(e.target.value); setActive('') }}/>
 
-      {/* Send button */}
-      <button
-        onClick={() => send(custom || active)}
-        disabled={(!active && !custom.trim()) || sending}
+      <button onClick={() => send(customText || messages.find(m=>m.id===active)?.text || '')}
+        disabled={(!active && !customText.trim()) || sending}
         style={{ ...saveBtn, width:'100%', justifyContent:'center', gap:8,
           background: sending?A.text3:sent?A.green:'#ff9500',
-          opacity:(!active&&!custom.trim())?0.4:1 }}>
+          opacity:(!active&&!customText.trim())?0.4:1 }}>
         <Bell size={14}/> {sending?'Sending…':sent?'Sent!':'Send to All Active Players'}
       </button>
-
-      {(!active && !custom.trim()) && (
-        <p style={{ color:A.text3, fontSize:12, textAlign:'center', marginTop:8 }}>
-          Select a quick message or type a custom one above
-        </p>
-      )}
     </div>
   )
 }

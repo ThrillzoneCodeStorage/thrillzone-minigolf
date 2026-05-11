@@ -46,44 +46,107 @@ const COUNTRIES = [
 ]
 
 function CountryFlagPicker({ player, sessionId, onDone }) {
-  const [selected, setSelected] = useState(null)
-  const [saved, setSaved]       = useState(false)
+  const [selected,  setSelected]  = useState(null)
+  const [search,    setSearch]    = useState('')
+  const [popular,   setPopular]   = useState([])
+  const [saving,    setSaving]    = useState(false)
+
+  useEffect(() => {
+    // Load most popular countries from recent sessions
+    import('../../lib/supabase').then(({ supabase }) => {
+      supabase.from('sessions')
+        .select('country_code')
+        .not('country_code', 'is', null)
+        .order('started_at', { ascending: false })
+        .limit(200)
+        .then(({ data }) => {
+          if (!data) return
+          const counts = {}
+          data.forEach(s => { if (s.country_code) counts[s.country_code] = (counts[s.country_code]||0)+1 })
+          const sorted = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([code])=>code)
+          // Always include NZ and AU at front
+          const top = ['NZ','AU',...sorted.filter(c=>c!=='NZ'&&c!=='AU')].slice(0,8)
+          setPopular(top)
+        })
+    })
+  }, [])
 
   async function save(code) {
-    setSelected(code)
+    setSelected(code); setSaving(true)
     try {
       const { supabase } = await import('../../lib/supabase')
-      await supabase.from('sessions')
-        .update({ country_code: code })
-        .eq('id', sessionId)
+      await supabase.from('sessions').update({ country_code: code }).eq('id', sessionId)
     } catch {}
-    setSaved(true)
-    setTimeout(() => onDone(code), 600)
+    setSaving(false)
+    setTimeout(() => onDone(code), 500)
   }
+
+  const filtered = search.trim()
+    ? COUNTRIES.filter(c => c.name.toLowerCase().includes(search.toLowerCase()) || c.code.toLowerCase().includes(search.toLowerCase()))
+    : COUNTRIES
+
+  const popularList = popular.map(code => COUNTRIES.find(c=>c.code===code)).filter(Boolean)
 
   return (
     <div>
-      <p style={{ fontSize:13, fontWeight:700, color:'var(--text-2)', marginBottom:12, textAlign:'center' }}>
+      <p style={{ fontSize:13, fontWeight:700, color:'var(--text-2)', marginBottom:10, textAlign:'center' }}>
         🌍 Where are you from?
       </p>
-      <div style={{ display:'flex', flexWrap:'wrap', gap:7, justifyContent:'center', maxHeight:200, overflowY:'auto' }}>
-        {COUNTRIES.map(c => (
-          <button key={c.code} onClick={() => save(c.code)}
-            style={{
-              display:'flex', flexDirection:'column', alignItems:'center', gap:3,
-              background: selected===c.code ? 'rgba(255,214,0,0.12)' : 'var(--bg-card-2)',
-              border: `1px solid ${selected===c.code?'var(--yellow)':'var(--border)'}`,
-              borderRadius:10, padding:'8px 10px', cursor:'pointer', fontFamily:'inherit',
-              minWidth:64, transition:'all 0.12s',
-            }}>
-            <span style={{ fontSize:22 }}>{c.flag}</span>
-            <span style={{ fontSize:10, fontWeight:600, color:'var(--text-2)', whiteSpace:'nowrap' }}>{c.name}</span>
-          </button>
-        ))}
+
+      {/* Search */}
+      <input
+        placeholder="Search country…"
+        value={search} onChange={e=>setSearch(e.target.value)}
+        style={{ width:'100%', background:'var(--bg-card-2)', border:'1px solid var(--border)',
+          borderRadius:8, padding:'8px 12px', color:'var(--text)', fontSize:13,
+          fontFamily:'inherit', marginBottom:10, boxSizing:'border-box' }}
+      />
+
+      {/* Popular (only when not searching) */}
+      {!search.trim() && popularList.length > 0 && (
+        <div style={{ marginBottom:10 }}>
+          <p style={{ fontSize:10, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:7 }}>Popular</p>
+          <div style={{ display:'flex', flexWrap:'wrap', gap:7 }}>
+            {popularList.map(c => (
+              <button key={c.code} onClick={() => save(c.code)}
+                disabled={saving}
+                style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:3,
+                  background: selected===c.code ? 'rgba(255,214,0,0.12)' : 'var(--bg-card-2)',
+                  border: `1px solid ${selected===c.code?'var(--yellow)':'var(--border)'}`,
+                  borderRadius:10, padding:'8px 10px', cursor:'pointer', fontFamily:'inherit', minWidth:60, transition:'all 0.12s' }}>
+                <span style={{ fontSize:22 }}>{c.flag}</span>
+                <span style={{ fontSize:10, fontWeight:600, color:'var(--text-2)', whiteSpace:'nowrap' }}>{c.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* All / search results */}
+      <div style={{ maxHeight:170, overflowY:'auto' }}>
+        <p style={{ fontSize:10, fontWeight:700, color:'var(--text-3)', textTransform:'uppercase', letterSpacing:'0.08em', marginBottom:7 }}>
+          {search.trim() ? `Results (${filtered.length})` : 'All Countries'}
+        </p>
+        <div style={{ display:'flex', flexWrap:'wrap', gap:6 }}>
+          {filtered.map(c => (
+            <button key={c.code} onClick={() => save(c.code)}
+              disabled={saving}
+              style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:2,
+                background: selected===c.code ? 'rgba(255,214,0,0.12)' : 'var(--bg-card-2)',
+                border: `1px solid ${selected===c.code?'var(--yellow)':'var(--border)'}`,
+                borderRadius:8, padding:'6px 8px', cursor:'pointer', fontFamily:'inherit',
+                minWidth:52, transition:'all 0.12s' }}>
+              <span style={{ fontSize:18 }}>{c.flag}</span>
+              <span style={{ fontSize:9, fontWeight:600, color:'var(--text-2)', whiteSpace:'nowrap' }}>{c.name}</span>
+            </button>
+          ))}
+        </div>
       </div>
-      <button className="btn btn-ghost btn-sm btn-full" style={{ marginTop:10, color:'var(--text-3)', fontSize:12 }}
+
+      <button className="btn btn-ghost btn-sm btn-full"
+        style={{ marginTop:10, color:'var(--text-3)', fontSize:12 }}
         onClick={() => onDone(null)}>
-        Skip country selection
+        Skip — no flag
       </button>
     </div>
   )
@@ -185,17 +248,21 @@ export default function EndScreen() {
   const winner = leaderboard[0]
   const [showFullScorecard, setShowFullScorecard] = useState(false)
 
-  // Detect qualifying players for leaderboard selfie
+  // Detect qualifying players — runs when leaderboard is loaded
+  const selfieShownRef = useRef(false)
   useEffect(() => {
-    if (!sessionId || optOut) return
+    if (!sessionId || optOut || selfieShownRef.current) return
+    if (leaderboard.length === 0) return
+    // Players who completed all holes
     const totalHoles = holes.length
-    const qualifiers = leaderboard.filter(p => p.holesPlayed >= totalHoles)
+    const qualifiers = leaderboard.filter(p => (p.holesPlayed || p.holes || 0) >= totalHoles)
     if (qualifiers.length > 0) {
+      selfieShownRef.current = true
       setLbSelfieQueue(qualifiers)
       setLbSelfiePlayer(qualifiers[0])
-      setTimeout(() => setShowLbSelfie(true), 1200)
+      setTimeout(() => setShowLbSelfie(true), 1500)
     }
-  }, [])
+  }, [leaderboard])
   const skippedList = holes.filter(h => skippedHoles.has(h.id))
   const hasSkipped = skippedList.length > 0
 

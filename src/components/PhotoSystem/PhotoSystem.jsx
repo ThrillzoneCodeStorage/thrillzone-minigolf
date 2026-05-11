@@ -601,8 +601,8 @@ export function PhotoGallery({ onClose }) {
               <div style={{ background:'#fff', padding:'10px 10px 0', borderRadius:6, boxShadow:'0 8px 32px rgba(0,0,0,0.45)' }}>
                 <img src={photos[carouselIdx]} alt={`Memory ${carouselIdx+1}`}
                   style={{ width:'100%', display:'block', borderRadius:2 }}/>
-                <div style={{ padding:'10px 0 12px', textAlign:'center' }}>
-                  <img src="/logo.png" alt="" style={{ maxWidth:'70%', maxHeight:40, objectFit:'contain', display:'block', margin:'0 auto' }}/>
+                <div style={{ padding:'6px 0 10px', textAlign:'center' }}>
+                  <p style={{ fontSize:11, color:'#aaa', fontFamily:'Georgia,serif', margin:0 }}>{new Date().toLocaleDateString('en-NZ', { day:'numeric', month:'short', year:'numeric' })}</p>
                 </div>
               </div>
               {photos.length > 1 && (

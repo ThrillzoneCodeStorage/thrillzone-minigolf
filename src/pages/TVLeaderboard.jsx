@@ -449,8 +449,22 @@ export default function TVLeaderboard() {
                           </div>
                         )}
                         <div style={{ minWidth:0 }}>
-                          <span style={{ display:'block', fontSize:nameSize, fontWeight:900, letterSpacing:'-0.03em', color:isFirst?'#FFD600':'#ccc', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-                            {e.name}
+                          <span style={{ display:'flex', alignItems:'center', gap:6 }}>
+                            <span style={{ fontSize:nameSize, fontWeight:900, letterSpacing:'-0.03em', color:isFirst?'#FFD600':'#ccc', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', flex:1 }}>
+                              {e.name}
+                            </span>
+                            {e.country_code && e.country_code !== 'OTHER' && (
+                              <span style={{ fontSize:Math.max(14,nameSize*0.6), flexShrink:0 }}>
+                                {({'NZ':'🇳🇿','AU':'🇦🇺','GB':'🇬🇧','US':'🇺🇸','DE':'🇩🇪','FR':'🇫🇷','JP':'🇯🇵',
+                                   'CN':'🇨🇳','IN':'🇮🇳','CA':'🇨🇦','BR':'🇧🇷','MX':'🇲🇽','ES':'🇪🇸','IT':'🇮🇹',
+                                   'NL':'🇳🇱','SE':'🇸🇪','NO':'🇳🇴','DK':'🇩🇰','CH':'🇨🇭','AT':'🇦🇹','KR':'🇰🇷',
+                                   'SG':'🇸🇬','ZA':'🇿🇦','IE':'🇮🇪','PT':'🇵🇹','PL':'🇵🇱','FJ':'🇫🇯','WS':'🇼🇸',
+                                   'TO':'🇹🇴','PG':'🇵🇬','TW':'🇹🇼','HK':'🇭🇰','MY':'🇲🇾','TH':'🇹🇭','ID':'🇮🇩',
+                                   'PH':'🇵🇭','VN':'🇻🇳','AR':'🇦🇷','CL':'🇨🇱','FI':'🇫🇮','BE':'🇧🇪','CZ':'🇨🇿',
+                                   'SK':'🇸🇰','HU':'🇭🇺','RO':'🇷🇴','HR':'🇭🇷','GR':'🇬🇷','RU':'🇷🇺','UA':'🇺🇦',
+                                   'AE':'🇦🇪','SA':'🇸🇦','IL':'🇮🇱','KE':'🇰🇪'})[e.country_code] || ''}
+                              </span>
+                            )}
                           </span>
                           {e.started_at && (
                             <span style={{ fontSize:dateSize, color:'#2a2a2a', fontWeight:600 }}>
@@ -471,7 +485,8 @@ export default function TVLeaderboard() {
                         {(() => {
                           const parAvg = e.totalPar ? e.totalPar / e.holes : 3
                           const diff   = e.avg - parAvg
-                          const avgCol = diff <= -0.2 ? '#22c55e' : diff < 1.0 ? '#FFD600' : '#ef4444'
+                          // green = at or below par, yellow = up to 1 above par, red = 1+ above par
+                          const avgCol = diff <= 0 ? '#22c55e' : diff < 1.0 ? '#FFD600' : '#ef4444'
                           return <>
                             <p style={{ fontSize:avgSize, fontWeight:900, color:avgCol, margin:0, letterSpacing:'-0.02em', lineHeight:1,
                               textShadow: diff <= -0.2 ? '0 0 12px rgba(34,197,94,0.4)' : diff < 1.0 ? '0 0 12px rgba(255,214,0,0.3)' : 'none' }}>{e.avg}</p>

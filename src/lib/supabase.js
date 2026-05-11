@@ -139,7 +139,7 @@ export async function getLeaderboard(period = 'all') {
 
   let query = supabase
     .from('sessions')
-    .select(`id, players, play_style, started_at, scores(hole_id, player_name, strokes)`)
+    .select(`id, players, play_style, started_at, country_code, scores(hole_id, player_name, strokes)`)
     .eq('opt_out_leaderboard', false)
     .not('play_style', 'eq', 'fun')
 
@@ -166,14 +166,15 @@ export async function getLeaderboard(period = 'all') {
       const total = playerScores.reduce((a, s) => a + s.strokes, 0)
       const avg   = Math.round((total / playerScores.length) * 10) / 10
       entries.push({
-        name:       player.name,
-        color:      player.color,
+        name:        player.name,
+        color:       player.color,
         total,
         avg,
         totalPar,
-        holes:      playerScores.length,
-        session_id: session.id,
-        started_at: session.started_at,
+        holes:       playerScores.length,
+        session_id:  session.id,
+        started_at:  session.started_at,
+        country_code: session.country_code || null,
       })
     }
   }
@@ -459,8 +460,33 @@ export async function uploadLeaderboardPhoto(sessionId, playerName, blob) {
 export async function getLeaderboardPlayerPhotos() {
   const { data } = await supabase
     .from('leaderboard_player_photos')
-    .select('session_id, player_name, photo_url')
+    .select('session_id, player_name, photo_url, taken_at')
+    .order('taken_at', { ascending: false })
   return data || []
+}
+
+// Only keep photos for players currently in top 10 — called periodically
+export async function pruneLeaderboardPhotos() {
+  try {
+    // Get current top 10 session IDs across all time
+    const top10 = await getLeaderboard('all')
+    const activeSessionIds = new Set(top10.map(e => e.session_id))
+
+    // Get all photos
+    const { data: photos } = await supabase
+      .from('leaderboard_player_photos')
+      .select('session_id, player_name')
+
+    // Delete any photo whose session is not in top 10
+    const toDelete = (photos || []).filter(p => !activeSessionIds.has(p.session_id))
+    for (const p of toDelete) {
+      await supabase.from('leaderboard_player_photos')
+        .delete()
+        .eq('session_id', p.session_id)
+        .eq('player_name', p.player_name)
+    }
+    return toDelete.length
+  } catch { return 0 }
 }
 
 // ── Session lock/unlock ────────────────────────────────────────
@@ -488,4 +514,17 @@ export async function broadcastMessage(message) {
 export async function clearBroadcastMessage() {
   await supabase.from('admin_settings')
     .upsert({ key:'broadcast_message', value: JSON.stringify({ text:'', ts:0 }) })
+}
+
+// ── Saved broadcast messages ───────────────────────────────────
+export async function getSavedMessages() {
+  const { data } = await supabase.from('admin_settings')
+    .select('value').eq('key', 'saved_messages').single()
+  if (!data?.value) return []
+  try { return JSON.parse(data.value) } catch { return [] }
+}
+
+export async function saveBroadcastMessages(messages) {
+  await supabase.from('admin_settings')
+    .upsert({ key: 'saved_messages', value: JSON.stringify(messages) })
 }
