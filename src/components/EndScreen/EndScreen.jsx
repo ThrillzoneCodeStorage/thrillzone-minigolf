@@ -46,6 +46,7 @@ const COUNTRIES = [
 ]
 
 function CountryFlagPicker({ player, sessionId, onDone }) {
+  const t           = useTranslation()
   const [selected,  setSelected]  = useState(null)
   const [search,    setSearch]    = useState('')
   const [popular,   setPopular]   = useState([])
